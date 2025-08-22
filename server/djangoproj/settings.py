@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,7 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-sjr8(@x2glhycj%qd&z&2qb=_9k67!+=75pr*3p4(zg@j0mffs"
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise Exception('DJANGO_SECRET_KEY environment variable not set!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -77,7 +81,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "money_manager_db",
         "USER": "root",
-        "PASSWORD": "Cc.198422231",
+        "PASSWORD": os.environ.get('DB_SECRET_PASSWORD'),
         "HOST": "localhost",
         "PORT": "3306",
     }
