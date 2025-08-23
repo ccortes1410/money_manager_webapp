@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from .models import User, Income, Expense
+from .models import Transaction
 from django.contrib.auth.models import User
+from django.http import JsonResponse
+import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
-from django.views import generic
+from django.views.decorators import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 import logging
 
@@ -38,3 +40,7 @@ def register_user(request):
         return HttpResponseRedirect(reverse("login"))
 
     return render(request, "register.html")
+
+def login_user(request):
+
+    data = json.loads(request.body)
