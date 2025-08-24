@@ -6,7 +6,7 @@ from django.http import JsonResponse
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
-from django.views.decorators import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 import logging
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def register_user(request):
-    context = {}
+    # context = {}
     if request.method == "GET":
         return render(request, "moneymanager/user_registration_bootstrap.html", context)
     elif request.method == "POST":
@@ -41,6 +41,33 @@ def register_user(request):
 
     return render(request, "register.html")
 
-def login_user(request):
-
+def login_request(request):
+    
     data = json.loads(request.body)
+    username = data['userName']
+    password = data['password']
+
+    user = authenticate(username=username, password=password)
+    data = {"userName": username}
+    if user is not None:
+
+        login(request, user)
+        data = {"userName": username, "status": "Authenticated"}
+
+    return JsonResponse(data)
+
+def logout_request(request):
+
+    logout(request)
+    data = {"userName": ""}
+    return JsonResponse(data)
+
+def get_transactions(request):
+    try:
+        if request.method == "GET":
+            transactions = Transaction.objects.filter(user=request.user)
+            data = {"transactions": list(transactions.values())}
+            return JsonResponse(data)
+    except Exception as e:
+        logger.error(f"Error fetching transactions: {e}")
+        return JsonResponse({"error": "Failed to fetch transactions"}, status=500)
