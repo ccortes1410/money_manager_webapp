@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def register_user(request):
-    # context = {}
+    context = {}
     if request.method == "GET":
         return render(request, "money_manager/user_registration_bootstrap.html", context)
     elif request.method == "POST":

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import './Login.css';
-import Header from '../Header/Header';
+import Header from '../Sidebar/Sidebar';
+import Sidebar from '../Sidebar/Sidebar';
 
 const Login = ({ onClose }) => {
 
@@ -41,7 +42,7 @@ const Login = ({ onClose }) => {
 
     return (
         <div>
-            <Header/>
+            <Sidebar/>
         <div onClick={onClose}>
             <div    
                 onClick={(e) => {
