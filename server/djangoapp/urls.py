@@ -22,8 +22,29 @@ from . import views
 
 app_name = "djangoapp"
 urlpatterns = [
-    path(route='register', view=views.register_user, name='register'),
-    path(route='login', view=views.login_request, name='login'),
-    path(route='logout', view=views.logout_request, name='logout'),
-    path(route='get_transactions', view=views.get_transactions, name='get_transactions'),
+    path(
+        route='register',
+        view=views.register_user,
+        name='register'
+    ),
+    path(
+        route='login',
+        view=views.login_request,
+        name='login'
+    ),
+    path(
+        route='logout',
+        view=views.logout_request,
+        name='logout'
+    ),
+    path(
+        route='get_transactions',
+        view=views.get_transactions,
+        name='get_transactions'
+    ),
+    path(
+        route='add_transaction',
+        view=views.add_transaction,
+        name='add_transaction'
+    )
 ]

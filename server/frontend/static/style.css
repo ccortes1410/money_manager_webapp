@@ -36,8 +36,34 @@ img{
     justify-content: center;
 }
 
-.container-columns{
-    display:flex;
+.container-columns {
+    display: flex;
+}
+
+.home-login {
+    display: flex;
+    flex-direction: column;
+    justify-self: right;
+    align-content: center;
+    padding-left: auto;
+    padding-right: auto;
+    margin-left: 40%;
+    margin-top: 5%;
+    margin-right: 5%;
+    border: rgb(151, 123, 206) 3px solid;
+    border-radius: 10px;
+}
+
+.home-preview {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: center;
+    margin-left: 10%;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: 5%;
+
 }
 
 /* .column{

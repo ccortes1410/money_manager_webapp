@@ -71,3 +71,16 @@ def get_transactions(request):
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
         return JsonResponse({"error": "Failed to fetch transactions"}, status=500)
+
+def add_transaction(request):
+    try: 
+        if request.method == "POST":
+            Transaction.objects.create(
+                user = request.user,
+                description = request.POST.get("description"),
+                amount = request.POST.get("amount")
+            )
+            return JsonResponse({"status": "Transaction added successfully"})
+    except Exception as e:
+        logger.error(f"Error adding transaction: {e}")
+        return JsonResponse({"error": "Failed to add transaction"}, status=500)
