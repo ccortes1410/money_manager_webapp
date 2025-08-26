@@ -38,7 +38,7 @@ urlpatterns = [
         name='logout'
     ),
     path(
-        route='get_transactions',
+        route='dashboard',
         view=views.get_transactions,
         name='get_transactions'
     ),
