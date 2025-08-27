@@ -29,6 +29,10 @@
         }
     };
 
+    const goDashboard = () => {
+        window.location.href = '/dashboard';
+    };
+
     let checkSession = () => {
         let curr_user = sessionStorage.getItem('username');
 
@@ -92,7 +96,7 @@
                         <label for="password" class="form-label">Password</label>
                         <input type="password" class="form-control" id="password">
                     </div>
-                    <button type="submit" class="btn btn-primary" onClick="login()">Login</button>
+                    <a type="submit" class="btn btn-primary" href="/dashboard">Login</a>
                     <p>Don't have an account? Sign up <a href="/register">here</a></p>
                 </form>
             </div>

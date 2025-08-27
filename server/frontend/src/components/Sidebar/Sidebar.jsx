@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import "../assets/style.css";
 import "../assets/bootstrap.min.css";
+import homeIcon from '../assets/hogar.png';
+import profileIcon from '../assets/persona.png';
+import friendsIcon from '../assets/amigos.png';
 
 const Sidebar = () => {
     const [collapsed, setCollapsed] = useState(true);
@@ -44,14 +47,15 @@ const Sidebar = () => {
         <div 
             className="d-flex flex-column flex-shrink-0 p-3 bg-light" 
             style={{
-                width: '250px', 
+                width: collapsed ? '80px' : '250px', 
                 height: '100vh', 
                 position: 'fixed',
-                transition: 'width 0.3s'
+                transition: 'width 0.2s'
                 }}
         >
             <button
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-secondary mb-3"
+                style={{ width: '100%' }}
                 onClick={toggleSidebar}
                 aria-label="Toggle Sidebar"
             >
@@ -64,14 +68,14 @@ const Sidebar = () => {
             <ul className="nav nav-pills flex-column mb-auto">
                 <li className="nav-item">
                     {collapsed ? <a className="nav-link active" aria-current="page" href="/">
-                    <img src="hogar.png" className="img_icon"/>
+                    <img src={homeIcon} className="img_icon"/>
                     </a> : <span className="nav-link active">Home</span>}
                 </li>
                 <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/profile"><img src="persona.png" className="img_icon"/></a> : <span className="nav-link">Profile</span>}
+                    {collapsed ? <a className="nav-link" href="/profile"><img src={profileIcon} className="img_icon"/></a> : <span className="nav-link">Profile</span>}
                 </li>
                 <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/friends"><img src="friends.png" className="img_icon"/></a> : <span className="nav-link">Friends</span>}
+                    {collapsed ? <a className="nav-link" href="/friends"><img src={friendsIcon} className="img_icon"/></a> : <span className="nav-link">Friends</span>}
                 </li>
             </ul>
             <hr/>

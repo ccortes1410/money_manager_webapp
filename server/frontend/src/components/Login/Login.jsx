@@ -37,7 +37,7 @@ const Login = ({ onClose }) => {
     };
 
     if (!open) {
-        window.location.href = '/dashboard';
+        window.location.href = 'dashboard';
     }
 
     return (
@@ -50,9 +50,9 @@ const Login = ({ onClose }) => {
             }}
             className='modalContainer'
             >
-                <form className="login_panel" style={{}} onSubmit={login}>
+                <form className="login_panel" onSubmit={login}>
                     <div>
-                        <span className="input_field">Username</span>
+                        {/* <span className="input_field">Username</span> */}
                         <input
                             type="text"
                             placeholder="Username"
@@ -63,7 +63,7 @@ const Login = ({ onClose }) => {
                         />
                     </div>
                     <div>
-                        <span className="input_field">Password</span>
+                        {/* <span className="input_field">Password</span> */}
                         <input
                             type="password"
                             placeholder="Password"
