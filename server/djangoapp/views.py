@@ -78,7 +78,8 @@ def add_transaction(request):
             Transaction.objects.create(
                 user = request.user,
                 description = request.POST.get("description"),
-                amount = request.POST.get("amount")
+                amount = request.POST.get("amount"),
+                category = request.POST.get("category")
             )
             return JsonResponse({"status": "Transaction added successfully"})
     except Exception as e:

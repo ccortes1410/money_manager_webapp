@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import '../assets/style.css';
+import Sidebar from '../Sidebar/Sidebar';
 
 
 const Dashboard = () => {
@@ -26,6 +27,9 @@ const Dashboard = () => {
     
     return (
         <div className="dashboard">
+        <div>
+            <Sidebar />
+        </div>
             <h1>Transaction Dashboard</h1>
             {data ? (
                 <table className='table'>
