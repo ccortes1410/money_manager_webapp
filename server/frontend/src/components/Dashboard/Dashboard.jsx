@@ -7,7 +7,7 @@ import Sidebar from '../Sidebar/Sidebar';
 const Dashboard = () => {
     const [data, setData] = useState(null);
 
-    let trans_url = "/djangoapp/get_transactions";
+    let trans_url = "/djangoapp/dashboard";
 
     const get_transactions = async () => {
         const res = await fetch(trans_url, {
@@ -26,10 +26,8 @@ const Dashboard = () => {
 
     
     return (
-        <div className="dashboard">
-        <div>
+        <div className="dashboard-container">
             <Sidebar />
-        </div>
             <h1>Transaction Dashboard</h1>
             {data ? (
                 <table className='table'>
