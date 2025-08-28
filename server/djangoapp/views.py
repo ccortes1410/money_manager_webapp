@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from .models import Transaction
+from .models import Transactions
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -62,10 +62,10 @@ def logout_request(request):
     data = {"userName": ""}
     return JsonResponse(data)
 
-def get_transactions(request):
+def dashboard(request):
     try:
         if request.method == "GET":
-            transactions = Transaction.objects.filter(user=request.user)
+            transactions = Transactions.objects.filter(user=request.user)
             data = {"transactions": list(transactions.values())}
             return JsonResponse(data)
     except Exception as e:
@@ -75,7 +75,7 @@ def get_transactions(request):
 def add_transaction(request):
     try: 
         if request.method == "POST":
-            Transaction.objects.create(
+            Transactions.objects.create(
                 user = request.user,
                 description = request.POST.get("description"),
                 amount = request.POST.get("amount"),

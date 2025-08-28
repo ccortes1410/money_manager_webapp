@@ -1,7 +1,35 @@
 .dashboard-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+    flex-direction: row;
+    align-items: flex-start;
+    /* padding: 20px; */
     background-color: #127b9b;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 10%;
+    margin-left: 250px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-left: 250px;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    margin-left: 250px;
+}
+
+.data-table th {
+    background-color: #f4f4f4;
+    text-align: left;
+    margin-left: 250px
 }

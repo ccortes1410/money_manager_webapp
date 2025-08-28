@@ -68,14 +68,16 @@ const Sidebar = () => {
             <ul className="nav nav-pills flex-column mb-auto">
                 <li className="nav-item">
                     {collapsed ? <a className="nav-link active" aria-current="page" href="/">
-                    <img src={homeIcon} className="img_icon"/>
+                    <img src={homeIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/>
                     </a> : <span className="nav-link active">Home</span>}
                 </li>
                 <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/profile"><img src={profileIcon} className="img_icon"/></a> : <span className="nav-link">Profile</span>}
+                    {collapsed ? <a className="nav-link" href="/profile">
+                    <img src={profileIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/></a> : <span className="nav-link">Profile</span>}
                 </li>
                 <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/friends"><img src={friendsIcon} className="img_icon"/></a> : <span className="nav-link">Friends</span>}
+                    {collapsed ? <a className="nav-link" href="/friends">
+                    <img src={friendsIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/></a> : <span className="nav-link">Friends</span>}
                 </li>
             </ul>
             <hr/>

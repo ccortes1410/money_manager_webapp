@@ -39,8 +39,8 @@ urlpatterns = [
     ),
     path(
         route='dashboard',
-        view=views.get_transactions,
-        name='get_transactions'
+        view=views.dashboard,
+        name='dashboard'
     ),
     path(
         route='add_transaction',
