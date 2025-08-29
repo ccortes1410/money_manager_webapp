@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoproj.settings")
 django.setup()
 
 from django.contrib.auth.models import User
-from djangoapp.models import Transactions
+from djangoapp.models import Transaction
 
 def initiate():
     # Create users
@@ -30,7 +30,7 @@ def initiate():
     ]
 
     for transaction_data in sample_transactions:
-        Transactions.objects.create(**transaction_data)
+        Transaction.objects.create(**transaction_data)
 
     
 

@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Transactions
+from .models import Transaction
 
-class TransactionsAdmin(admin.ModelAdmin):
+class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'amount', 'date', 'description')
     search_fields = ('description',)
 
-admin.site.register(Transactions, TransactionsAdmin)
+admin.site.register(Transaction, TransactionAdmin)

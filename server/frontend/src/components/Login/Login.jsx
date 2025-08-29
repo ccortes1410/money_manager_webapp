@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import Header from '../Sidebar/Sidebar';
 import Sidebar from '../Sidebar/Sidebar';
 
-const Login = ({ onClose }) => {
-
+const Login = () => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     let login_url = window.location.origin + "/djangoapp/login";
+
+    const navigate = useNavigate();
 
     const login = async (e) => {
         e.preventDefault();
@@ -23,28 +24,26 @@ const Login = ({ onClose }) => {
             body: JSON.stringify({
                 userName: userName,
                 password: password
-            })
-    });
+            }),
+            credentials: 'include',
+        });
 
-    const json = await res.json();
-    if (json.status != null && json.status === "Authenticated") {
-        sessionStorage.setItem('username', json.userName);
-        setOpen(false);
-    }
-    else {
-        alert("The user could not be authenticated");
-    }
+        const json = await res.json();
+        if (json.status != null && json.status === "Authenticated") {
+            sessionStorage.setItem('username', json.userName);
+            // setOpen(false);
+            navigate('/dashboard');
+        }
+        else {
+            alert("The user could not be authenticated");
+        }
     };
-
-    if (!open) {
-        window.location.href = 'dashboard';
-    }
 
     return (
         <div>
             <Sidebar/>
-        <div onClick={onClose}>
-            <div    
+        <div>
+            <div
                 onClick={(e) => {
                 e.stopPropagation();
             }}
@@ -75,7 +74,7 @@ const Login = ({ onClose }) => {
                     </div>
                     <div>
                     <input className="action_button" type="submit" value="Login"/>
-                    <input className="action_button" type="button" value="Cancel" onClick={()=>setOpen(false)}/>
+                    <input className="action_button" type="button" value="Cancel" onClick={() => navigate('/home')}/>
                     </div>
                     {/* <a className="loginlink" href="/register">Register Now</a> */}
                 </form>

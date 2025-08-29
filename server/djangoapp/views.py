@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from .models import Transactions
+from .models import Transaction
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from .restapi import get_request
 import logging
 
 logger = logging.getLogger(__name__)
@@ -61,23 +62,52 @@ def logout_request(request):
 
     logout(request)
     data = {"userName": ""}
-    return JsonResponse(data)
+    return JsonResponse({"status": "logged_out"})
 
-# @login_required
+@login_required
 def dashboard(request):
-    try:
-        if request.method == "GET":
-            transactions = Transactions.objects.filter(user=request.user)
-            data = {"transactions": list(transactions.values())}
-            return JsonResponse(data)
-    except Exception as e:
-        logger.error(f"Error fetching transactions: {e}")
-        return JsonResponse({"error": "Failed to fetch transactions"}, status=500)
+    print(request.user)
+    if request.method == "GET":
+        transactions = Transaction.objects.filter(user=request.user)
+        data = list(transactions.values())
+        return JsonResponse({
+            "transactions": data,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authenticated": request.user.is_authenticated
+            }
+        })
+    elif request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = data.get("amount")
+            date = data.get("date")
+            description = data.get("description")
+            Transaction.objects.create(
+                user=request.user,
+                description=description,
+                amount=amount,
+                date=date,  # <-- add this line
+            )
+            return JsonResponse({"status": "Transaction added successfully"}, status=201)
+        except Exception as e:
+            logger.error(f"Error adding transaction: {e}")
+            return JsonResponse({"error": "Failed to add transaction"}, status=500)
+    elif request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            ids = data.get("ids", [])
+            Transaction.objects.filter(id__in=ids, user=request.user).delete()
+            return JsonResponse({"status": "deleted"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
 
 def add_transaction(request):
     try: 
         if request.method == "POST":
-            Transactions.objects.create(
+            Transaction.objects.create(
                 user = request.user,
                 description = request.POST.get("description"),
                 amount = request.POST.get("amount"),

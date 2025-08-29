@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import "../assets/style.css";
+import "../Dashboard/Dashboard.css"
 import "../assets/bootstrap.min.css";
 import homeIcon from '../assets/hogar.png';
 import profileIcon from '../assets/persona.png';
 import friendsIcon from '../assets/amigos.png';
+import logoutIcon from '../assets/salida.png';
 
-const Sidebar = () => {
-    const [collapsed, setCollapsed] = useState(true);
-
+const Sidebar = ({ collapsed, setCollapsed }) => {
     const toggleSidebar = () => {
         setCollapsed(!collapsed);
     }
@@ -17,17 +17,16 @@ const Sidebar = () => {
         let logout_url = window.location.origin + "/djangoapp/logout";
         const res = await fetch(logout_url, {
             method: 'GET',
+            credentials: 'include'
         });
 
         const json = await res.json();
-        if (json) {
+        if (json && json.status === "logged_out") {
             let username = sessionStorage.getItem('username');
             sessionStorage.removeItem('username');
-            window.location.href = window.location.origin;
-            window.location.reload();
             alert("Logging out " + username + "...")
-        }
-        else {
+            window.location.href = "/login";
+        } else {
             alert("The user could not be logged out");
         }
     }
@@ -45,14 +44,7 @@ const Sidebar = () => {
 
     return (
         <div 
-            className="d-flex flex-column flex-shrink-0 p-3" 
-            style={{
-                width: collapsed ? '80px' : '250px', 
-                height: '100vh', 
-                position: 'fixed',
-                transition: 'width 0.2s',
-                backgroundColor: '#064483ff',
-                }}
+            className={collapsed ? 'sidebar' : 'sidebar expanded'}
         >
             <button
                 className="btn btn-outline-secondary mb-3"
@@ -83,7 +75,13 @@ const Sidebar = () => {
             </ul>
             <hr/>
             <div>
-                <a className="nav-link" href="/logout">Logout</a>
+                {collapsed ? (
+                    <a className="nav-link" href="#" onClick={logout}>
+                        <img src={logoutIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/>
+                    </a>
+                ) : (
+                    <a className="nav-link" href="#" onClick={logout}>Logout</a>
+                )}
             </div>
         </div>
     )
