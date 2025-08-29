@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 import logging
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ def logout_request(request):
     data = {"userName": ""}
     return JsonResponse(data)
 
+# @login_required
 def dashboard(request):
     try:
         if request.method == "GET":

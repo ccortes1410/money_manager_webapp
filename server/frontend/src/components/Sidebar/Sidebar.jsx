@@ -45,12 +45,13 @@ const Sidebar = () => {
 
     return (
         <div 
-            className="d-flex flex-column flex-shrink-0 p-3 bg-light" 
+            className="d-flex flex-column flex-shrink-0 p-3" 
             style={{
                 width: collapsed ? '80px' : '250px', 
                 height: '100vh', 
                 position: 'fixed',
-                transition: 'width 0.2s'
+                transition: 'width 0.2s',
+                backgroundColor: '#064483ff',
                 }}
         >
             <button

@@ -23,6 +23,9 @@ const sequelize = new Sequelize(
     }
 );
 
+const Transactions = require('./transactions')(sequelize, DataTypes);
+
+
 // const transaction_data = JSON.parse(fs.readFileSync('transactions.js', 'utf8'));
 async function connectWithRetry() {
     let retries = 5;
@@ -30,7 +33,29 @@ async function connectWithRetry() {
         try {
             await sequelize.authenticate();
             console.log('Database connection established successfully.');
-            await sequelize.sync();
+            // await sequelize.sync();
+            console.log('Starting app.js...');
+            console.log('Connected to database:', sequelize.config.database);
+            console.log(Object.keys(Transactions.rawAttributes)); // Should include 'user_id'
+
+            app.get('/', async (req, res) => {
+                res.send("Welcome to the Money Manager API");
+            });
+
+            app.get('/fetchTransactions', async (req, res) => {
+                try {
+                    const documents = await Transactions.findAll();
+                    console.log("Fetched transactions:", JSON.stringify(documents, null, 4));
+                    res.json(documents);
+                } catch (error) {
+                    console.log("Error fetching transactions:", error);
+                    res.status(500).json({ error: "Internal Server Error" });
+                }
+            });
+
+            app.listen(port, () => {
+                console.log(`Server is running on http://localhost:${port}`);
+            });
             break;
         } catch (error) {
             console.error('Database connection failed:', error);
@@ -46,48 +71,3 @@ async function connectWithRetry() {
 }
 
 connectWithRetry();
-
-
-
-const User = sequelize.define('User', {
-    username: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-});
-
-(async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('Connection has been established successfully.');
-        await sequelize.sync();
-        const admin = await User.create({ username: 'admin', password: 'admin' });
-        console.log(admin.toJSON());
-    } catch (error) {
-        console.error('Unable to connect to the database:', error);
-    }
-})();
-
-const Transactions = require('./transactions')(sequelize, DataTypes);
-
-app.get('/', async (req, res) => {
-    res.send("Welcome to the Money Manager API");
-})
-
-app.get('/fetchTransactions', async (req, res) => {
-    try {
-        const documents = await Transactions.findAll();
-        res.json(documents);
-    } catch (error) {
-        console.log("Error fetching transactions:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});

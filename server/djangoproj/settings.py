@@ -100,8 +100,8 @@ DATABASES = {
         "NAME": "money_manager_db",
         "USER": "root",
         "PASSWORD": os.environ.get('DB_SECRET_PASSWORD'),
-        "HOST": "localhost",
-        "PORT": "3306",
+        "HOST": "127.0.0.1",
+        "PORT": "3307",
     }
 }
 
