@@ -4,7 +4,7 @@ The main page of an authorized user should show their recorded transactions.
 
 A Transaction should have the following:
 - id (auto increment)
-- user_id (extracte from session)
+- user_id (extracted from session)
 - amount (user input)
 - category (user input)
 - date recorded (extracted from system)
