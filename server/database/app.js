@@ -3,6 +3,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const fs = require('fs');
 const cors = require('cors');
 const { connect } = require('http2');
+const { BADFAMILY } = require('dns');
 
 const app = express();
 const port = 3030;
@@ -57,6 +58,20 @@ async function connectWithRetry() {
                 try {
                     const documents = await Budget.findAll();
                     console.log("Fetched budget:", JSON.stringify(documents, null, 4));
+                    res.json(documents);
+                } catch (error) {
+                    console.log("Error fetching budget:", error);
+                    res.status(500).json({ error: "Internal Server Error" });
+                }
+            })
+
+            app.get('/fetchBudget/:id', async (req, res) => {
+                try {
+                    const documents = await Budget.findAll({
+                        where: {
+                            id: req.params.id
+                        }
+                    });
                     res.json(documents);
                 } catch (error) {
                     console.log("Error fetching budget:", error);

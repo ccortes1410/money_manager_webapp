@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoproj.settings")
 django.setup()
 
 from django.contrib.auth.models import User
-from djangoapp.models import Transaction
+from djangoapp.models import Transaction, Budget
 
 def initiate():
     # Create users
@@ -17,6 +17,12 @@ def initiate():
     user1, _ = User.objects.get_or_create(username='user1', defaults={'password': 'password1'})
     user2, _ = User.objects.get_or_create(username='user2', defaults={'password': 'password2'})
     user3, _ = User.objects.get_or_create(username='user3', defaults={'password': 'password3'})
+
+    # Create budgets
+
+    Food = Budget.objects.create(user_id=Krlp.id, name="Food", amount=2000.00, period=['monthly',])
+    Transport = Budget.objects.create(user_id=user1.id, name="Transport", amount=300.00, period=['monthly',])
+    Housing = Budget.objects.create(user_id=Krlp.id, name="Housing", amount=800.00, period=['monthly',])
 
     # Sample data to populate the database
     sample_transactions = [
@@ -28,6 +34,11 @@ def initiate():
         {"user": user3, "amount": 300.00, "date": "2023-01-06", "description": "Gym Membership", "category": "Health"},
         {"user": user1, "amount": 400.00, "date": "2023-01-07", "description": "Online Shopping", "category": "Entertainment"}
     ]
+
+    sample_budgets = [Food, Transport, Housing]
+
+    for budget in sample_budgets:
+        budget.save()
 
     for transaction_data in sample_transactions:
         Transaction.objects.create(**transaction_data)

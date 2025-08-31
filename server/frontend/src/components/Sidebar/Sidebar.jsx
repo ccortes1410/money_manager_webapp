@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "../Dashboard/Dashboard.css"
-import "../assets/bootstrap.min.css";
-import homeIcon from '../assets/hogar.png';
-import profileIcon from '../assets/persona.png';
+import dashIcon from '../assets/panel.png';
+import budgetIcon from '../assets/budget.png';
 import friendsIcon from '../assets/amigos.png';
 import logoutIcon from '../assets/salida.png';
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
+    const location = useLocation();
+    const currentPath = location.pathname;
+
     const toggleSidebar = () => {
         setCollapsed(!collapsed);
     }
@@ -58,19 +62,82 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 {!collapsed && <span className="fs-4">Money Manager</span>}
             </a>
             <hr/>
-            <ul className="nav nav-pills flex-column mb-auto">
-                <li className="nav-item">
-                    {collapsed ? <a className="nav-link active" aria-current="page" href="/dashboard">
-                    <img src={homeIcon} style={{ width: '24px', height: '24px', alignContent: 'center' }} className="img_icon"/>
-                    </a> : <span className="nav-link active">Home</span>}
+            <ul className="nav flex-column mb-auto">
+                <li className={`nav-item${currentPath === '/dashboard' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a 
+                            className={`nav-link`}
+                            aria-current="page"
+                            href="/dashboard"
+                        >
+                            <img 
+                                src={dashIcon}
+                                style={{ 
+                                        width: '30px',
+                                        height: '30px',
+                                        alignContent: 'center',
+                                        objectFit: 'contain'
+                                        }}
+                                className="img_icon"/>
+                        </a>
+                    ) : (
+                        <a
+                            className="nav-link"
+                            href="/dashboard"
+                            style={{
+                                marginLeft: '20px',
+                                }}
+                        >
+                            Dashboard
+                        </a>
+                    )}
                 </li>
-                <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/budget">
-                    <img src={profileIcon} style={{ width: '24px', height: '24px'}} className="img_icon"/></a> : <span className="nav-link">Profile</span>}
+                <li className={`nav-item${currentPath === '/budget' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a 
+                            className="nav-link"
+                            href="/budget"
+                        >
+                            <img 
+                                src={budgetIcon}
+                                style={{ 
+                                    width: '30px',
+                                    height: '30px',
+                                    alignContent: 'center',
+                                    objectFit: 'contain'
+                                    }}
+                                className="img_icon"
+                            />
+                        </a>
+                    ) : (
+                        <a
+                            className="nav-link"
+                            href="/budget"
+                        >
+                            Budgets
+                        </a>
+                    )}
                 </li>
-                <li className="nav-item">
-                    {collapsed ? <a className="nav-link" href="/friends">
-                    <img src={friendsIcon} style={{ width: '24px', height: '24px', alignContent: 'center' }} className="img_icon"/></a> : <span className="nav-link">Friends</span>}
+                <li className={`nav-item${currentPath === '/friends' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a className={`nav-link`} href="/friends">
+                            <img 
+                                src={friendsIcon}
+                                style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    alignContent: 'center',
+                                    objectFit: 'contain'
+                                    }}
+                                className="img_icon"/>
+                        </a>
+                    ) : (
+                        <a 
+                            className="nav-link"
+                        >
+                            Friends
+                        </a>
+                    )}
                 </li>
             </ul>
             <hr/>
