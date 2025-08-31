@@ -43,8 +43,8 @@ urlpatterns = [
         name='dashboard'
     ),
     path(
-        route='add_transaction',
-        view=views.add_transaction,
-        name='add_transaction'
-    )
+        route='budget',
+        view=views.budget,
+        name='budget'
+    ),
 ]

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from .models import Transaction
+from .models import Transaction, Budget
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -103,15 +103,31 @@ def dashboard(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+def budget(request):
+    try:
+        if request.method == "GET":
+            budget = Budget.objects.filter(user=request.user)
+            data = list(budget.values())
+            return JsonResponse({
+                "budget": data,
+                "user": {
+                    "id": request.user.id,
+                    "username": request.user.username,
+                    "is_authenticated": request.user.is_authenticated
+                }
+            })
+    except Exception as e:
+        logger.error(f"Error fetching budget: {e}")
+        return JsonResponse({"error": "Failed to fetch budget"}, status=500)
 
 def add_transaction(request):
     try: 
         if request.method == "POST":
             Transaction.objects.create(
-                user = request.user,
-                description = request.POST.get("description"),
-                amount = request.POST.get("amount"),
-                category = request.POST.get("category")
+                user=request.user,
+                description=request.POST.get("description"),
+                amount=request.POST.get("amount"),
+                category=request.POST.get("category")
             )
             return JsonResponse({"status": "Transaction added successfully"})
     except Exception as e:

@@ -12,6 +12,7 @@ const Dashboard = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [amountInput, setAmountInput] = useState('');
     const [dateInput, setDateInput] = useState('');
+    const [categoryInput, setCategoryInput] = useState('');
     const [descriptionInput, setDescriptionInput] = useState('');
     const [selectedTransactions, setSelectedTransactions] = useState([]);
 
@@ -154,8 +155,10 @@ const Dashboard = () => {
                 transition: "margin-left 0.2s"
             }}
             >
-            <h1 style={{textAlign: 'center' }}>Transaction Dashboard</h1>
             <div className="dashboard-header">
+                <h1 style={{ color: '#fff' }}>Transaction Dashboard</h1>
+            </div>
+            <div className="input-header">
                 <div>
                     <input 
                         type="number" 
@@ -168,6 +171,12 @@ const Dashboard = () => {
                         placeholder="Description" 
                         style={{ marginTop: '10px', marginLeft: '10px' }} 
                         onChange={e => setDescriptionInput(e.target.value)}
+                    />
+                    <input 
+                        type="text"
+                        placeholder="Category"
+                        style={{ marginTop: '10px', marginLeft: '10px' }}
+                        onChange={e => setCategoryInput(e.target.value)}
                     />
                     <input 
                         type="date" 
@@ -201,6 +210,7 @@ const Dashboard = () => {
                         <th></th>
                         <th>Description</th>
                         <th>Amount</th>
+                        <th>Category</th>
                         <th>Date</th>
                     <th>
                         <input
@@ -222,6 +232,7 @@ const Dashboard = () => {
                                     /></td>
                                 <td>{transaction.description}</td>
                                 <td>${transaction.amount}</td>
+                                <td>{transaction.category}</td>
                                 <td>{transaction.date}</td>
                             </tr>
                         ))}

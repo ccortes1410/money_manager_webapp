@@ -5,6 +5,7 @@ import Header from '../Sidebar/Sidebar';
 import Sidebar from '../Sidebar/Sidebar';
 
 const Login = () => {
+    const [collapsed, setCollapsed] = useState(true);
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     // const [open, setOpen] = useState(true);
@@ -40,8 +41,8 @@ const Login = () => {
     };
 
     return (
-        <div>
-            <Sidebar/>
+        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
+            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div>
             <div
                 onClick={(e) => {
