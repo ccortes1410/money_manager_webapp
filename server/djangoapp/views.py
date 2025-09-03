@@ -1,3 +1,4 @@
+from django.forms import model_to_dict
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from .models import Transaction, Budget
@@ -66,9 +67,14 @@ def logout_request(request):
 
 @login_required
 def dashboard(request):
-    print(request.user)
+    # print(request.user)
+    category = request.GET.get("category")
+    print(category)
     if request.method == "GET":
-        transactions = Transaction.objects.filter(user=request.user)
+        if category:
+            transactions = Transaction.objects.filter(user=request.user, category=category)
+        else:
+            transactions = Transaction.objects.filter(user=request.user)
         data = list(transactions.values())
         return JsonResponse({
             "transactions": data,
@@ -78,6 +84,7 @@ def dashboard(request):
                 "is_authenticated": request.user.is_authenticated
             }
         })
+        
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -103,13 +110,15 @@ def dashboard(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
-def budget(request):
+
+@login_required
+def budget_list(request):
     try:
         if request.method == "GET":
-            budget = Budget.objects.filter(user=request.user)
-            data = list(budget.values())
+            budgets = Budget.objects.filter(user=request.user)
+            data = list(budgets.values())
             return JsonResponse({
-                "budget": data,
+                "budgets": data,
                 "user": {
                     "id": request.user.id,
                     "username": request.user.username,
@@ -120,6 +129,34 @@ def budget(request):
         logger.error(f"Error fetching budget: {e}")
         return JsonResponse({"error": "Failed to fetch budget"}, status=500)
 
+
+@login_required
+def budget_detail(request, budget_id):
+    # budget_id = request.GET.get("id")
+    try:
+        if not budget_id:
+            logger.error("No Budget ID provided")
+            return JsonResponse({"error": "Budget ID is required"}, status=400)
+
+        logger.info(f"Fetching budget with ID: {budget_id} for user: {request.user.username}")
+        budget = Budget.objects.get(id=budget_id, user=request.user)
+        logger.info(f"Budget found: {budget}")
+
+        data = model_to_dict(budget)
+        logger.debug(f"Budget details: {data}")
+        return JsonResponse({
+            "budget": data,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authenticated": request.user.is_authenticated
+            }       
+        })
+    except Budget.DoesNotExist:
+        return JsonResponse({"error": "Budget not found"}, status=404)
+
+
+@login_required
 def add_transaction(request):
     try: 
         if request.method == "POST":

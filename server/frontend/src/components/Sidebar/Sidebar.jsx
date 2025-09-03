@@ -92,11 +92,11 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/budget' ? ' active' : ''}`}>
+                <li className={`nav-item${currentPath === '/budgets' ? ' active' : ''}`}>
                     {collapsed ? (
                         <a 
                             className="nav-link"
-                            href="/budget"
+                            href="/budgets"
                         >
                             <img 
                                 src={budgetIcon}
@@ -112,7 +112,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                     ) : (
                         <a
                             className="nav-link"
-                            href="/budget"
+                            href="/budgets"
                         >
                             Budgets
                         </a>

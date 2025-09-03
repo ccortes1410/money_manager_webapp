@@ -28,5 +28,6 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='index.html')),
     path('register/', TemplateView.as_view(template_name='index.html')),
     path('dashboard/', TemplateView.as_view(template_name='index.html')),
-    path('budget/', TemplateView.as_view(template_name='index.html'))
+    path('budgets/', TemplateView.as_view(template_name='index.html')),
+    # path('budget/<int:budget_id>/', TemplateView.as_view(template_name='index.html')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

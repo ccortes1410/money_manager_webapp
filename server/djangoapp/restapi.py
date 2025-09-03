@@ -17,3 +17,12 @@ def get_request(endpoint, **kwargs):
     except Exception as e:
         print("Error occurred: {}".format(e))
     return response.json()
+
+# def get_budget(endpoint, budget_id):
+#     if budget_id:
+#         request_url = backend_url + endpoint
+#     try:
+#         response = requests.get(request_url)
+#     except Exception as e:
+#         print("Error occurred: {}".format(e))
+#     return response.json()

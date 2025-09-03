@@ -54,7 +54,7 @@ async function connectWithRetry() {
                 }
             });
 
-            app.get('/fetchBudget', async (req, res) => {
+            app.get('/fetchBudgets', async (req, res) => {
                 try {
                     const documents = await Budget.findAll();
                     console.log("Fetched budget:", JSON.stringify(documents, null, 4));

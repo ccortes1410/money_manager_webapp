@@ -28,4 +28,4 @@ class Budget(models.Model):
         unique_together = ('name', 'user')
 
     def __str__(self):
-        return f"Category: {self.category.name} by {self.user.username}"
+        return f"Category: {self.name} by {self.user.username}"

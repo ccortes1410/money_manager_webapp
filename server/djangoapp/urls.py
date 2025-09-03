@@ -43,8 +43,13 @@ urlpatterns = [
         name='dashboard'
     ),
     path(
-        route='budget',
-        view=views.budget,
-        name='budget'
+        route='budgets',
+        view=views.budget_list,
+        name='budget_list'
     ),
+    path(
+        route='budget/<int:budget_id>/',
+        view=views.budget_detail,
+        name='budget_detail'
+    )
 ]
