@@ -79,6 +79,17 @@ async function connectWithRetry() {
                 }
             })
 
+            app.post('/addBudget', async (req, res) => {
+                const { name, amount, period } = req.body;
+                try {
+                    const newBudget = await Budget.create({ name, amount, period });
+                    res.status(201).json(newBudget);
+                } catch (error) {
+                    console.log("Error adding budget:", error);
+                    res.status(500).json({ error: "Internal Server Error" });
+                }
+            });
+            
             app.listen(port, () => {
                 console.log(`Server is running on http://localhost:${port}`);
             });

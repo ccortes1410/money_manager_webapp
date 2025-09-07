@@ -48,8 +48,13 @@ urlpatterns = [
         name='budget_list'
     ),
     path(
-        route='budget/<int:budget_id>/',
-        view=views.budget_detail,
-        name='budget_detail'
+        route='budgets/<int:budget_id>/delete/',
+        view=views.budget_list,
+        name='delete_budget'
+    ),
+    path(
+        route='add-budget',
+        view=views.budget_list,
+        name='add_budget'
     )
 ]

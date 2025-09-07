@@ -4,6 +4,7 @@ import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import Budget from './components/Budgets/Budget';
 import Budgets from './components/Budgets/Budgets';
+import AddBudget from './components/Budgets/AddBudget';
 
 function App() {
     return (
@@ -13,6 +14,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/budget/:budget_id" element={<Budget />} />
+            <Route path="/add-budget" element={<AddBudget />} />
         </Routes>
     );
 }

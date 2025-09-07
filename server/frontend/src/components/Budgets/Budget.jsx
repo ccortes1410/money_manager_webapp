@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../Sidebar/Sidebar';
-import '../Dashboard/Dashboard.css';
+import { Pie } from 'react-chartjs-2';
+import { Chart, ArcElement, Tooltip, Legend, Title } from 'chart.js';
+import './Budgets.css';
+
+Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budget = ({ selectedBudgetId }) => {
     // const [collapsed, setCollapsed] = useState(true);
@@ -42,6 +45,46 @@ const Budget = ({ selectedBudgetId }) => {
             console.error(error);
         }
     };
+
+   
+
+    const getPieChartData = (budget, transactions) => {
+        if (!budget || !budget.name || transactions.length === 0) return {};
+
+        const dataByCategory = {};
+        
+        // budget.name
+
+        const categoryTotals = transactions.reduce((acc, tx) => {
+            acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+            return acc;
+        }, {});
+
+        const totalSpent = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+        const remaining = Math.max(budget.amount - totalSpent, 0);
+        categoryTotals['Remaining'] = remaining;
+        categoryTotals['Total Spent'] = totalSpent;
+
+        const colors = [
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+        ];
+
+        return {
+            labels: Object.keys(categoryTotals),
+            datasets: [
+                {
+                    data: Object.values(categoryTotals),
+                    backgroundColor: colors.slice(0, Object.keys(categoryTotals).length),
+                    borderWidth: 1,
+                }
+            ]
+        };
+    };
+    
+    const pieChartData = getPieChartData(budget, transactions);
+
     useEffect(() => {
         if (selectedBudgetId) {
             get_budget(selectedBudgetId);
@@ -97,7 +140,16 @@ const Budget = ({ selectedBudgetId }) => {
                         </div>
                     )
                 }
-            </div>
+                <div className="pie-chart-container">
+                    {pieChartData ? (
+                        <Pie 
+                            data={pieChartData}
+                        />
+                    ) : (
+                        <p>No data available for pie chart</p>
+                    )}
+                    </div>
+                </div>
     );
 }
 

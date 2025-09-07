@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import '../assets/style.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { Line } from 'react-chartjs-2';
-import { Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
+import { Line, Pie } from 'react-chartjs-2';
+import { ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
 
-Chart.register(LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
+Chart.register(ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const Dashboard = () => {
     const [collapsed, setCollapsed] = useState(true);
@@ -58,7 +58,16 @@ const Dashboard = () => {
         responsive: true,
         plugins: {
             legend: { display: true },
-            title: { display: true, text: 'Transaction Overview' }
+            title: { display: true, text: 'Transaction Overview' },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        let value = context.raw || 0;
+                        return `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    }
+                }
+            }
         },
         scales: {
             x: { title: {display: true, text: 'Date'} },
@@ -98,12 +107,72 @@ const Dashboard = () => {
             ]
         }
     }
+    
+    const pieChartOptions = {
+        responsive: true,
+        plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'Spending by Category' },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        let value = context.raw || 0;
+                        return `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    }
+                }
+            },
+        size: {
+            height: '250px',
+            width: '250px'
+            }
+        }
+    };
+
+    const getPieChartData = () => {
+        if (!Array.isArray(data) || data.length === 0) return null;
+
+        const categoryMap = {};
+        data.forEach(tx => {
+            if (tx.category && tx.amount && !isNaN(Number(tx.amount))) {
+                if (!categoryMap[tx.category]) {
+                    categoryMap[tx.category] = 0;
+                }
+                categoryMap[tx.category] += Number(tx.amount);
+            }
+        });
+
+        const categories = Object.keys(categoryMap);
+        const amounts = categories.map(cat => categoryMap[cat]);
+
+        if (categories.length === 0 ) return null;
+
+        const colors = [
+            'rgba(75,192,192,1)',
+            'rgba(153,102,255,1)',
+            'rgba(255,159,64,1)',
+            'rgba(255,99,132,1)',
+            'rgba(54,162,235,1)',
+            'rgba(255,206,86,1)',
+        ];
+
+        return {
+            labels: categories,
+            datasets: [
+                {
+                    data: amounts,
+                    backgroundColor: colors.slice(0, categories.length),
+                    borderWidth: 1
+                }
+            ]
+        };
+    };
 
     const handleAddTransaction = async() => {
-        const amount = document.querySelector('input[type="number"]').value;
-        const date = document.querySelector('input[type="date"]').value || getToday();
-        const description = document.querySelector('input[type="text"]').value;
-        const category = document.querySelector('input[type="text"]').value || "General";
+        const amount = amountInput;
+        const date = dateInput || getToday();
+        const description = descriptionInput;
+        const category = categoryInput || "General";
 
         // Add validation if needed
 
@@ -173,10 +242,13 @@ const Dashboard = () => {
     const handleInputChange = (e) => {
         const query = e.target.value;
         setSearchQuery(query);
+
         const filtered = allData.filter((transaction) =>
             transaction.description.toLowerCase().includes(query.toLowerCase())
         );
-        setData(filtered);
+        if (filtered.length > 0 || query === "") {
+            setData(filtered.length > 0 ? filtered : allData);
+        }
     }
     
     const handleLostFocus = () => {
@@ -204,8 +276,11 @@ const Dashboard = () => {
     const chartData = getChartData();
     console.log(chartData);
 
+    const pieChartData = getPieChartData();
+    console.log(pieChartData);
+
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }}>
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div 
             className="dashboard-container"
@@ -215,8 +290,11 @@ const Dashboard = () => {
             >
             <div className="dashboard-header">
                 <h1 style={{ color: '#fff' }}>Transaction Dashboard</h1>
+                <div className="active-user">
+                        <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
+                </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'row'}}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'row', width: '100%'}}>
             <div style={{ flex: 2 }}>
                 <div className="input-header">
                         <div>
@@ -224,29 +302,33 @@ const Dashboard = () => {
                             type="number" 
                             placeholder="Amount" 
                             style={{ marginTop: '10px', marginLeft: '10px' }}
+                            value={amountInput}
                             onChange={e => setAmountInput(e.target.value)}
                         />
                         <input 
                             type="text" 
                             placeholder="Description" 
-                            style={{ marginTop: '10px', marginLeft: '10px' }} 
+                            style={{ marginTop: '10px', marginLeft: '10px' }}
+                            value={descriptionInput}
                             onChange={e => setDescriptionInput(e.target.value)}
                         />
                         <input 
                             type="text"
                             placeholder="Category"
                             style={{ marginTop: '10px', marginLeft: '10px' }}
+                            value={categoryInput}
                             onChange={e => setCategoryInput(e.target.value)}
                         />
                         <input 
                             type="date" 
                             placeholder="Date" 
-                            style={{ marginTop: '10px', marginLeft: '10px' }} 
+                            style={{ marginTop: '10px', marginLeft: '10px' }}
+                            value={dateInput}
                             onChange={e => setDateInput(e.target.value)}
                         />
                         <button 
                             className="button-add" 
-                            onClick={handleAddTransaction} 
+                            onClick={handleAddTransaction}
                             style={{ marginTop: '10px', marginLeft: '10px' }}
                         >
                             Add
@@ -259,9 +341,6 @@ const Dashboard = () => {
                             Delete
                         </button>
                     </div>
-                    <div className="active-user">
-                        <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
-                    </div>
                 </div>
 
             {Array.isArray(data) && data.length > 0 ? (
@@ -273,21 +352,12 @@ const Dashboard = () => {
                             <th>Amount</th>
                             <th>Category</th>
                             <th>Date</th>
-                    <th style={{ width: '150px' }}>
-                        <input
-                            type="text"
-                            placeholder="Search transactions..."
-                            onChange={handleInputChange}
-                            onBlur={handleLostFocus}
-                            value={searchQuery}
-                        />
-                    </th>
                     </tr>
                     </thead>
                     <tbody>
                         {data.map((transaction) => (
                             <tr key={transaction.id}>
-                                <td>
+                                <td style={{ width: '30px' }}>
                                     <input 
                                         type="checkbox"
                                         checked={selectedTransactions.includes(transaction.id)}
@@ -300,20 +370,43 @@ const Dashboard = () => {
                             </tr>
                         ))}
                         </tbody>
-                    </table>
-                ) : (
+                        <tfoot>
+                            <tr style={{ width: '150px', marginLeft: '100px' }}>
+                                <td colSpan="1">
+                                    <input
+                                        type="text"
+                                        placeholder="Search transactions..."
+                                        onChange={handleInputChange}
+                                        onBlur={handleLostFocus}
+                                        value={searchQuery}
+                                    />
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            ) : (
                     <div>
                         <p style={{ marginTop: '20px', textAlign: 'center' }}>Loading...</p>
                     </div>
             )}
             </div>
-                <div style={{ flex: 1, marginLeft: '24px', minWidth: '200px' }}>
+                <div style={{ flex: 1, marginLeft: '24px', minWidth: '300px' }}>
                     <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
                     {chartData && chartData.labels && chartData.labels.length > 0 ? (
                         <Line data={chartData}  options={chartOptions}  />
                     ) : (
                         <p style={{ textAlign: 'center' }}>No data available</p>
                     )}
+                    </div>
+                <div style={{ flex: 1, marginLeft: '24px', minWidth: '300px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <h3 style={{ textAlign: 'center' }}>Spending by Category</h3>
+                        {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
+                            <Pie data={pieChartData} options={pieChartOptions} />
+                        ) : (
+                            <p style={{ textAlign: 'center' }}>No data available</p>
+                        )}
+                    </div>
                 </div> 
         </div>
     </div>

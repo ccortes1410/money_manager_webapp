@@ -1,0 +1,87 @@
+.budget-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    /* padding: 16px; */
+    background-color: #71bb71;
+}
+
+.budget-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 16px;
+    height: 40px;
+    min-height: 60px;
+    background-color: #0a364b;
+    color: white
+}
+.budget-header h1 {
+    margin: 0 auto;
+    flex: 0 1 auto;
+    font-size: 36px;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+}
+
+.add-budget-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    background-color: #a4c3cc;
+}
+
+.add-budget-button {
+    background-color: #318834;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.add-budget-button:hover {
+    background-color: #1e581e;
+}
+
+.delete-budget-button {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.delete-budget-button:hover {
+    background-color: #af231e;
+}
+.budget-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.budget-table th,
+.budget-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    background-color: #57adc7;
+    border-radius: 2px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.budget-table th {
+    background-color: #f4f4f4;
+    text-align: left;
+}
