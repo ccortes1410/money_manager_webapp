@@ -35,6 +35,64 @@
     background-color: #a4c3cc;
 }
 
+.add-budget-form {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 10px 20px;
+    align-items: center;
+    width: 40%;
+    height: 300px;
+    margin-bottom: 16px;
+    margin-top: 40px;
+    border: 2px solid #ddd;
+    padding: 2px;
+    background-color: #1d689e;
+    border-radius: 4px;
+}
+
+.add-budget-form input[type="text"],
+.add-budget-form input[type="number"] {
+    padding: 10px;
+    margin: 10px 10px 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 150px;
+    font-size: 16px;
+    justify-self: center;
+}
+
+.add-budget-form select {
+    padding: 10px;
+    margin: 10px 10px 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 150px;
+    font-size: 16px;
+    justify-self: center;
+}
+
+.add-budget-form label {
+    font-size: 18px;
+    margin-top: 10px;
+    color: white;
+    justify-self: flex-start;
+}
+
+.add-budget-form button {
+    background-color: #318834;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    width: 150px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
 .add-budget-button {
     background-color: #318834;
     color: white;

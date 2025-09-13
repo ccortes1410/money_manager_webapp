@@ -13,23 +13,29 @@ const AddBudget = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const addBudgetUrl = window.location.origin + "/djangoapp/add-budget";
-        const response = await fetch(addBudgetUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                name,
-                amount,
-                period
-            }),
-        });
 
-        if (response.ok) {
-            alert("Budget added successfully!");
-            window.location.href = "/budgets"; // Redirect to budgets page
+        if (amount <= 0) {
+            alert("Amount must be a positive number.");
+            return;
         } else {
-            alert("Failed to add budget. Please try again.");
+            const response = await fetch(addBudgetUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name,
+                    amount,
+                    period
+                }),
+            });
+    
+            if (response.ok) {
+                alert("Budget added successfully!");
+                window.location.href = "/budgets"; // Redirect to budgets page
+            } else {
+                alert("Failed to add budget. Please try again.");
+            }
         }
     };
 
@@ -45,26 +51,29 @@ const AddBudget = () => {
             </div>
                 <form className="add-budget-form" onSubmit={handleSubmit}>
                 <div>
-                    <label>Budget Name:</label>
+                    <label htmlFor="budget-name">Budget Name:</label>
                     <input
                         type="text"
+                        id="budget-name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
                     />
                 </div>
                 <div>
-                    <label>Amount:</label>
+                    <label htmlFor="budget-amount">Amount:</label>
                     <input
                         type="number"
+                        id="budget-amount"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
                     />
                 </div>
                 <div>
-                    <label>Period:</label>
+                    <label htmlFor="budget-period">Period:</label>
                     <select
+                        id="budget-period"
                         value={period}
                         onChange={(e) => setPeriod(e.target.value)}
                         required

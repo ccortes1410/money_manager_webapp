@@ -46,8 +46,6 @@ const Budget = ({ selectedBudgetId }) => {
         }
     };
 
-   
-
     const getPieChartData = (budget, transactions) => {
         if (!budget || !budget.name || transactions.length === 0) return {};
 
@@ -103,54 +101,33 @@ const Budget = ({ selectedBudgetId }) => {
     }, [budget]);
 
     return (
-            <div className="budget-container">
-                <h2>Budget Details</h2>
-                {budget === null ? (
-                    <p>No budget selected</p>
-                ) : budget.error ? (
-                    <p style={{ color: 'red' }}>Error: {budget.error}</p>
-                ) : (
-                    <div>
-                        <h3>{budget.name}</h3>
-                            <p>Amount: ${budget.amount}</p>
-                            <p>Period: {budget.period}</p>
-                            <h4>Transactions</h4>
-                                {transactions.length === 0 ? (
-                                    <p>No transactions found</p>
-                                ) : (
-                                    <table className='data-table'>
-                                        <thead>
-                                            <tr>
-                                                <th>Description</th>
-                                                <th>Amount</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {transactions.map((tx) => (
-                                                <tr key={tx.id}>
-                                                    <td>{tx.description}</td>
-                                                    <td>${tx.amount}</td>
-                                                    <td>{tx.date}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )}
-                        </div>
-                    )
-                }
-                <div className="pie-chart-container">
-                    {pieChartData ? (
-                        <Pie 
-                            data={pieChartData}
-                        />
-                    ) : (
-                        <p>No data available for pie chart</p>
-                    )}
-                    </div>
-                </div>
-    );
-}
+        <div className="budget-details">
+            {budget === null ? (
+                <p>No budget selected</p>
+            ) : budget.error ? (
+                <p style={{ color: 'red' }}>Error: {budget.error}</p>
+            ) : (
+                <table className='data-table'>
+                    <thead>
+                        <tr>
+                            <th>Transaction</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {transactions.map((tx) => (
+                            <tr key={tx.id}>
+                                <td>{tx.name}</td>
+                                <td>${tx.amount}</td>
+                                <td>{tx.date}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    )
+};
 
 export default Budget;

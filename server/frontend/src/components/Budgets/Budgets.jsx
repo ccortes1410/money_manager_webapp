@@ -13,7 +13,7 @@ const Budgets = () => {
     const [collapsed, setCollapsed] = useState(true);
     const [budgets, setBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
-    const [selectedBudgetId, setSelectedBudgetId] = useState('');
+    const [selectedBudgetId, setSelectedBudgetId] = useState(null);
     const [user, setUser] = useState(null);
 
     const budgets_url = '/djangoapp/budgets';
@@ -144,7 +144,8 @@ const Budgets = () => {
         }
     };
 
-  
+    const selectedBudget = budgets.find(b => b.id === selectedBudgetId);
+
     useEffect(() => {
         if (user !== null && !user.is_authenticated) {
             navigate('/');
@@ -170,7 +171,12 @@ const Budgets = () => {
                                 <h5>{budget.name}</h5>
                                 {pieChartData.labels.length > 0 && pieChartData.datasets.length > 0 ? (
                                     <>
-                                    <Pie data={pieChartData} options={pieChartOptions} />
+                                    <Pie 
+                                        data={pieChartData}
+                                        options={pieChartOptions}
+                                        onClick={() => setSelectedBudgetId(budget.id)}
+                                        style={{ cursor: 'pointer' }}
+                                    />
                                     <button 
                                         className="delete-budget-button" 
                                         onClick={() => handleDeleteBudget(budget.id)}
@@ -185,6 +191,12 @@ const Budgets = () => {
                         )
                     })}
                 </div>
+                {selectedBudgetId && (
+                    <div style={{ marginTop: '32px' }}>
+                        <h3>Transactions for {selectedBudget.name}</h3>
+                        <Budget budget={selectedBudgetId} />
+                    </div>
+                )}
                 <p>Your total budget is: ${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
             </div>
         </div>
