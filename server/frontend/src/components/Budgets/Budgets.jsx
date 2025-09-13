@@ -194,7 +194,7 @@ const Budgets = () => {
                 {selectedBudgetId && (
                     <div style={{ marginTop: '32px' }}>
                         <h3>Transactions for {selectedBudget.name}</h3>
-                        <Budget budget={selectedBudgetId} />
+                        <Budget selectedBudgetId={selectedBudgetId} />
                     </div>
                 )}
                 <p>Your total budget is: ${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p>

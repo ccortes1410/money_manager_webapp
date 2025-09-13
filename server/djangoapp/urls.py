@@ -56,5 +56,10 @@ urlpatterns = [
         route='add-budget',
         view=views.budget_list,
         name='add_budget'
+    ),
+    path(
+        route='budget/<int:budget_id>',
+        view=views.budget_detail,
+        name='budget_detail'
     )
 ]

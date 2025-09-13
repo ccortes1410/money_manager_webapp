@@ -116,7 +116,7 @@ const Budget = ({ selectedBudgetId }) => {
                     <tbody>
                         {transactions.map((tx) => (
                             <tr key={tx.id}>
-                                <td>{tx.name}</td>
+                                <td>{tx.description}</td>
                                 <td>${tx.amount}</td>
                                 <td>{tx.date}</td>
                             </tr>
