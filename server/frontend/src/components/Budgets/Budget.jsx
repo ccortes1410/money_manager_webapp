@@ -80,8 +80,6 @@ const Budget = ({ selectedBudgetId }) => {
             ]
         };
     };
-    
-    const pieChartData = getPieChartData(budget, transactions);
 
     useEffect(() => {
         if (selectedBudgetId) {
