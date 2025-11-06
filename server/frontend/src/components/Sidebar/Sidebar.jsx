@@ -58,11 +58,11 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             >
                 {collapsed ? '→' : '←'}
             </button>
-            <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark tex-decoration-none">
+            <a href="/" className="sidebar-header">
                 {!collapsed && <span className="fs-4">Money Manager</span>}
             </a>
             <hr/>
-            <ul className="nav flex-column mb-auto">
+            <ul className="nav flex-column mb-auto" style={{ alignItems: 'center' }} >
                 <li className={`nav-item${currentPath === '/dashboard' ? ' active' : ''}`}>
                     {collapsed ? (
                         <a 
@@ -82,11 +82,8 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a
-                            className="nav-link"
+                            className="sidebar-link"
                             href="/dashboard"
-                            style={{
-                                marginLeft: '20px',
-                                }}
                         >
                             Dashboard
                         </a>
@@ -111,10 +108,56 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a
-                            className="nav-link"
+                            className="sidebar-link"
                             href="/budgets"
                         >
                             Budgets
+                        </a>
+                    )}
+                </li>
+                <li className={`nav-item${currentPath === '/subscriptions' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a className={`nav-link`} href="/subscriptions">
+                            <img 
+                                src={dashIcon}
+                                style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    alignContent: 'center',
+                                    objectFit: 'contain'
+                                }}
+                                className="img_icon"
+                            />
+                        </a>
+                    ) : (
+                        <a
+                            className="sidebar-link"
+                            href="/subscriptions"
+                        >
+                            Subscriptions
+                        </a>
+                    )}
+                </li>
+                <li className={`nav-item${currentPath === '/savings' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a className={`nav-link`} href="/savings">
+                            <img 
+                                src={dashIcon}
+                                style={{ 
+                                    width: '30px',
+                                    height: '30px',
+                                    alignContent: 'center',
+                                    objectFit: 'contain'
+                                    }}
+                                className="img_icon"
+                            />
+                        </a>
+                    ) : (
+                        <a
+                            className="sidebar-link"
+                            href="/savings"
+                        >
+                            Savings
                         </a>
                     )}
                 </li>
@@ -133,7 +176,8 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a 
-                            className="nav-link"
+                            className="sidebar-link"
+                            href="/friends"
                         >
                             Friends
                         </a>
@@ -143,11 +187,11 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             <hr/>
             <div>
                 {collapsed ? (
-                    <a className="nav-link" href="#" onClick={logout}>
+                    <a className="sidebar-link" href="#" onClick={logout}>
                         <img src={logoutIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/>
                     </a>
                 ) : (
-                    <a className="nav-link" href="#" onClick={logout}>Logout</a>
+                    <a className="sidebar-link" href="#" onClick={logout}>Logout</a>
                 )}
             </div>
         </div>

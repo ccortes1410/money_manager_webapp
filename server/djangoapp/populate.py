@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoproj.settings")
 django.setup()
 
 from django.contrib.auth.models import User
-from djangoapp.models import Transaction, Budget
+from djangoapp.models import Transaction, Budget, RecurringTransaction
 
 def initiate():
     # Create users
@@ -23,6 +23,7 @@ def initiate():
     Food = Budget.objects.create(user_id=Krlp.id, name="Food", amount=2000.00, period='monthly')
     Transport = Budget.objects.create(user_id=user1.id, name="Transport", amount=300.00, period='monthly')
     Housing = Budget.objects.create(user_id=Krlp.id, name="Housing", amount=800.00, period='monthly')
+    Coffee = Budget.objects.create(user_id=Krlp.id, name="Coffee", amount=5000, period='weekly')
 
     # Sample data to populate the database
     sample_transactions = [
@@ -35,7 +36,33 @@ def initiate():
         {"user": user1, "amount": 400.00, "date": "2023-01-07", "description": "Online Shopping", "category": "Entertainment"}
     ]
 
-    sample_budgets = [Food, Transport, Housing]
+    sample_budgets = [Food, Transport, Housing, Coffee]
+
+    # Sample Recurring Transactions
+
+    Gym = RecurringTransaction.objects.create(
+        user_id=Krlp.id,
+        amount=29900,
+        category="Health",
+        description="Gym Membership",
+        start_date="2023-01-01",
+        frequency="monthly",
+        active=True
+    )
+    Netflix = RecurringTransaction.objects.create(
+        user_id=Krlp.id,
+        amount=15900,
+        category="Entertainment",
+        description="Netflix Subscription",
+        start_date="2023-01-15",
+        frequency="monthly",
+        active=True
+    )
+    
+    sample_recurring_transactions = [Gym, Netflix]
+
+    for rt in sample_recurring_transactions:
+        rt.save()
 
     for budget in sample_budgets:
         budget.save()

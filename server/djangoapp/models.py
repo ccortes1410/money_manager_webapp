@@ -8,7 +8,6 @@ class Transaction(models.Model):
     description = models.CharField(max_length=255)
     category = models.CharField(max_length=100, null=True, blank=True)
     date = models.DateField()
-    recurring_source = models.ForeignKey('RecurringTransaction', null=True, blank=True, on_delete=models.SET_NULL)
     
     def __str__(self):
         return f"Transaction {self.id}: {self.amount} on {self.date} by {self.user.username}"
@@ -19,9 +18,9 @@ class Budget(models.Model):
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
-        ('yearly', 'Yearly'),
     ]
 
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
@@ -49,7 +48,6 @@ class RecurringTransaction(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
-    occurrences = models.PositiveIntegerField(null=True, blank=True)
     active = models.BooleanField(default=True)
 
     def __str__(self):

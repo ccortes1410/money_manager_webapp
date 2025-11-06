@@ -1,4 +1,4 @@
 from django.apps import AppConfig
 
-class DjangoappConfig(AppConfig):
+class MoneyManagerAppConfig(AppConfig):
     name = 'djangoapp'
