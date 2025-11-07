@@ -61,5 +61,10 @@ urlpatterns = [
         route='budget/<int:budget_id>',
         view=views.budget_detail,
         name='budget_detail'
-    )
+    ),
+    path(
+        route='subscriptions',
+        view=views.subscriptions,
+        name='subscriptions'
+    ),
 ]

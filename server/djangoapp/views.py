@@ -201,7 +201,12 @@ def budget_detail(request, budget_id):
 
 @login_required
 def subscriptions(request):
-
+    try:
+        if request.method == "GET":
+            return get_request(request, "fetchSubscriptions")
+    except Exception as e:
+        logger.error(f"Error fetching subscriptions: {e}")
+        return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
     return render(request, "money_manager/subscriptions.html")
     
 
