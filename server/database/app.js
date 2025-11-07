@@ -26,6 +26,7 @@ const sequelize = new Sequelize(
 
 const Transactions = require('./transactions')(sequelize, DataTypes);
 const Budget = require('./budget')(sequelize, DataTypes);
+const RecurringTransaction = require('./recurring_transactions')(sequelize, DataTypes);
 
 // const transaction_data = JSON.parse(fs.readFileSync('transactions.js', 'utf8'));
 async function connectWithRetry() {
@@ -86,6 +87,17 @@ async function connectWithRetry() {
                     res.status(201).json(newBudget);
                 } catch (error) {
                     console.log("Error adding budget:", error);
+                    res.status(500).json({ error: "Internal Server Error" });
+                }
+            });
+
+            app.get('/fetchSubscriptions', async (req, res) => {
+                try {
+                    const documents = await Subscription.findAll();
+                    console.log("Fetched subscriptions:", JSON.stringify(documents, null, 4));
+                    res.json(documents);
+                } catch (error) {
+                    console.log("Error fetching subscriptions:", error);
                     res.status(500).json({ error: "Internal Server Error" });
                 }
             });

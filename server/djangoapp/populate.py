@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoproj.settings")
 django.setup()
 
 from django.contrib.auth.models import User
-from djangoapp.models import Transaction, Budget, RecurringTransaction
+from djangoapp.models import Subscription, Transaction, Budget
 
 def initiate():
     # Create users
@@ -38,9 +38,9 @@ def initiate():
 
     sample_budgets = [Food, Transport, Housing, Coffee]
 
-    # Sample Recurring Transactions
+    # Sample Subscriptions
 
-    Gym = RecurringTransaction.objects.create(
+    Gym = Subscription.objects.create(
         user_id=Krlp.id,
         amount=29900,
         category="Health",
@@ -49,7 +49,7 @@ def initiate():
         frequency="monthly",
         active=True
     )
-    Netflix = RecurringTransaction.objects.create(
+    Netflix = Subscription.objects.create(
         user_id=Krlp.id,
         amount=15900,
         category="Entertainment",
@@ -68,9 +68,8 @@ def initiate():
         budget.save()
 
     for transaction_data in sample_transactions:
-        Transaction.objects.create(**transaction_data)
+        Transaction.objects.create(**transaction_data).save()
 
-    
 
 if __name__ == "__main__":
     initiate()

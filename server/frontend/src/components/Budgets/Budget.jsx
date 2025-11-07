@@ -26,7 +26,7 @@ const Budget = ({ selectedBudgetId }) => {
             console.error(error);
         }
     }
-
+``
     const get_budget = async (budgetId) => {
         const budget_url = `/djangoapp/budget/${budgetId}`;
         try {

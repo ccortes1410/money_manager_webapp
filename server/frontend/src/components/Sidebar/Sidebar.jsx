@@ -84,7 +84,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         <a
                             className="sidebar-link"
                             href="/dashboard"
-                        >
+                        >  
                             Dashboard
                         </a>
                     )}

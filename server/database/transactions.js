@@ -27,14 +27,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATEONLY,
             allowNull: false
         },
-        recurring_source: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'RecurringTransaction',
-                key: 'id'
-            }
-        }
+        // recurring_source: {
+        //     type: DataTypes.INTEGER,
+        //     allowNull: true,
+        //     references: {
+        //         model: 'RecurringTransaction',
+        //         key: 'id'
+        //     }
+        // }
         
     }, {
         tableName: 'djangoapp_transaction',

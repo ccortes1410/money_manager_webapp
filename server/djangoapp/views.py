@@ -199,6 +199,10 @@ def budget_detail(request, budget_id):
 #         return JsonResponse({"error": "Failed to add budget"}, status=500)
     
 
+@login_required
+def subscriptions(request):
+
+    return render(request, "money_manager/subscriptions.html")
     
 
 
