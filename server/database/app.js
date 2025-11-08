@@ -26,7 +26,7 @@ const sequelize = new Sequelize(
 
 const Transactions = require('./transactions')(sequelize, DataTypes);
 const Budget = require('./budget')(sequelize, DataTypes);
-const RecurringTransaction = require('./recurring_transactions')(sequelize, DataTypes);
+const Subscription = require('./subscriptions')(sequelize, DataTypes);
 
 // const transaction_data = JSON.parse(fs.readFileSync('transactions.js', 'utf8'));
 async function connectWithRetry() {

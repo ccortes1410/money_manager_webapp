@@ -1,7 +1,7 @@
 // const sequelize = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-    return sequelize.define('RecurringTransaction', {
+    return sequelize.define('Subscription', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -41,7 +41,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: true
         }
     }, {
-        tableName: 'djangoapp_recurringtransaction',
+        tableName: 'djangoapp_subscription',
         timestamps: false
     });
 };

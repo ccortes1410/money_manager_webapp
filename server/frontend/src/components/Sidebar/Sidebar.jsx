@@ -3,10 +3,15 @@ import { useLocation } from 'react-router-dom';
 import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "../Dashboard/Dashboard.css"
+import "../Sidebar/Sidebar.css";
 import dashIcon from '../assets/panel.png';
 import budgetIcon from '../assets/budget.png';
 import friendsIcon from '../assets/amigos.png';
 import logoutIcon from '../assets/salida.png';
+import homeIcon from '../assets/home.png';
+import subscriptionIcon from '../assets/subscription.png';
+import bankIcon from '../assets/bank.png';
+import friendIcon from '../assets/friend.png';
 
 const Sidebar = ({ collapsed, setCollapsed }) => {
     const location = useLocation();
@@ -71,13 +76,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                             href="/dashboard"
                         >
                             <img 
-                                src={dashIcon}
-                                style={{ 
-                                        width: '30px',
-                                        height: '30px',
-                                        alignContent: 'center',
-                                        objectFit: 'contain'
-                                        }}
+                                src={homeIcon}
                                 className="img_icon"/>
                         </a>
                     ) : (
@@ -97,12 +96,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         >
                             <img 
                                 src={budgetIcon}
-                                style={{ 
-                                    width: '30px',
-                                    height: '30px',
-                                    alignContent: 'center',
-                                    objectFit: 'contain'
-                                    }}
                                 className="img_icon"
                             />
                         </a>
@@ -117,15 +110,12 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 </li>
                 <li className={`nav-item${currentPath === '/subscriptions' ? ' active' : ''}`}>
                     {collapsed ? (
-                        <a className={`nav-link`} href="/subscriptions">
+                        <a 
+                            className={`nav-link`}
+                            href="/subscriptions"
+                        >
                             <img 
-                                src={dashIcon}
-                                style={{
-                                    width: '30px',
-                                    height: '30px',
-                                    alignContent: 'center',
-                                    objectFit: 'contain'
-                                }}
+                                src={subscriptionIcon}
                                 className="img_icon"
                             />
                         </a>
@@ -142,13 +132,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                     {collapsed ? (
                         <a className={`nav-link`} href="/savings">
                             <img 
-                                src={dashIcon}
-                                style={{ 
-                                    width: '30px',
-                                    height: '30px',
-                                    alignContent: 'center',
-                                    objectFit: 'contain'
-                                    }}
+                                src={bankIcon}
                                 className="img_icon"
                             />
                         </a>
@@ -165,13 +149,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                     {collapsed ? (
                         <a className={`nav-link`} href="/friends">
                             <img 
-                                src={friendsIcon}
-                                style={{
-                                    width: '30px',
-                                    height: '30px',
-                                    alignContent: 'center',
-                                    objectFit: 'contain'
-                                    }}
+                                src={friendIcon}
                                 className="img_icon"/>
                         </a>
                     ) : (

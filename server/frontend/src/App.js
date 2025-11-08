@@ -5,6 +5,9 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Budget from './components/Budgets/Budget';
 import Budgets from './components/Budgets/Budgets';
 import AddBudget from './components/Budgets/AddBudget';
+import Subscriptions from './components/Subscriptions/Subscriptions';
+// import Savings from './components/Savings/Savings';
+// import Friends from './components/Friends/Friends';
 
 function App() {
     return (
@@ -15,6 +18,10 @@ function App() {
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/budget/:budget_id" element={<Budget />} />
             <Route path="/add-budget" element={<AddBudget />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
+            {/* <Route path="/savings" element={<Savings />} /> */}
+            {/* <Route path="/friends" element={<Friends />} /> */}
+            {/* <Route path="*" element={<Login />} /> */}
         </Routes>
     );
 }

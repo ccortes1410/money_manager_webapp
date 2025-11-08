@@ -1,7 +1,7 @@
 from django.forms import model_to_dict
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
-from .models import Transaction, Budget
+from .models import Transaction, Budget, Subscription
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -203,12 +203,49 @@ def budget_detail(request, budget_id):
 def subscriptions(request):
     try:
         if request.method == "GET":
-            return get_request(request, "fetchSubscriptions")
+            subscriptions = Subscription.objects.filter(user=request.user)
+            data = list(subscriptions.values())
+            return JsonResponse({
+                "subscriptions": data,
+                "user": {
+                    "id": request.user.id,
+                    "username": request.user.username,
+                    "is_authenticated": request.user.is_authenticated
+                }
+            })
+        
+        if request.method == "POST":
+            data = json.loads(request.body)
+            name = data.get("name")
+            amount = data.get("amount")
+            renewal_date = data.get("renewal_date")
+            Subscription.objects.create(
+                user=request.user,
+                name=name,
+                amount=amount,
+                renewal_date=renewal_date
+            )
+            return JsonResponse({"status": "Subscription added successfully"}, status=201)
+        
+        if request.method == "DELETE":
+            data = json.loads(request.body)
+            ids = data.get("ids", [])
+            Subscription.objects.filter(id__in=ids, user=request.user).delete()
+            return JsonResponse({"status": "deleted"})
+        
     except Exception as e:
         logger.error(f"Error fetching subscriptions: {e}")
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
     return render(request, "money_manager/subscriptions.html")
-    
+
+@login_required
+def delete_subscription(request, subscription_id):
+    try:
+        if request.method == "DELETE":
+            Subscription.objects.filter(id=subscription_id, user=request.user).delete()
+            return JsonResponse({"status": "deleted"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 
 @login_required
