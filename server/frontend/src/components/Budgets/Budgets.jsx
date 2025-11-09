@@ -160,7 +160,7 @@ const Budgets = () => {
                     <h1 style={{ color: 'white', textAlign: 'center' }}>My Budgets</h1>
                     <div className="active-user">
                         <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
-                </div>
+                    </div>
                 </div>
                 <button className="add-budget-button" onClick={() => navigate('/add-budget')}>Add Budget</button>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '32px' }}>

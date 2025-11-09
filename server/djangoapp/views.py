@@ -44,6 +44,7 @@ def register_user(request):
 
     return render(request, "register.html")
 
+
 def login_request(request):
     
     data = json.loads(request.body)
@@ -59,11 +60,13 @@ def login_request(request):
 
     return JsonResponse(data)
 
+
 def logout_request(request):
 
     logout(request)
     data = {"userName": ""}
     return JsonResponse({"status": "logged_out"})
+
 
 @login_required
 def dashboard(request):
@@ -84,7 +87,7 @@ def dashboard(request):
                 "is_authenticated": request.user.is_authenticated
             }
         })
-        
+    
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -103,6 +106,50 @@ def dashboard(request):
         except Exception as e:
             logger.error(f"Error adding transaction: {e}")
             return JsonResponse({"error": "Failed to add transaction"}, status=500)
+        
+    elif request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            ids = data.get("ids", [])
+            Transaction.objects.filter(id__in=ids, user=request.user).delete()
+            return JsonResponse({"status": "deleted"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+
+@login_required
+def transaction_list(request):
+    if request.method == "GET":
+        transactions = Transaction.objects.filter(user=request.user)
+        data = list(transactions.values())
+        return JsonResponse({
+            "transactions": data,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authenticated": request.user.is_authenticated
+            }
+        })
+    
+    elif request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = data.get("amount")
+            date = data.get("date")
+            description = data.get("description")
+            category = data.get("category")
+            Transaction.objects.create(
+                user=request.user,
+                description=description,
+                amount=amount,
+                date=date,
+                category=category
+            )
+            return JsonResponse({"status": "Transaction added successfully"}, status=201)
+        except Exception as e:
+            logger.error(f"Error adding transaction: {e}")
+            return JsonResponse({"error": "Failed to add transaction"}, status=500)
+    
     elif request.method == "DELETE":
         try:
             data = json.loads(request.body)

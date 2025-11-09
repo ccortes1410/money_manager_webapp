@@ -2,6 +2,7 @@ import Login from './components/Login/Login';
 import { Routes, Route } from 'react-router-dom';
 import Register from './components/Register/Register';
 import Dashboard from './components/Dashboard/Dashboard';
+import Transactions from './components/Transactions/Transactions';
 import Budget from './components/Budgets/Budget';
 import Budgets from './components/Budgets/Budgets';
 import AddBudget from './components/Budgets/AddBudget';
@@ -15,6 +16,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/budget/:budget_id" element={<Budget />} />
             <Route path="/add-budget" element={<AddBudget />} />

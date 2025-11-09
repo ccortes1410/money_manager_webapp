@@ -4,9 +4,9 @@ import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "../Dashboard/Dashboard.css"
 import "../Sidebar/Sidebar.css";
-import dashIcon from '../assets/panel.png';
+// import dashIcon from '../assets/panel.png';
 import budgetIcon from '../assets/budget.png';
-import friendsIcon from '../assets/amigos.png';
+import detailIcon from '../assets/detail.png';
 import logoutIcon from '../assets/salida.png';
 import homeIcon from '../assets/home.png';
 import subscriptionIcon from '../assets/subscription.png';
@@ -88,6 +88,25 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     )}
                 </li>
+                <li className={`nav-item${currentPath === '/transactions' ? ' active' : ''}`}>
+                    {collapsed ? (
+                        <a
+                            className={`nav-link`}
+                            href="/transactions"
+                        >
+                            <img 
+                                src={detailIcon}
+                                className="img_icon"/>
+                        </a>
+                    ) : (
+                        <a
+                            className="sidebar-link"
+                            href="/transactions"
+                        >
+                            Transactions
+                        </a>
+                    )}
+                </li>
                 <li className={`nav-item${currentPath === '/budgets' ? ' active' : ''}`}>
                     {collapsed ? (
                         <a 
@@ -165,11 +184,11 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             <hr/>
             <div>
                 {collapsed ? (
-                    <a className="sidebar-link" href="#" onClick={logout}>
+                    <a className="sidebar-link" href="/" onClick={logout}>
                         <img src={logoutIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/>
                     </a>
                 ) : (
-                    <a className="sidebar-link" href="#" onClick={logout}>Logout</a>
+                    <a className="sidebar-link" href="/" onClick={logout}>Logout</a>
                 )}
             </div>
         </div>

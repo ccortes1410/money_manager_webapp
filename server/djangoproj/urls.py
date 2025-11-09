@@ -28,6 +28,7 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='index.html')),
     path('register/', TemplateView.as_view(template_name='index.html')),
     path('dashboard/', TemplateView.as_view(template_name='index.html')),
+    path('transactions/', TemplateView.as_view(template_name="index.html")),
     path('budgets/', TemplateView.as_view(template_name='index.html')),
     path('subscriptions/', TemplateView.as_view(template_name='index.html')),
     # path('budget/<int:budget_id>/', TemplateView.as_view(template_name='index.html')),

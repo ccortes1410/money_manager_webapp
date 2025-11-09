@@ -121,20 +121,14 @@ const Subscriptions = () => {
     return (
         <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-        <div
-            className="subscriptions container"
-            style= {{
-                transition: 'margin-left 0.2s',
-            }}
-            >
-            <div className="subscriptions header">
-                <h1 style={{ color: '#fff' }}>Subscriptions</h1>
-                <div className="active-user">
-                    <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
+            <div className="subscriptions-container">
+                <div className="subscriptions-header">
+                    <h1 style={{ color: '#fff' }}>Subscriptions</h1>
+                    <div className="active-user">
+                        <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
+                    </div>
                 </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'row', width: '100%' }}>
-            <div style={{ flex: 2}}>
+            
                 <div className="input-header">
                     <div>
                         <input
@@ -173,12 +167,7 @@ const Subscriptions = () => {
                         </button>
                     </div>
                 </div>
-            
-            <div className="main_content" style={{ marginLeft: collapsed ? '80px' : '250px', padding: '20px', width: '100%' }}>
-                <h2>Subscriptions</h2>
-            </div>
-        </div>
-
+        
         {Array.isArray(subscriptions) && subscriptions.length > 0 ? (
             <table className='data-table'>
                 <thead>
@@ -214,8 +203,7 @@ const Subscriptions = () => {
             <p>No subscriptions found.</p>
         )}
             </div>
-        </div>
-    </div>
+            </div>
     );
 }
 

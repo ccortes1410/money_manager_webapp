@@ -1,0 +1,135 @@
+.transactions-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    min-width: 0;
+    background-color: #a4c3cc;
+    box-sizing: border-box;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.transactions-container::-webkit-scrollbar {
+    display: none;
+}
+
+
+.transactions-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: 40px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 60px;
+    padding: 0 16px;
+    background-color: #0a364b;
+}
+
+.transactions-header h1 {
+    margin: 0 auto;
+    flex: 0 1 auto;
+    font-size: 36px;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+}
+
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 10%;
+    overflow-x: auto;
+    min-height: 40px;
+    padding: 0 16px;
+    background-color: #07632a;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    background-color: #57adc7;
+    border-radius: 2px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th {
+    background-color: #f4f4f4;
+    text-align: left;
+}
+
+.button-add {
+    background-color: #79bb7b;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.button-delete {
+    background-color: #b3331d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.button-add:hover {
+    background-color: #1e581e;
+}
+
+.button-delete:hover {
+    background-color: #641515;
+}
+
+.input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 4px 2px;
+    width: calc(100% - 16px);
+}
+
+.active-user {
+    position: absolute;
+    right: 10px;
+    display: flex;
+    margin: 0 50px 10px 10px;
+    padding: 0 30px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    align-self: flex-end;
+    border-radius: 4px;
+    font-size: large;
+    background-color: #1d7e1d;
+    color: white;
+    min-width: 60px;
+    /* max-width: 200px; */
+    height: 40px;
+    box-sizing: border-box;
+}
