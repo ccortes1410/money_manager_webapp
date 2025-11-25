@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import '../assets/style.css';
 import Sidebar from '../Sidebar/Sidebar';
-import { Line, Pie } from 'react-chartjs-2';
-import { ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
+import { Line, Pie, Bar } from 'react-chartjs-2';
+import { BarElement, ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
 
-Chart.register(ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
+Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const Dashboard = () => {
     const [collapsed, setCollapsed] = useState(true);
     const [user, setUser] = useState(null);
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [budgets, setBudgets] = useState([]);
+    const [transactions, setTransactions] = useState([]);
     const [allData, setAllData] = useState([]);
     const [data, setData] = useState([]);
+    
     const [searchQuery, setSearchQuery] = useState("");
     const [amountInput, setAmountInput] = useState('');
     const [dateInput, setDateInput] = useState('');
@@ -20,31 +24,42 @@ const Dashboard = () => {
     const [descriptionInput, setDescriptionInput] = useState('');
     const [selectedTransactions, setSelectedTransactions] = useState([]);
 
+    // Set an array for years to display on bar graph
+    const years = Array.from(
+        new Set(transactions.map((t) => new Date(t.date).getFullYear()))
+    ).sort((a, b) => b - a);
+
+    const currentYear = new Date().getFullYear();
+    const [selectedYear, setSelectedYear] = useState(currentYear);
+
     const getToday = () => {
         const today = new Date();
         return today.toISOString().split('T')[0];
     };
 
-    let trans_url = "/djangoapp/dashboard";
+    // Set the urls from where to get data
+    let trans_url = "/djangoapp/transactions";
+    let subs_url = "/djangoapp/subscriptions";
+    let budget_url = "/djangoapp/budgets";
 
     const navigate = useNavigate();
 
     const get_transactions = async () => {
         try {
-                const res = await fetch(trans_url, {
-                method: 'GET',
-                credentials: 'include',
+            const res = await fetch(trans_url, {
+            method: 'GET',
+            credentials: 'include',
             });
 
             const retobj = await res.json();
             if (retobj.transactions) {
                 let transactions = Array.from(retobj.transactions)
                 .filter(tx => tx.user_id === retobj.user.id);
-                setAllData(transactions);
+                setTransactions(transactions);
                 setData(transactions);
                 setUser(retobj.user);
             } else {
-                setAllData([]);
+                setTransactions([]);
                 setData([]);
                 setUser(null);
             }
@@ -54,11 +69,109 @@ const Dashboard = () => {
         
     }
 
+    const get_subscriptions = async () => {
+        try {
+            const res = await fetch(subs_url, {
+                method: 'GET',
+                credentials: 'include',
+            });
+
+            const retobj = await res.json();
+            if (retobj.subscriptions) {
+                let subscriptions = Array.from(retobj.subscriptions)
+                .filter(sub => sub.user_id === retobj.user.id);
+                setSubscriptions(subscriptions);
+                setUser(retobj.user);
+            } else {
+                setSubscriptions([]);
+                setUser(null);
+            }
+        } catch (error) {
+            console.error("Error fetching subscriptions: ", error);
+        }
+    }
+
+    const get_budgets = async () => {
+        try {
+            const res = await fetch(budget_url, {
+                method: 'GET',
+                credentials: 'include',
+            });
+
+            const retobj = await res.json();
+            if (retobj.budgets) {
+                let budgets = Array.from(retobj.budgets)
+                .filter(bud => bud.user_id === retobj.user.id);
+                setBudgets(budgets);
+                setUser(retobj.user);
+            } else {
+                setBudgets([]);
+                setUser(null);
+            }
+        } catch (error) {
+            console.error("Error fetching budgets: ", error);
+        }
+    }
+    
+    const monthlySpending = useMemo(() => {
+        const totals = Array(12).fill(0);
+
+        transactions.forEach((t) => {
+            const date = new Date(t.date);
+            if (date.getFullYear() === selectedYear) {
+                const m = date.getMonth();
+                totals[m] += Number(t.amount);
+            }
+        });
+    // console.log(date);
+        return totals;
+    }, [transactions, selectedYear]);
+
+    const monthLabels = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+
+    const monthlySpendingOptions = {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            title: { display: true, text: `${selectedYear}` },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        let value = context.raw || 0;
+                        return `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Amount ($)" } },
+            x: { title: { display: true } },
+        },
+    };
+
+    const getMonthlySpending = {
+        labels: monthLabels,
+        datasets: [
+            {
+                label: "Spending per Month",
+                data: monthlySpending,
+                backgroundColor: "#dc3545",
+                borderRadius: 4,
+                barThickness: 20,
+            },
+        ],
+    };
+
     const chartOptions = {
         responsive: true,
         plugins: {
             legend: { display: true },
-            title: { display: true, text: 'Transaction Overview' },
+            // title: { display: true, text: 'Transaction Overview' },
             tooltip: {
                 callbacks: {
                     label: function(context) {
@@ -72,14 +185,18 @@ const Dashboard = () => {
         scales: {
             x: { title: {display: true, text: 'Date'} },
             y: { title: { display: true, text: 'Amount'} }
+        },
+        size: {
+            height: '250px',
+            width: '250px',
         }
     };
 
     const getChartData = () => {
-        if (!Array.isArray(data) || data.length === 0) return null;
+        if (!Array.isArray(transactions) || transactions.length === 0) return null;
 
         const dateMap = {};
-        data.forEach(tx => {
+        transactions.forEach(tx => {
             if (tx.date && tx.amount && !isNaN(Number(tx.amount))) {
                 if(!dateMap[tx.date]) {
                     dateMap[tx.date] = 0;
@@ -110,9 +227,10 @@ const Dashboard = () => {
     
     const pieChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: { display: true },
-            title: { display: true, text: 'Spending by Category' },
+            // title: { display: true, text: 'Spending by Category' },
             tooltip: {
                 callbacks: {
                     label: function(context) {
@@ -120,20 +238,23 @@ const Dashboard = () => {
                         let value = context.raw || 0;
                         return `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     }
-                }
-            },
+                },
+                intersect: true,
+                mode: "nearest",
+                enables: true,
+            },   
+        },
         size: {
             height: '250px',
-            width: '250px'
-            }
+            width: '250px',
         }
     };
 
     const getPieChartData = () => {
-        if (!Array.isArray(data) || data.length === 0) return null;
+        if (!Array.isArray(transactions) || transactions.length === 0 || !Array.isArray(subscriptions) || subscriptions.length === 0 ) return null;
 
         const categoryMap = {};
-        data.forEach(tx => {
+        transactions.forEach(tx => {
             if (tx.category && tx.amount && !isNaN(Number(tx.amount))) {
                 if (!categoryMap[tx.category]) {
                     categoryMap[tx.category] = 0;
@@ -141,6 +262,15 @@ const Dashboard = () => {
                 categoryMap[tx.category] += Number(tx.amount);
             }
         });
+
+        subscriptions.forEach(sb => {
+            if (sb.category && sb.amount && !isNaN(Number(sb.amount))) {
+                if (!categoryMap[sb.category]) {
+                    categoryMap[sb.category] = 0;
+                }
+                categoryMap[sb.category] += Number(sb.amount);
+            }
+        })
 
         const categories = Object.keys(categoryMap);
         const amounts = categories.map(cat => categoryMap[cat]);
@@ -259,6 +389,8 @@ const Dashboard = () => {
     
     useEffect(() => {
         get_transactions();
+        get_subscriptions();
+        get_budgets();
     }, []);
 
     useEffect(() => {
@@ -280,136 +412,80 @@ const Dashboard = () => {
     console.log(pieChartData);
 
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-        <div 
-            className="dashboard-container"
-            style={{
-                transition: "margin-left 0.2s"
-            }}
-            >
-            <div className="dashboard-header">
-                <h1 style={{ color: '#fff' }}>Transaction Dashboard</h1>
-                <div className="active-user">
-                        <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
-                </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', flexDirection: 'row', width: '100%'}}>
-            <div style={{ flex: 2 }}>
-                <div className="input-header">
-                        <div>
-                        <input 
-                            type="number" 
-                            placeholder="Amount" 
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                            value={amountInput}
-                            onChange={e => setAmountInput(e.target.value)}
-                        />
-                        <input 
-                            type="text" 
-                            placeholder="Description" 
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                            value={descriptionInput}
-                            onChange={e => setDescriptionInput(e.target.value)}
-                        />
-                        <input 
-                            type="text"
-                            placeholder="Category"
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                            value={categoryInput}
-                            onChange={e => setCategoryInput(e.target.value)}
-                        />
-                        <input 
-                            type="date" 
-                            placeholder="Date" 
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                            value={dateInput}
-                            onChange={e => setDateInput(e.target.value)}
-                        />
-                        <button 
-                            className="button-add" 
-                            onClick={handleAddTransaction}
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                        >
-                            Add
-                        </button>
-                        <button 
-                            className="button-delete" 
-                            onClick={handleDeleteTransaction} 
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
 
-            {Array.isArray(data) && data.length > 0 ? (
-                <table className='data-table'>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Category</th>
-                            <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {data.map((transaction) => (
-                            <tr key={transaction.id}>
-                                <td style={{ width: '30px' }}>
-                                    <input 
-                                        type="checkbox"
-                                        checked={selectedTransactions.includes(transaction.id)}
-                                        onChange={() => handleCheckboxChange(transaction.id)}
-                                    /></td>
-                                <td>{transaction.description}</td>
-                                <td>${transaction.amount}</td>
-                                <td>{String(transaction.category)}</td>
-                                <td>{transaction.date}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                        <tfoot>
-                            <tr style={{ width: '150px', marginLeft: '100px' }}>
-                                <td colSpan="1">
-                                    <input
-                                        type="text"
-                                        placeholder="Search transactions..."
-                                        onChange={handleInputChange}
-                                        onBlur={handleLostFocus}
-                                        value={searchQuery}
-                                    />
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            ) : (
-                    <div>
-                        <p style={{ marginTop: '20px', textAlign: 'center' }}>Loading...</p>
+            <div className='main-section'>
+                <div className="dashboard-header">
+                    <h1 style={{ color: '#fff' }}>Dashboard</h1>
+                    <div className="active-user">
+                            <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
                     </div>
-            )}
-            </div>
-                <div style={{ flex: 1, marginLeft: '24px', minWidth: '300px' }}>
-                    <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
-                    {chartData && chartData.labels && chartData.labels.length > 0 ? (
-                        <Line data={chartData}  options={chartOptions}  />
-                    ) : (
-                        <p style={{ textAlign: 'center' }}>No data available</p>
-                    )}
-                    </div>
-                <div style={{ flex: 1, marginLeft: '24px', minWidth: '300px' }}>
-                    <div style={{ textAlign: 'center' }}>
-                        <h3 style={{ textAlign: 'center' }}>Spending by Category</h3>
-                        {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
-                            <Pie data={pieChartData} options={pieChartOptions} />
+                </div>
+                <div 
+                    className="dashboard-container"
+                    style={{
+                        transition: "margin-left 0.2s"
+                    }}>
+                    <div className="dashboard-card transactions">
+                        <h4 style={{ textAlign: 'center' }}>Transaction Overview</h4>
+                        <div className="chart-wrapper line-chart-wrapper">
+                             {getMonthlySpending && getMonthlySpending.labels && getMonthlySpending.labels.length > 0 ? ( 
+                            <>
+                            <div>
+                                <label>
+                                    Select Year: {' '}
+                                    <select
+                                        value={selectedYear}
+                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                        >
+                                            {years.map((y) => (
+                                                <option key={y} value={y}>
+                                                    {y}
+                                                </option>
+                                            ))}
+                                        </select>
+                                </label>
+                             </div>
+                            <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
+                          </>
                         ) : (
                             <p style={{ textAlign: 'center' }}>No data available</p>
                         )}
+                        </div>
                     </div>
-                </div> 
+                    <div className="dashboard-card categories">
+                        <h4 style={{ textAlign: 'center' }}>Spending by Category</h4>
+                        <div className="chart-wrapper pie-chart-wrapper">
+                            {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
+                                <Pie data={pieChartData} options={pieChartOptions} />
+                            ) : (
+                                <p style={{ textAlign: 'center' }}>No data available</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="dashboard-card subscriptions">
+                        <h4 style={{ textAlign: 'center' }}>Subscriptions Total</h4>
+                        {subscriptions && subscriptions.length > 0 ? (
+                            <div className="subscription-wrapper">
+                                <p style={{ fontSize: '36px', textAlign: 'center' }}>${subscriptions.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                            </div>
+                        ) : (
+                            <p>No Data Available</p>
+                        )}
+                    </div>
+                    <div className="dashboard-card budgets">
+                        <h4 style={{ textAlign: 'center' }}>Budget Total</h4>
+                        {budgets && budgets.length > 0 ? (
+                            <div className="budget-wrapper">
+                                <p style={{ fontSize: '36px', textAlign: 'center' }}>${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                            </div>
+                        ) : (
+                            <p>No Data Available</p>
+                        )}
+                    </div>
+            </div>
         </div>
-    </div>
     </div>
     )
 }

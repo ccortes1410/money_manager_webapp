@@ -23,13 +23,9 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        start_date: {
+        due_date: {
             type: DataTypes.DATEONLY,
             allowNull: false
-        },
-        end_date: {
-            type: DataTypes.DATEONLY,
-            allowNull: true
         },
         frequency: {
             type: DataTypes.STRING,

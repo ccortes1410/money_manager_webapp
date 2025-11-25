@@ -88,39 +88,44 @@ def dashboard(request):
             }
         })
     
-    elif request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            amount = data.get("amount")
-            date = data.get("date")
-            description = data.get("description")
-            category = data.get("category")
-            Transaction.objects.create(
-                user=request.user,
-                description=description,
-                amount=amount,
-                date=date,
-                category=category
-            )
-            return JsonResponse({"status": "Transaction added successfully"}, status=201)
-        except Exception as e:
-            logger.error(f"Error adding transaction: {e}")
-            return JsonResponse({"error": "Failed to add transaction"}, status=500)
+    # elif request.method == "POST":
+    #     try:
+    #         data = json.loads(request.body)
+    #         amount = data.get("amount")
+    #         date = data.get("date")
+    #         description = data.get("description")
+    #         category = data.get("category")
+    #         Transaction.objects.create(
+    #             user=request.user,
+    #             description=description,
+    #             amount=amount,
+    #             date=date,
+    #             category=category
+    #         )
+    #         return JsonResponse({"status": "Transaction added successfully"}, status=201)
+    #     except Exception as e:
+    #         logger.error(f"Error adding transaction: {e}")
+    #         return JsonResponse({"error": "Failed to add transaction"}, status=500)
         
-    elif request.method == "DELETE":
-        try:
-            data = json.loads(request.body)
-            ids = data.get("ids", [])
-            Transaction.objects.filter(id__in=ids, user=request.user).delete()
-            return JsonResponse({"status": "deleted"})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+    # elif request.method == "DELETE":
+    #     try:
+    #         data = json.loads(request.body)
+    #         ids = data.get("ids", [])
+    #         Transaction.objects.filter(id__in=ids, user=request.user).delete()
+    #         return JsonResponse({"status": "deleted"})
+    #     except Exception as e:
+    #         return JsonResponse({"error": str(e)}, status=400)
 
 
 @login_required
 def transaction_list(request):
+    category = request.GET.get("category")
+
     if request.method == "GET":
-        transactions = Transaction.objects.filter(user=request.user)
+        if category:
+            transactions = Transaction.objects.filter(user=request.user, category=category)
+        else:
+            transactions = Transaction.objects.filter(user=request.user)
         data = list(transactions.values())
         return JsonResponse({
             "transactions": data,
@@ -226,25 +231,6 @@ def budget_detail(request, budget_id):
     except Budget.DoesNotExist:
         return JsonResponse({"error": "Budget not found"}, status=404)
 
-# @login_required
-# def add_budget(request):
-#     try:
-#         if request.method == "POST":
-#             data = json.loads(request.body)
-#             name = data.get("name")
-#             amount = data.get("amount")
-#             period = data.get("period")
-#             Budget.objects.create(
-#                 user=request.user,
-#                 name=name,
-#                 amount=amount,
-#                 period=period
-#             )
-#             return JsonResponse({"status": "Budget added successfully"}, status=201)
-#     except Exception as e:
-#         logger.error(f"Error adding budget: {e}")
-#         return JsonResponse({"error": "Failed to add budget"}, status=500)
-    
 
 @login_required
 def subscriptions(request):
@@ -261,25 +247,33 @@ def subscriptions(request):
                 }
             })
         
-        if request.method == "POST":
+        elif request.method == "POST":
             data = json.loads(request.body)
-            name = data.get("name")
+            description = data.get("description")
             amount = data.get("amount")
-            renewal_date = data.get("renewal_date")
+            category = data.get("category")
+            due_date = data.get("due_date")
+            frequency = data.get("frequency")
+            active = data.get("active")
+
             Subscription.objects.create(
                 user=request.user,
-                name=name,
+                description=description,
                 amount=amount,
-                renewal_date=renewal_date
+                category=category,
+                due_date=due_date,
+                frequency=frequency,
+                active=active,
             )
             return JsonResponse({"status": "Subscription added successfully"}, status=201)
         
-        if request.method == "DELETE":
-            data = json.loads(request.body)
-            ids = data.get("ids", [])
-            Subscription.objects.filter(id__in=ids, user=request.user).delete()
-            return JsonResponse({"status": "deleted"})
-        
+        elif request.method == "DELETE":
+            try:
+                Subscription.objects.filter(id__in=ids, user=request.user).delete()
+                return JsonResponse({"status": "deleted"})
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=400)    
+                
     except Exception as e:
         logger.error(f"Error fetching subscriptions: {e}")
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)

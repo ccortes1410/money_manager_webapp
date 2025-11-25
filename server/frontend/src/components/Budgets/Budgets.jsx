@@ -6,14 +6,16 @@ import Sidebar from '../Sidebar/Sidebar';
 import Budget from './Budget';
 import { Pie } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend, Title } from 'chart.js';
+import BudgetBar from './BudgetBar';
 
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budgets = () => {
     const [collapsed, setCollapsed] = useState(true);
     const [budgets, setBudgets] = useState([]);
+    // const [sharedBudgets, setSharedBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
-    const [selectedBudgetId, setSelectedBudgetId] = useState(null);
+    const [selectedBudget, setSelectedBudget] = useState(null);
     const [user, setUser] = useState(null);
 
     const budgets_url = '/djangoapp/budgets';
@@ -32,7 +34,7 @@ const Budgets = () => {
                 setBudgets(data.budgets);
                 setUser(data.user);
                 if (data.budgets.length > 0) {
-                    setSelectedBudgetId(data.budgets[0].id);
+                    setSelectedBudget(data.budgets[0].id);
                 }
             }
         } catch (error) {
@@ -44,14 +46,14 @@ const Budgets = () => {
     }
 
     const get_transactions = async () => {
-        const transactions_url = `/djangoapp/dashboard`;
+        const transactions_url = `/djangoapp/transactions`;
         try {
             const response = await fetch(transactions_url, {
                 method: 'GET',
                 credentials: 'include'
             });
             const data = await response.json();
-            setTransactions(data.transactions || []);
+            setTransactions(data.transactions);
         } catch (error) {
             alert('Error fetching transactions');
             setTransactions([]);
@@ -86,11 +88,17 @@ const Budgets = () => {
         get_transactions();
     }, []);
 
-    useEffect(() => {
-            if (user !== null && !user.is_authenticated) {
-                navigate('/');
-            }
-    }, [user]);
+    const budgets_spent = budgets.map((b) => {
+        const relatedTx = transactions.filter(
+            (t) => t.category === b.name
+        );
+
+        const totalSpent = relatedTx.reduce((sum, t) => sum + Number(t.amount), 0);
+
+        return { ...b, spent: totalSpent };
+    })
+
+    // console.log(myBudgets)
 
     const getPieChartData = (budget) => {
         if (!budget || !budget.amount || !Array.isArray(transactions)) {
@@ -144,7 +152,7 @@ const Budgets = () => {
         }
     };
 
-    const selectedBudget = budgets.find(b => b.id === selectedBudgetId);
+    // const selectedBudget = budgets.find(b => b.id === selectedBudgetId);
 
     useEffect(() => {
         if (user !== null && !user.is_authenticated) {
@@ -157,14 +165,70 @@ const Budgets = () => {
             <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
             <div className="budget-container">
                 <div className="budget-header">
-                    <h1 style={{ color: 'white', textAlign: 'center' }}>My Budgets</h1>
+                    <h1 style={{ color: 'white', textAlign: 'center' }}>Budgets</h1>
                     <div className="active-user">
                         <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
                     </div>
                 </div>
-                <button className="add-budget-button" onClick={() => navigate('/add-budget')}>Add Budget</button>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '32px' }}>
-                    {budgets.map(budget => {
+                
+                <div className="budgets-view">
+                    {/* My Budgets */}
+                    <div className="budget-card">
+                        <div className="budget-list header">
+                            <h2>My Budgets</h2>
+                            <button 
+                                className="add-budget-button"
+                                onClick={() => navigate('/add-budget')}
+                            >
+                                New Budget
+                            </button>
+                        </div>
+                        <div className="budget-list">
+                            {budgets_spent.map((b) => (
+                                <BudgetBar
+                                    key={b.id}
+                                    budget={b}
+                                    onSelect={() => setSelectedBudget(b)}
+                                    onDelete={() => handleDeleteBudget(b.id)}
+                                />                               
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Budget Details */}
+                    <div className="budget-card">
+                        <h2>Budget Details</h2>
+                        <div className="budget-info budget-details">
+                        {selectedBudget ? (
+                            <Budget 
+                                budget={selectedBudget} 
+                                transactions={transactions.filter(
+                                    (t) => t.category === selectedBudget.name
+                                )}
+                            />
+                        ) : (
+                            <p>Select a budget to view details.</p>
+                        )}
+                        </div>
+                    </div>
+
+                    {/* Shared Budgets 
+                    {/* <div className="budget-card">
+                        <h2>Shared Budgets</h2>
+                        {/* <div className='budget-list'>
+                            {sharedBudgets.map((b) => (
+                                <BudgetBar
+                                    key={b.id}
+                                    budget={b}
+                                    shared
+                                />
+                            ))}
+                        </div> *
+                    </div> */}
+                </div>
+
+                {/* <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '32px' }}> */}
+                    {/* {budgets.map(budget => {
                         const pieChartData = getPieChartData(budget);
                         return (
                             <div key={budget.id} style={{ minWidth: 200, textAlign: 'center' }}>
@@ -191,13 +255,13 @@ const Budgets = () => {
                         )
                     })}
                 </div>
-                {selectedBudgetId && (
+                {selectedBudget && (
                     <div style={{ marginTop: '32px' }}>
                         <h3>Transactions for {selectedBudget.name}</h3>
                         <Budget selectedBudgetId={selectedBudgetId} />
                     </div>
                 )}
-                <p>Your total budget is: ${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                <p>Your total budget is: ${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p> */}
             </div>
         </div>
     );

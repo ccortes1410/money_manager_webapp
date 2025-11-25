@@ -45,7 +45,7 @@ def initiate():
         amount=29900,
         category="Health",
         description="Gym Membership",
-        start_date="2023-01-01",
+        due_date="2025-11-20",
         frequency="monthly",
         active=True
     )
@@ -54,7 +54,7 @@ def initiate():
         amount=15900,
         category="Entertainment",
         description="Netflix Subscription",
-        start_date="2023-01-15",
+        due_date="2025-11-15",
         frequency="monthly",
         active=True
     )

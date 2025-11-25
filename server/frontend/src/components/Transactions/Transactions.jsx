@@ -22,7 +22,7 @@ const Transactions = () => {
         return today.toISOString().split('T')[0];
     }
 
-    let transaction_url = '/djangoapp/transactions';
+    let transaction_url = "/djangoapp/transactions";
 
     const navigate = useNavigate();
 
@@ -36,7 +36,7 @@ const Transactions = () => {
             const retobj = await res.json();
             if (retobj.transactions) {
                 let transactions = Array.from(retobj.transactions)
-                .filter(tx => tx.user === retobj.user.id);
+                .filter(tx => tx.user_id === retobj.user.id);
                 setAllData(transactions);
                 setData(transactions);
                 setUser(retobj.user);
@@ -207,9 +207,16 @@ const Transactions = () => {
                 >
                     -
                 </button>
+                <input
+                    type="text"
+                    placeholder="Search"
+                    onChange={handleInputChange}
+                    onBlur={handleLostFocus}
+                    value={searchQuery}
+                    />
             </div>
             </div>
-            <div>
+            {/* <div> */}
                 {Array.isArray(data) && data.length > 0 ? (
                     <table className="data-table">
                         <thead>
@@ -246,7 +253,7 @@ const Transactions = () => {
                 )}
             </div>
         </div>
-        </div>
+        // </div>
     )
 }
 

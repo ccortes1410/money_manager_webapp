@@ -182,10 +182,10 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                 </li>
             </ul>
             <hr/>
-            <div>
+            <div style={{ alignItems: 'center', paddingRight: '10px' }}>
                 {collapsed ? (
-                    <a className="sidebar-link" href="/" onClick={logout}>
-                        <img src={logoutIcon} style={{ width: '24px', height: '24px' }} className="img_icon"/>
+                    <a className="sidebar-link" style={{ paddingRight: '10px' }} href="/" onClick={logout}>
+                        <img src={logoutIcon} className="img_icon"/>
                     </a>
                 ) : (
                     <a className="sidebar-link" href="/" onClick={logout}>Logout</a>

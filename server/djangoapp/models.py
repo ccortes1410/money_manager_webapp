@@ -47,8 +47,7 @@ class Subscription(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     category = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=255, blank=True)
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField()
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     active = models.BooleanField(default=True)
 

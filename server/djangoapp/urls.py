@@ -45,7 +45,7 @@ urlpatterns = [
     path(
         route='transactions',
         view=views.transaction_list,
-        name='transaction_list'
+        name='transactions'
     ),
     path(
         route='budgets',
