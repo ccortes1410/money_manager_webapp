@@ -41,8 +41,8 @@ const Login = () => {
     };
 
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+        // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
+        //     <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div>
             <div
                 onClick={(e) => {
@@ -81,7 +81,7 @@ const Login = () => {
                 </form>
             </div>
         </div>
-        </div>
+        // </div>
     )
 
 };

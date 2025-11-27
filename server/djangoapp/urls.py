@@ -73,8 +73,13 @@ urlpatterns = [
         name='subscriptions'
     ),
     path(
-        route='subscriptions/<int:subscription_id>/delete/',
-        view=views.delete_subscription,
-        name='delete_subscription'
+        route='subscriptions/delete/',
+        view=views.delete_subs,
+        name='delete_subs'
+    ),
+    path(
+        route='subscriptions/update/',
+        view=views.update_subs,
+        name='update_subs'
     ),
 ]

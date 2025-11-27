@@ -4,7 +4,9 @@
     align-items: center;
     width: 100%;
     /* padding: 16px; */
-    background-color: #71bb71;
+    background-color: #a4c3cc;
+    /* scrollbar-width: none;
+    overflow-y: hidden; */
 }
 
 .budgets-view {
@@ -15,8 +17,8 @@
     width: 100%;
     gap: 1.5rem;
     padding: 1.5rem;
-    overflow: hidden;
-    scrollbar-width: none;
+    /* overflow: hidden;
+    scrollbar-width: none; */
 }
 
 .budget-card {
@@ -27,6 +29,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-height: max-content;
 }
 
 .budget-card h2 {

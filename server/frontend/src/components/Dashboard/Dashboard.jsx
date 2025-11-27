@@ -2,14 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import '../assets/style.css';
-import Sidebar from '../Sidebar/Sidebar';
 import { Line, Pie, Bar } from 'react-chartjs-2';
 import { BarElement, ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
 
 Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const Dashboard = () => {
-    const [collapsed, setCollapsed] = useState(true);
+    // const [collapsed, setCollapsed] = useState(true);
     const [user, setUser] = useState(null);
     const [subscriptions, setSubscriptions] = useState([]);
     const [budgets, setBudgets] = useState([]);
@@ -411,10 +410,10 @@ const Dashboard = () => {
     const pieChartData = getPieChartData();
     console.log(pieChartData);
 
-    return (
-        <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+    const activeSubs = subscriptions.filter(sub => sub.active)
+    const inactiveSubs = subscriptions.filter(sub => !sub.active)
 
+    return (
             <div className='main-section'>
                 <div className="dashboard-header">
                     <h1 style={{ color: '#fff' }}>Dashboard</h1>
@@ -465,10 +464,14 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="dashboard-card subscriptions">
-                        <h4 style={{ textAlign: 'center' }}>Subscriptions Total</h4>
+                        <h2 style={{ textAlign: 'center' }}>Subscriptions Total</h2>
                         {subscriptions && subscriptions.length > 0 ? (
                             <div className="subscription-wrapper">
-                                <p style={{ fontSize: '36px', textAlign: 'center' }}>${subscriptions.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                                <h4>Active Subscriptions</h4>
+                                <p style={{ fontSize: '20px', textAlign: 'center' }}>${activeSubs.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+
+                                <h4> Inactive Subcriptions</h4>
+                                <p style={{ fontSize: '20px', textAlign: 'center' }}>${inactiveSubs.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
                             </div>
                         ) : (
                             <p>No Data Available</p>
@@ -486,7 +489,6 @@ const Dashboard = () => {
                     </div>
             </div>
         </div>
-    </div>
     )
 }
 export default Dashboard;

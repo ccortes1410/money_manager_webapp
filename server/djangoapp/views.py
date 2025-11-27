@@ -1,6 +1,6 @@
 from django.forms import model_to_dict
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from .models import Transaction, Budget, Subscription
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -265,29 +265,56 @@ def subscriptions(request):
                 frequency=frequency,
                 active=active,
             )
-            return JsonResponse({"status": "Subscription added successfully"}, status=201)
-        
-        elif request.method == "DELETE":
-            try:
-                Subscription.objects.filter(id__in=ids, user=request.user).delete()
-                return JsonResponse({"status": "deleted"})
-            except Exception as e:
-                return JsonResponse({"error": str(e)}, status=400)    
-                
+            return JsonResponse({"status": "Subscription added successfully"}, status=201)   
+                  
     except Exception as e:
         logger.error(f"Error fetching subscriptions: {e}")
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
     return render(request, "money_manager/subscriptions.html")
 
 @login_required
-def delete_subscription(request, subscription_id):
+def delete_subs(request):
+    data = json.loads(request.body)
+    ids = data.get('ids', [])
+    subs = Subscription.objects.filter(id__in=ids, user=request.user)
+    count = subs.count()
+
     try:
         if request.method == "DELETE":
-            Subscription.objects.filter(id=subscription_id, user=request.user).delete()
-            return JsonResponse({"status": "deleted"})
+            subs.delete()
+            return JsonResponse(
+                {
+                "deleted": ids,
+                "message": f"{count} subscriptions deleted succesfully."
+                },
+                status=200,
+            )
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
+
+@login_required
+def update_subs(request):
+    data = json.loads(request.body)
+    ids = data.get('ids', [])
+    active = data.get('active')
+    subs = Subscription.objects.filter(id__in=ids, user=request.user)
+    count = subs.count()
+
+    try:
+        if request.method == "PATCH":
+            subs.update(active=active)
+            return JsonResponse(
+                {
+                    "updated": ids,
+                    "active": active,
+                    "message": f"{count} subscriptions updated succesfully"
+                },
+                status=200
+            )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
 
 @login_required
 def add_transaction(request):

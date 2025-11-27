@@ -11,7 +11,7 @@ import BudgetBar from './BudgetBar';
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budgets = () => {
-    const [collapsed, setCollapsed] = useState(true);
+    const [collapsed, setCollapsed] = useState(false);
     const [budgets, setBudgets] = useState([]);
     // const [sharedBudgets, setSharedBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -161,8 +161,8 @@ const Budgets = () => {
     }, [user]); 
 
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+        // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
+        //     <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
             <div className="budget-container">
                 <div className="budget-header">
                     <h1 style={{ color: 'white', textAlign: 'center' }}>Budgets</h1>
@@ -226,44 +226,8 @@ const Budgets = () => {
                         </div> *
                     </div> */}
                 </div>
-
-                {/* <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', marginTop: '32px' }}> */}
-                    {/* {budgets.map(budget => {
-                        const pieChartData = getPieChartData(budget);
-                        return (
-                            <div key={budget.id} style={{ minWidth: 200, textAlign: 'center' }}>
-                                <h5>{budget.name}</h5>
-                                {pieChartData.labels.length > 0 && pieChartData.datasets.length > 0 ? (
-                                    <>
-                                    <Pie 
-                                        data={pieChartData}
-                                        options={pieChartOptions}
-                                        onClick={() => setSelectedBudgetId(budget.id)}
-                                        style={{ cursor: 'pointer' }}
-                                    />
-                                    <button 
-                                        className="delete-budget-button" 
-                                        onClick={() => handleDeleteBudget(budget.id)}
-                                    >
-                                        Delete
-                                    </button>
-                                    </>
-                                ) : (
-                                    <p>No data available</p>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
-                {selectedBudget && (
-                    <div style={{ marginTop: '32px' }}>
-                        <h3>Transactions for {selectedBudget.name}</h3>
-                        <Budget selectedBudgetId={selectedBudgetId} />
-                    </div>
-                )}
-                <p>Your total budget is: ${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p> */}
             </div>
-        </div>
+        // </div>
     );
 }
 

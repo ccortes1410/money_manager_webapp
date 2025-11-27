@@ -2,6 +2,33 @@
     text-align: center;
 }
 
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;   /* always hide horizontal */
+  overflow-y: hidden;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    height: 100vh;
+    transition: margin-left 0.25s ease;
+    /* scrollbar-width: none; */
+}
+
+.main-content.collapsed {
+    overflow-y: hidden;
+    scrollbar-width: none;
+    margin-left: auto;
+}
+
 .App-logo {
     height: 40vmin;
     pointer-events: none;

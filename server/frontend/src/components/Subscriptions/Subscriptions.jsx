@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Subscriptions.css';
-import '../assets/style.css';
-import Sidebar from '../Sidebar/Sidebar';
 
 const Subscriptions = () => {
     const [ amountInput, setAmountInput ] = useState("");
@@ -12,7 +10,7 @@ const Subscriptions = () => {
     const [ frequencyInput, setFrequencyInput ] = useState("monthly");
     const [ activeInput, setActiveInput ] = useState(false);
     const [ subscriptions, setSubscriptions ] = useState([]);
-    const [ collapsed, setCollapsed ] = useState(true);
+    // const [ collapsed, setCollapsed ] = useState(true);
     const [ user, setUser ] = useState(null);
     const [ selectedSubs, setSelectedSubs ] = useState([]);
 
@@ -58,7 +56,7 @@ const Subscriptions = () => {
         }
     }
 
-    const handleAddSubscription = async () => {
+    const handleAddSub = async () => {
         const amount = amountInput;
         const date = dateInput || getToday();
         const description = descriptionInput;
@@ -72,7 +70,7 @@ const Subscriptions = () => {
             description: description,
             category: category,
             frequency: frequency,
-            active: active,
+            active: active || false,
         };
 
         try {
@@ -94,6 +92,7 @@ const Subscriptions = () => {
                 setCategoryInput("");
                 setFrequencyInput("");
                 setActiveInput(false);
+                setSelectedSubs([]);
             } else {
                 alert("Error adding subscription");
             }
@@ -103,20 +102,23 @@ const Subscriptions = () => {
         }
     }
 
-    const handleDeleteSubscription = async (subscriptionId) => {
+    const handleDeleteSubs = async ([]) => {
         if (selectedSubs === 0) return;
 
-        const delete_url = `/djangoapp/subscriptions/${subscriptionId}/delete/`;
+        const delete_url = `/djangoapp/subscriptions/delete/`;
         try {
             const response = await fetch(delete_url, {
                 method: "DELETE",
                 credentials: "include",
-                body: JSON.stringify({ id: subscriptionId }),
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ids: selectedSubs }),
             });
             if (!response.ok) {
-                throw new Error("Failed to delete subscription");
+                throw new Error("Failed to delete subscriptions");
             }
-            alert("Subscription deleted successfully");
+            alert("Subscriptions deleted successfully");
             window.location.href = '/subscriptions'; // Redirect to subscriptions page
         } catch (error) {
             alert("Error deleting subscriptions: " + error.message);
@@ -136,7 +138,7 @@ const Subscriptions = () => {
         get_subscriptions();
     }, []);
 
-    const handleToggleActive = async () => {
+    const handleUpdateSubs = async ([]) => {
         if (selectedSubs.length === 0) return;
 
         const shouldActivate = subscriptions
@@ -148,10 +150,29 @@ const Subscriptions = () => {
         );
 
         setSubscriptions(updated);
-
+        const update_url = "/djangoapp/subscriptions/update/"
         try {
-            const update_url = `/djangoapp/subscriptions/${}`
-            await fetch()
+            const res = await fetch(update_url, {
+                method: "PATCH",
+                credentials: 'include',
+                body: JSON.stringify({ ids: selectedSubs, active: shouldActivate }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            if (!res.ok) {
+                alert("Error updating subscriptions")
+            } else {
+                setActiveInput(false);
+                setAmountInput("");
+                setCategoryInput("");
+                setDateInput("");
+                setSelectedSubs([]);
+            }
+            alert("Subscriptions updated successfully.");
+        } catch (error) {
+            alert("Error updating subscriptions: ", error.message);
+            console.log(error);
         }
     }
 
@@ -162,12 +183,10 @@ const Subscriptions = () => {
     }, [user]);
 
     useEffect(() => {
-        setActiveInput(data.active)
+        setActiveInput(subscriptions.active)
     },[])
 
     return (
-        <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
             <div className="subscriptions-container">
                 <div className="subscriptions-header">
                     <h1 style={{ color: '#fff' }}>Subscriptions</h1>
@@ -223,17 +242,23 @@ const Subscriptions = () => {
                             onChange={(e) => setActiveInput(true)}
                         />
                         <button
-                            className="button-add"
-                            onClick={handleAddSubscription}
+                            className="add-btn"
+                            onClick={handleAddSub}
                         >
-                            Add Subscription
+                            +
                         </button>
                         <button
-                            className="button-delete"
-                            onClick={() => handleDeleteSubscription(selectedSubs)}
+                            className="del-btn"
+                            onClick={() => handleDeleteSubs(selectedSubs)}
                             style={{ marginLeft: '10px' }}
                         >
-                            Delete Subscription
+                            -
+                        </button>
+                        <button
+                            className="upd-btn"
+                            onClick={() => handleUpdateSubs(selectedSubs)}
+                        >
+                            Update
                         </button>
                     </div>
                 </div>
@@ -262,7 +287,6 @@ const Subscriptions = () => {
         )}
         </div>
             </div>
-        </div>
     );
 }
 

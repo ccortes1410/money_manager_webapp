@@ -4,7 +4,7 @@ import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "../Dashboard/Dashboard.css"
 import "../Sidebar/Sidebar.css";
-// import dashIcon from '../assets/panel.png';
+import travelIcon from '../assets/travel.png';
 import budgetIcon from '../assets/budget.png';
 import detailIcon from '../assets/detail.png';
 import logoutIcon from '../assets/salida.png';
@@ -13,13 +13,13 @@ import subscriptionIcon from '../assets/subscription.png';
 import bankIcon from '../assets/bank.png';
 import friendIcon from '../assets/friend.png';
 
-const Sidebar = ({ collapsed, setCollapsed }) => {
+const Sidebar = ({ collapsed, onToggle }) => {
     const location = useLocation();
     const currentPath = location.pathname;
 
-    const toggleSidebar = () => {
-        setCollapsed(!collapsed);
-    }
+    // const toggleSidebar = () => {
+    //     setCollapsed(!collapsed);
+    // }
 
     const logout = async (e) => {
         e.preventDefault();
@@ -52,26 +52,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     }
 
     return (
-        <div 
-            className={collapsed ? 'sidebar' : 'sidebar expanded'}
-        >
+        <aside 
+            className={`sidebar ${collapsed ? "collapsed" : ""}`}>
             <button
-                className="btn btn-outline-secondary mb-3"
-                style={{ width: '100%' }}
-                onClick={toggleSidebar}
-                aria-label="Toggle Sidebar"
+                className="collapse-btn"
+                onClick={onToggle}
             >
-                {collapsed ? '→' : '←'}
+                {collapsed ? '>' : '<'}
             </button>
-            <a href="/" className="sidebar-header">
+
+            {/* <a href="/" className="sidebar-header">
                 {!collapsed && <span className="fs-4">Money Manager</span>}
-            </a>
+            </a> */}
             <hr/>
-            <ul className="nav flex-column mb-auto" style={{ alignItems: 'center' }} >
-                <li className={`nav-item${currentPath === '/dashboard' ? ' active' : ''}`}>
+            <nav className={`nav-links ${collapsed ? "collapsed" : ""}`}>
+                <li className={`nav-item ${currentPath === '/dashboard/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a 
-                            className={`nav-link`}
+                            className="nav-link"
                             aria-current="page"
                             href="/dashboard"
                         >
@@ -81,14 +79,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a
-                            className="sidebar-link"
+                            className={`sidebar-link ${currentPath === "/dashboard/" ? 'active' : ''}`}
                             href="/dashboard"
                         >  
                             Dashboard
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/transactions' ? ' active' : ''}`}>
+                <li className={`nav-item ${currentPath === '/transactions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a
                             className={`nav-link`}
@@ -96,18 +94,19 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         >
                             <img 
                                 src={detailIcon}
-                                className="img_icon"/>
+                                className="img_icon"
+                            />
                         </a>
                     ) : (
                         <a
-                            className="sidebar-link"
+                            className={`sidebar-link ${currentPath === '/transactions/' ? 'active' : ''}`}
                             href="/transactions"
                         >
                             Transactions
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/budgets' ? ' active' : ''}`}>
+                <li className={`nav-item${currentPath === '/budgets/' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a 
                             className="nav-link"
@@ -120,14 +119,14 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a
-                            className="sidebar-link"
+                            className={`sidebar-link ${currentPath === '/budgets/' ? 'active' : ''}`}
                             href="/budgets"
                         >
                             Budgets
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/subscriptions' ? ' active' : ''}`}>
+                <li className={`nav-item${currentPath === '/subscriptions/' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a 
                             className={`nav-link`}
@@ -140,31 +139,31 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                         </a>
                     ) : (
                         <a
-                            className="sidebar-link"
+                            className={`sidebar-link ${currentPath === '/subscriptions/' ? 'active' : ''}`}
                             href="/subscriptions"
                         >
                             Subscriptions
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/savings' ? ' active' : ''}`}>
+                <li className={`nav-item${currentPath === '/savings' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a className={`nav-link`} href="/savings">
                             <img 
-                                src={bankIcon}
+                                src={travelIcon}
                                 className="img_icon"
                             />
                         </a>
                     ) : (
                         <a
                             className="sidebar-link"
-                            href="/savings"
+                            href="/trips"
                         >
-                            Savings
+                            Trips
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/friends' ? ' active' : ''}`}>
+                {/* <li className={`nav-item${currentPath === '/friends' ? ' active' : ''}`}>
                     {collapsed ? (
                         <a className={`nav-link`} href="/friends">
                             <img 
@@ -179,19 +178,26 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
                             Friends
                         </a>
                     )}
-                </li>
-            </ul>
+                </li> */}
+            </nav>
             <hr/>
-            <div style={{ alignItems: 'center', paddingRight: '10px' }}>
+            <nav className={`nav-links logout ${collapsed ? 'collapsed' : ''}`}>
                 {collapsed ? (
-                    <a className="sidebar-link" style={{ paddingRight: '10px' }} href="/" onClick={logout}>
-                        <img src={logoutIcon} className="img_icon"/>
+                    <a 
+                        className="nav-link"
+                        href="/"
+                        onClick={logout}
+                    >
+                        <img 
+                            src={logoutIcon}
+                            className="img_icon"
+                        />
                     </a>
                 ) : (
                     <a className="sidebar-link" href="/" onClick={logout}>Logout</a>
                 )}
-            </div>
-        </div>
+            </nav>
+        </aside>
     )
 }
 

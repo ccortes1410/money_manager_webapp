@@ -153,8 +153,8 @@ const Transactions = () => {
     }, [user]);
 
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }} >
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+        // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }} >
+        //     <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         <div
             className="transactions-container"
         >
@@ -252,7 +252,7 @@ const Transactions = () => {
                     </div>
                 )}
             </div>
-        </div>
+        // </div>
         // </div>
     )
 }
