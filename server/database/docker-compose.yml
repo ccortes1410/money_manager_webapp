@@ -7,12 +7,14 @@ services:
     ports:
       - "3307:3306"
     restart: always
+    command: --secure-file-priv=""
     environment:
       DB_SECRET_PASSWORD: ${DB_SECRET_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_SECRET_PASSWORD}
       MYSQL_DATABASE: money_manager_db
     volumes:
       - mysql_data:/var/lib/mysql
+      - C:\Users\Usuario\Desktop\Data Analysis Coursera\MySQL Uploads:/export
   api:
     image: nodeapp
     ports:

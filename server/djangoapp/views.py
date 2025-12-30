@@ -185,14 +185,19 @@ def budget_list(request, budget_id=None):
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
-            name = data.get("name")
+            category = data.get("category")
             amount = data.get("amount")
             period = data.get("period")
+            reset_day = data.get("reset_day")
+            expires_at = data.get("expires_at")
+
             Budget.objects.create(
                 user=request.user,
-                name=name,
+                category=category,
                 amount=amount,
-                period=period
+                period=period,
+                reset_day=reset_day,
+                expires_at=expires_at
             )
             return JsonResponse({"status": "Budget added successfully"}, status=201)
         except Exception as e:
@@ -254,7 +259,7 @@ def subscriptions(request):
             category = data.get("category")
             due_date = data.get("due_date")
             frequency = data.get("frequency")
-            active = data.get("active")
+            is_active = data.get("is_active")
 
             Subscription.objects.create(
                 user=request.user,
@@ -263,7 +268,7 @@ def subscriptions(request):
                 category=category,
                 due_date=due_date,
                 frequency=frequency,
-                active=active,
+                is_active=is_active,
             )
             return JsonResponse({"status": "Subscription added successfully"}, status=201)   
                   
@@ -297,17 +302,17 @@ def delete_subs(request):
 def update_subs(request):
     data = json.loads(request.body)
     ids = data.get('ids', [])
-    active = data.get('active')
+    is_active = data.get('is_active')
     subs = Subscription.objects.filter(id__in=ids, user=request.user)
     count = subs.count()
 
     try:
         if request.method == "PATCH":
-            subs.update(active=active)
+            subs.update(is_active=is_active)
             return JsonResponse(
                 {
                     "updated": ids,
-                    "active": active,
+                    "is_active": is_active,
                     "message": f"{count} subscriptions updated succesfully"
                 },
                 status=200

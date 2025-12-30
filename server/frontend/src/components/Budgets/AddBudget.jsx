@@ -1,14 +1,17 @@
-import React, { useState } from "react";
-import Sidebar from '../Sidebar/Sidebar';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import './Budgets.css';
 import '../Dashboard/Dashboard.css';
 
 const AddBudget = () => {
-    const [name, setName] = useState("");
-    const [amount, setAmount] = useState("");
-    const [period, setPeriod] = useState("");
-    const [collapsed, setCollapsed] = useState(true); 
-    const [user, setUser] = useState(null);
+    const [ category, setCategory ] = useState("");
+    const [ amount, setAmount ] = useState("");
+    const [ period, setPeriod ] = useState("");
+    const [ reset_day, setResetDay ] = useState(1);
+    const [ expires_at, setExpiresAt ] = useState("");
+    const [ user, setUser ] = useState(null);
+
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,9 +27,11 @@ const AddBudget = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    name,
+                    category,
                     amount,
-                    period
+                    period,
+                    reset_day,
+                    expires_at
                 }),
             });
     
@@ -39,10 +44,14 @@ const AddBudget = () => {
         }
     };
 
+    useEffect(() => {
+        if (user !== null && !user.is_authenticated) {
+            navigate('/');
+        }
+    }, [user]);
+
     return (
-        <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }}>
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-            <div className="add-budget-container">
+        <div className="add-budget-container">
             <div className="budget-header">
                 <h2>Add New Budget</h2>
                 <div className="active-user">
@@ -51,12 +60,12 @@ const AddBudget = () => {
             </div>
                 <form className="add-budget-form" onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="budget-name">Budget Name:</label>
+                    <label htmlFor="budget-name">Budget Category:</label>
                     <input
                         type="text"
-                        id="budget-name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        id="budget-category"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
                         required
                     />
                 </div>
@@ -79,14 +88,41 @@ const AddBudget = () => {
                         required
                     >
                         <option value="">Select a period</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                     </select>
                 </div>
-                <button type="submit">Add Budget</button>
+                <div>
+                    <input
+                        type="date"
+                        value={expires_at}
+                        onChange={(e) => setExpiresAt(e.target.value)}
+                    />
+                </div>
+                {period === "monthly" ? (
+                    <div>
+                    <label htmlFor="budget-reset">Reset Day</label>
+                    <select
+                        id="reset_day"
+                        value={reset_day}
+                        onChange={(e) => setResetDay(Number(e.target.value))}
+                    >
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((reset_day) => (
+                            <option key={reset_day} value={reset_day}>
+                                {reset_day}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                ) : (
+                    <></>
+                )}
+                
+                <button type="submit">Save Budget</button>
                 </form>
             </div>
-        </div>
     );
 };
 

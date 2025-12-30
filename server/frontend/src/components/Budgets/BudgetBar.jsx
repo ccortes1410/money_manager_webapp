@@ -9,11 +9,17 @@ const BudgetBar = ({ budget, onDelete, onSelect }) => {
     const spentPct = budget.amount ? (budget.spent/budget.amount) * 100 : 0;
     const overBudget = budget.spent > budget.amount;
     const remainingPct = Math.max(100 - spentPct, 0);
-    console.log(overBudget)
+    const expired = new Date(budget.expires_at) < new Date();
+
     return (
-        <div className='budget-bar' onClick={() => onSelect && onSelect(budget)}>
+        <div className={`budget-bar ${expired ? "expired" :  ""}`} onClick={() => onSelect && onSelect(budget)}>
             <div className='budget-info'>
-                <span>{budget.name}</span>
+                <span>{budget.category}</span>
+                {expired ? (
+                    <span className="status expired">Expired</span>
+                ) : (
+                    <span className="status active">Active</span>
+                )}
                 <span>
                     ${budget.amount}
                 </span>
@@ -36,11 +42,13 @@ const BudgetBar = ({ budget, onDelete, onSelect }) => {
                 <div
                     className='progress-fill remaining'
                     style={{ width: `${remainingPct}%`}}
+                    label={ `${(budget.amount - budget.spent).toFixed(2)}` }
                 ></div>
 
                 <div
                     className={`progress-fill spent ${overBudget ? "over" : ""}`}
                     style={{ width: `${spentPct}%` }}
+                    label={ `$${budget.spent.toFixed(2)}` }
                 ></div>
             </div>
         </div>

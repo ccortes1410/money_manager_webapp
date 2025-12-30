@@ -20,10 +20,10 @@ def initiate():
 
     # Create budgets
 
-    Food = Budget.objects.create(user_id=Krlp.id, name="Food", amount=2000.00, period='monthly')
-    Transport = Budget.objects.create(user_id=user1.id, name="Transport", amount=300.00, period='monthly')
-    Housing = Budget.objects.create(user_id=Krlp.id, name="Housing", amount=800.00, period='monthly')
-    Coffee = Budget.objects.create(user_id=Krlp.id, name="Coffee", amount=5000, period='weekly')
+    Food = Budget.objects.create(user_id=Krlp.id, category="Food", amount=2000.00, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Transport = Budget.objects.create(user_id=user1.id, category="Transport", amount=300.00, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Housing = Budget.objects.create(user_id=Krlp.id, category="Housing", amount=800.00, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Coffee = Budget.objects.create(user_id=Krlp.id, category="Coffee", amount=5000, period='weekly',reset_day=1,expires_at='2025-12-31')
 
     # Sample data to populate the database
     sample_transactions = [
@@ -44,19 +44,19 @@ def initiate():
         user_id=Krlp.id,
         amount=29900,
         category="Health",
-        description="Gym Membership",
+        description="Gym",
         due_date="2025-11-20",
         frequency="monthly",
-        active=True
+        is_active=True
     )
     Netflix = Subscription.objects.create(
         user_id=Krlp.id,
-        amount=15900,
+        amount=10900,
         category="Entertainment",
-        description="Netflix Subscription",
+        description="Netflix",
         due_date="2025-11-15",
         frequency="monthly",
-        active=True
+        is_active=True
     )
     
     sample_recurring_transactions = [Gym, Netflix]

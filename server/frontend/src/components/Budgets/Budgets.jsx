@@ -11,7 +11,6 @@ import BudgetBar from './BudgetBar';
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budgets = () => {
-    const [collapsed, setCollapsed] = useState(false);
     const [budgets, setBudgets] = useState([]);
     // const [sharedBudgets, setSharedBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -61,7 +60,7 @@ const Budgets = () => {
         }
     }
 
-     const handleDeleteBudget = async (budgetId) => {
+    const handleDeleteBudget = async (budgetId) => {
         const delete_url = `/djangoapp/budgets/${budgetId}/delete/`;
         try {
             const response = await fetch(delete_url, {
@@ -90,7 +89,7 @@ const Budgets = () => {
 
     const budgets_spent = budgets.map((b) => {
         const relatedTx = transactions.filter(
-            (t) => t.category === b.name
+            (t) => t.category === b.category
         );
 
         const totalSpent = relatedTx.reduce((sum, t) => sum + Number(t.amount), 0);
@@ -108,7 +107,7 @@ const Budgets = () => {
             };
         }
 
-        const txs = transactions.filter(tx => tx.category === budget.name);
+        const txs = transactions.filter(tx => tx.category === budget.category);
         const totalSpent = txs.reduce((sum, tx) => sum + Number(tx.amount), 0);
         const remaining = Math.max(Number(budget.amount) - totalSpent, 0);
 
@@ -160,6 +159,7 @@ const Budgets = () => {
         }
     }, [user]); 
 
+
     return (
         // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
         //     <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
@@ -197,13 +197,15 @@ const Budgets = () => {
 
                     {/* Budget Details */}
                     <div className="budget-card">
-                        <h2>Budget Details</h2>
-                        <div className="budget-info budget-details">
+                        <div className="budget-list header">
+                            <h2>Budget Details</h2>
+                        </div>
+                        <div className="budget-info">
                         {selectedBudget ? (
                             <Budget 
                                 budget={selectedBudget} 
                                 transactions={transactions.filter(
-                                    (t) => t.category === selectedBudget.name
+                                    (t) => t.category === selectedBudget.category
                                 )}
                             />
                         ) : (

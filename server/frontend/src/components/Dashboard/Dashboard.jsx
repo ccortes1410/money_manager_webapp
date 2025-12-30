@@ -283,6 +283,9 @@ const Dashboard = () => {
             'rgba(255,99,132,1)',
             'rgba(54,162,235,1)',
             'rgba(255,206,86,1)',
+            'rgba(243, 0, 41, 1)',
+            'rgba(62, 219, 75, 1)',
+            'rgba(200, 91, 233, 1)',
         ];
 
         return {
@@ -410,8 +413,8 @@ const Dashboard = () => {
     const pieChartData = getPieChartData();
     console.log(pieChartData);
 
-    const activeSubs = subscriptions.filter(sub => sub.active)
-    const inactiveSubs = subscriptions.filter(sub => !sub.active)
+    const activeSubs = subscriptions.filter(sub => sub.is_active)
+    const inactiveSubs = subscriptions.filter(sub => !sub.is_active)
 
     return (
             <div className='main-section'>

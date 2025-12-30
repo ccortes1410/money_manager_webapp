@@ -6,69 +6,20 @@ import './Budgets.css';
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budget = ({ budget, transactions }) => {
-    // const [collapsed, setCollapsed] = useState(true);
-    // const [budget, setBudget] = useState(null);
-    // const [transactions, setTransactions] = useState([]);
 
-
-    // const get_transactions = async (category) => {
-    //     const transactions_url = `/djangoapp/transactions?category=${category}`;
-    //     try {
-    //         const response = await fetch(transactions_url, {
-    //             method: 'GET',
-    //             credentials: 'include'
-    //         });
-    //         const data = await response.json();
-    //         setTransactions(data.transactions || []);
-    //     } catch (error) {
-    //         alert('Error fetching transactions');
-    //         setTransactions([]);
-    //         console.error(error);
-    //     }
-    // }
-
-    // const get_budget = async (budgetId) => {
-    //     const budget_url = `/djangoapp/budget/${budgetId}`;
-    //     try {
-    //         const response = await fetch(budget_url, {
-    //             method: 'GET',
-    //             credentials: 'include'
-    //         });
-    //         if (!response.ok) {
-    //             throw new Error('Budget not found');
-    //         }
-    //         const data = await response.json();
-    //         setBudget(data.budget);
-    //     } catch (error) {
-    //         alert('Error fetching budget ' + budgetId);
-    //         setBudget({ error: error.message });
-    //         console.error(error);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     if (selectedBudget) {
-    //         get_budget(selectedBudget);
-    //     } else {
-    //         // setBudget(null); // Clear budget if nothing selected
-    //         setTransactions([]);
-    //     }
-    // }, [selectedBudgetId]);
-
-    // useEffect(() => {
-    //     if (budget && budget.name) {
-    //         get_transactions(budget.name);
-    //     } else {
-    //         setTransactions([]);  
-    //     }
-    // }, [budget]);
+    if (!budget) {
+        return (
+            <div className="budget-details empty">
+                <p>Select a budget to display its details.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="budget-details">
-            <h3>{budget.name}</h3>
+            <h3>{budget.category}</h3>
             <p>Total Budget: ${budget.amount}</p>
             <p>Amount Spent: ${transactions.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
-            {budget ? (
                 <table>
                 <thead>
                     <tr>
@@ -87,9 +38,6 @@ const Budget = ({ budget, transactions }) => {
                     ))}
                 </tbody>
             </table>
-            ) : (
-                <p>Select a budget to display its details.</p>
-            )}
             
             {/* {budget === null ? (
                 <p>No budget selected</p>

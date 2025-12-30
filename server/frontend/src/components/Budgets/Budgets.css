@@ -41,6 +41,7 @@
 
 .budget-list.header {
     align-items: center;
+    justify-content: space-between;
     display: flex;
     gap: 0.5rem;
 }
@@ -54,6 +55,8 @@
 .budget-list.header h2 {
     color: #000;
     justify-content: center;
+    font-size: 36px;
+    font-weight: bold;
 }
 
 .budget-bar {
@@ -113,6 +116,10 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 0.5rem;
+}
+
+.budget-details.empty {
+    
 }
 
 .budget-details th,

@@ -62,7 +62,7 @@ const Subscriptions = () => {
         const description = descriptionInput;
         const category = categoryInput;
         const frequency = frequencyInput;
-        const active = activeInput;
+        const is_active = activeInput;
 
         const newSubscription = {
             amount: parseFloat(amount),
@@ -70,7 +70,7 @@ const Subscriptions = () => {
             description: description,
             category: category,
             frequency: frequency,
-            active: active || false,
+            is_active: is_active || false,
         };
 
         try {
@@ -143,10 +143,10 @@ const Subscriptions = () => {
 
         const shouldActivate = subscriptions
             .filter((s) => selectedSubs.includes(s.id))
-            .some((s) => !s.active);
+            .some((s) => !s.is_active);
 
         const updated = subscriptions.map((s) => 
-            selectedSubs.includes(s.id) ? { ...s, active: shouldActivate} : s  
+            selectedSubs.includes(s.id) ? { ...s, is_active: shouldActivate} : s  
         );
 
         setSubscriptions(updated);
@@ -155,7 +155,7 @@ const Subscriptions = () => {
             const res = await fetch(update_url, {
                 method: "PATCH",
                 credentials: 'include',
-                body: JSON.stringify({ ids: selectedSubs, active: shouldActivate }),
+                body: JSON.stringify({ ids: selectedSubs, is_active: shouldActivate }),
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -168,8 +168,8 @@ const Subscriptions = () => {
                 setCategoryInput("");
                 setDateInput("");
                 setSelectedSubs([]);
+                alert("Subscriptions updated successfully.");
             }
-            alert("Subscriptions updated successfully.");
         } catch (error) {
             alert("Error updating subscriptions: ", error.message);
             console.log(error);
@@ -183,7 +183,7 @@ const Subscriptions = () => {
     }, [user]);
 
     useEffect(() => {
-        setActiveInput(subscriptions.active)
+        setActiveInput(subscriptions.is_active)
     },[])
 
     return (
@@ -239,7 +239,7 @@ const Subscriptions = () => {
                             type="checkbox"
                             name="active"
                             value={activeInput}
-                            onChange={(e) => setActiveInput(true)}
+                            onChange={(e) => setActiveInput(!activeInput)}
                         />
                         <button
                             className="add-btn"
@@ -274,10 +274,10 @@ const Subscriptions = () => {
                             <p>${s.amount}</p>
                             <p>Due: {s.due_date}</p>
                             <div
-                                className={`status-indicator ${s.active ? "active" : "inactive"}`}
-                                title={s.active ? "Active" : "Inactive"}
+                                className={`status-indicator ${s.is_active ? "active" : "inactive"}`}
+                                title={s.is_active ? "Active" : "Inactive"}
                             >
-                                {s.active ? "Active" : "Inactive"}
+                                {s.is_active ? "Active" : "Inactive"}
                             </div>
                         </div>
                 
