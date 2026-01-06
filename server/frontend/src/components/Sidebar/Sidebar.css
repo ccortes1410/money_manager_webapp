@@ -97,9 +97,8 @@
 }
 
 .nav-links.logout {
-    height: 40px;
-    justify-self: flex-end;
-    box-sizing: content-box;
+    margin-top:auto;
+    padding:0.75rem;
 }
 
 /* .sidebar-link.active {

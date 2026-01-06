@@ -10,7 +10,8 @@ class BudgetAdmin(admin.ModelAdmin):
     search_fields = ('category',)
 
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'category', 'amount', 'active')
+    list_display = ('id', 'user', 'category', 'amount', 'is_active')
 
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Budget, BudgetAdmin)
+admin.site.register(Subscription, SubscriptionAdmin)

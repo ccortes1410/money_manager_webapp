@@ -1,5 +1,7 @@
 requests
-Django
+Django>=4.2
 Pillow
 gunicorn
 python-dotenv
+django-cors-headers
+mysqlclient>=2.2.7

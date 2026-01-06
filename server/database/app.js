@@ -11,7 +11,7 @@ const port = 3030;
 app.use(cors());
 app.use(require('body-parser').urlencoded({ extended: false }));
 
-console.log('DB_SECRET_PASSWORD:', process.env.DB_SECRET_PASSWORD);
+// console.log('DB_SECRET_PASSWORD:', process.env.DB_SECRET_PASSWORD);
 
 const sequelize = new Sequelize(
     'money_manager_db',

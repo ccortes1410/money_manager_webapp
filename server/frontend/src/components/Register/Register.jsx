@@ -19,7 +19,7 @@ const Register = () => {
     const register = async (e) => {
         e.preventDefault();
 
-        let register_url = window.location.origin + "/djangoapp/register";
+        let register_url = "/djangoapp/register";
 
         const res = await fetch(register_url, {
             method: 'POST',
@@ -48,12 +48,12 @@ const Register = () => {
     };
 
     return (
-        <div className="register_container" style={{width: "50%"}}>
-            <div className="header" style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                <span className="text" style={{flexGrow: "1"}}>Sign Up</span>
-                <div style={{display: "flex", flexDirection: "row", justifySelf: "end", alignSelf: "start"}}>
+        <div className="register-container">
+            <div className="register-header">
+                <span className='register-span'>Sign Up</span>
+                <div className="register-exit">
                     <a href="/" onClick={()=>{gohome()}} style={{justifyContent: "space-between", alignItems: "flex-end"}}>
-                        <img src={close_icon} alt="X" style={{width: "1cm"}}/>
+                        <img src={close_icon} alt="X" style={{width: "1cm", borderRadius: "50%"}}/>
                     </a>
                 </div>
                 <hr/>
@@ -61,28 +61,28 @@ const Register = () => {
            <form onSubmit={register}>
                 <div className="inputs">
                     <div className="input">
-                        <img src={user_icon} className="img_icon" alt="Username"/>
+                        <img src={user_icon} className="img_icon_reg" alt="Username"/>
                         <input type="text" name="username" placeholder="Username" className="input_field" onChange={(e) => {setUserName(e.target.value)}}/>
                     </div>
-                    <div>
-                        <img src={user_icon} className="img_icon" alt="First Name"/>
+                    <div className="input">
+                        <img src={user_icon} className="img_icon_reg" alt="First Name"/>
                         <input type="text" name="first_name" placeholder="First Name" className="input_field" onChange={(e) => {setFirstName(e.target.value)}}/>
                     </div>
-                    <div>
-                        <img src={user_icon} className="img_icon" alt="Last Name"/>
+                    <div className="input">
+                        <img src={user_icon} className="img_icon_reg" alt="Last Name"/>
                         <input type="text" name="last_name" placeholder="Last Name" className="input_field" onChange={(e) => {setLastName(e.target.value)}}/>
                     </div>
-                    <div>
-                        <img src={email_icon} className="img_icon" alt="Email"/>
+                    <div className="input">
+                        <img src={email_icon} className="img_icon_reg" alt="Email"/>
                         <input type="email" name="email" placeholder="Email" className="input_field" onChange={(e) => {setEmail(e.target.value)}}/>
                     </div>
-                    <div>
-                        <img src={password_icon} className="img_icon" alt="Password"/>
+                    <div className="input">
+                        <img src={password_icon} className="img_icon_reg" alt="Password"/>
                         <input type="password" name="psw" placeholder="Password" className="input_field" onChange={(e) => {setPassword(e.target.value)}}/>
                     </div>
                 </div>
-                <div className="submit_panel">
-                    <input className="submit" type="submit" value="Register"/>
+                <div className="submit-panel">
+                    <input className="submit-btn" type="submit" value="Register"/>
                 </div>
             </form> 
         </div>

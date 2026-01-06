@@ -408,10 +408,10 @@ const Dashboard = () => {
     }, [user]);
 
     const chartData = getChartData();
-    console.log(chartData);
+    // console.log(chartData);
 
     const pieChartData = getPieChartData();
-    console.log(pieChartData);
+    // console.log(pieChartData);
 
     const activeSubs = subscriptions.filter(sub => sub.is_active)
     const inactiveSubs = subscriptions.filter(sub => !sub.is_active)

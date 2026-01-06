@@ -1,0 +1,39 @@
+apiVersion: codeengine.cloud.ibm.com/v1beta1
+kind: Application
+metadata:
+  name: money_manager
+spec:
+  registrySecrets:
+  - br-access
+  envFrom:
+  - secretRef:
+      name: money-manager-secrets
+  replicas: 1
+  selector:
+    matchLabels:
+      run: money_manager
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        run: money_manager
+    spec:
+      containers:
+      - image: br.cr.io/ccortes/money_manager:latest
+        imagePullPolicy: Always
+        name: dealership
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "0.5"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+      restartPolicy: Always

@@ -61,9 +61,9 @@ const Sidebar = ({ collapsed, onToggle }) => {
                 {collapsed ? '>' : '<'}
             </button>
 
-            {/* <a href="/" className="sidebar-header">
+            <a href="/" className="sidebar-header">
                 {!collapsed && <span className="fs-4">Money Manager</span>}
-            </a> */}
+            </a>
             <hr/>
             <nav className={`nav-links ${collapsed ? "collapsed" : ""}`}>
                 <li className={`nav-item ${currentPath === '/dashboard/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>

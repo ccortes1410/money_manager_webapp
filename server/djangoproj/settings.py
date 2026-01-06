@@ -9,7 +9,9 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+# import pymysql
 
+# pymysql.install_as_MySQLdb()
 
 import os
 from pathlib import Path
@@ -19,7 +21,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENV = os.environ.get('DJANGO_ENV', 'local')
+ENV = os.environ.get('DJANGO_ENV', 'aws')
 
 if ENV == 'aws':
     load_dotenv(BASE_DIR / '.env.aws', override=True)
@@ -39,15 +41,23 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    'https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud',
 ]
 CORS_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    'https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud',
+]
+
+CORS_ALLOWED_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud",
 ]
 
 REST_FRAMEWORK = {
@@ -64,13 +74,13 @@ REST_FRAMEWORK = {
 
 INSTALLED_APPS = [
     "djangoapp.apps.MoneyManagerAppConfig",
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "corsheaders",
 ]
 
 MIDDLEWARE = [

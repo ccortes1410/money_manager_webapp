@@ -21,26 +21,41 @@ def register_user(request):
     if request.method == "GET":
         return render(request, "money_manager/user_registration_bootstrap.html", context)
     elif request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        email = request.POST.get("email")
-
-        user = User(username=username, email=email)
-        user.set_password(password)
-        user.save()
-        user_exist = False
-        
         try:
-            User.objects.get(username=username)
-            user_exist = True
-        except:
-            logger.error("New user")
-        if not user_exist:
-            user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, email=email, password=password)
-        logger.info(f"User registered: {username}")
-        return HttpResponseRedirect(reverse("login"))
+            # Accept both JSON and form-encoded POSTs
+            if request.META.get("CONTENT_TYPE", "").startswith("application/json"):
+                data = json.loads(request.body or b"{}")
+                username = data.get("username")
+                password = data.get("password")
+                first_name = data.get("first_name")
+                last_name = data.get("last_name")
+                email = data.get("email")
+            else:
+                username = request.POST.get("username")
+                password = request.POST.get("password")
+                first_name = request.POST.get("first_name")
+                last_name = request.POST.get("last_name")
+                email = request.POST.get("email")
+
+            if not username or not password:
+                return JsonResponse({"error": "username and password are required"}, status=400)
+
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({"error": "Already Registered"}, status=400)
+
+            user = User.objects.create_user(
+                username=username,
+                first_name=first_name or "",
+                last_name=last_name or "",
+                email=email or "",
+                password=password,
+            )
+            user.save()
+            logger.info(f"User registered: {username}")
+            return JsonResponse({"status": True, "userName": username}, status=201)
+        except Exception as e:
+            logger.exception(f"Error registering user: {e}")
+            return JsonResponse({"error": "Failed to register user"}, status=500)
 
     return render(request, "register.html")
 
