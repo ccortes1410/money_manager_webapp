@@ -59,24 +59,24 @@ const Register = () => {
                 <hr/>
             </div>
            <form onSubmit={register}>
-                <div className="inputs">
-                    <div className="input">
+                <div className="register-inputs">
+                    <div className="register-input">
                         <img src={user_icon} className="img_icon_reg" alt="Username"/>
                         <input type="text" name="username" placeholder="Username" className="input_field" onChange={(e) => {setUserName(e.target.value)}}/>
                     </div>
-                    <div className="input">
+                    <div className="register-input">
                         <img src={user_icon} className="img_icon_reg" alt="First Name"/>
                         <input type="text" name="first_name" placeholder="First Name" className="input_field" onChange={(e) => {setFirstName(e.target.value)}}/>
                     </div>
-                    <div className="input">
+                    <div className="register-input">
                         <img src={user_icon} className="img_icon_reg" alt="Last Name"/>
                         <input type="text" name="last_name" placeholder="Last Name" className="input_field" onChange={(e) => {setLastName(e.target.value)}}/>
                     </div>
-                    <div className="input">
+                    <div className="register-input">
                         <img src={email_icon} className="img_icon_reg" alt="Email"/>
                         <input type="email" name="email" placeholder="Email" className="input_field" onChange={(e) => {setEmail(e.target.value)}}/>
                     </div>
-                    <div className="input">
+                    <div className="register-input">
                         <img src={password_icon} className="img_icon_reg" alt="Password"/>
                         <input type="password" name="psw" placeholder="Password" className="input_field" onChange={(e) => {setPassword(e.target.value)}}/>
                     </div>

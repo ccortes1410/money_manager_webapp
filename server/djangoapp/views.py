@@ -1,7 +1,7 @@
 from django.forms import model_to_dict
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
-from .models import Transaction, Budget, Subscription
+from .models import Transaction, Budget, Subscription, Income
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -14,7 +14,6 @@ from .restapi import get_request
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 def register_user(request):
     context = {}
@@ -82,6 +81,14 @@ def logout_request(request):
     data = {"userName": ""}
     return JsonResponse({"status": "logged_out"})
 
+@login_required
+def current_user(request):
+    data = {
+        "id": request.user.id,
+        "username": request.user.username,
+        "is_authenticated": request.user.is_authenticated
+    }
+    return JsonResponse({"user": data})
 
 @login_required
 def dashboard(request):
@@ -102,34 +109,6 @@ def dashboard(request):
                 "is_authenticated": request.user.is_authenticated
             }
         })
-    
-    # elif request.method == "POST":
-    #     try:
-    #         data = json.loads(request.body)
-    #         amount = data.get("amount")
-    #         date = data.get("date")
-    #         description = data.get("description")
-    #         category = data.get("category")
-    #         Transaction.objects.create(
-    #             user=request.user,
-    #             description=description,
-    #             amount=amount,
-    #             date=date,
-    #             category=category
-    #         )
-    #         return JsonResponse({"status": "Transaction added successfully"}, status=201)
-    #     except Exception as e:
-    #         logger.error(f"Error adding transaction: {e}")
-    #         return JsonResponse({"error": "Failed to add transaction"}, status=500)
-        
-    # elif request.method == "DELETE":
-    #     try:
-    #         data = json.loads(request.body)
-    #         ids = data.get("ids", [])
-    #         Transaction.objects.filter(id__in=ids, user=request.user).delete()
-    #         return JsonResponse({"status": "deleted"})
-    #     except Exception as e:
-    #         return JsonResponse({"error": str(e)}, status=400)
 
 
 @login_required
@@ -350,3 +329,49 @@ def add_transaction(request):
     except Exception as e:
         logger.error(f"Error adding transaction: {e}")
         return JsonResponse({"error": "Failed to add transaction"}, status=500)
+    
+
+@login_required
+def income_list(request):
+    if request.method == "GET":
+        try:
+            incomes = Income.objects.filter(user=request.user)
+            data = list(incomes.values())
+            return JsonResponse({
+                "incomes": data,
+                "user": {
+                    "id": request.user.id,
+                    "username": request.user.username,
+                    "is_authenticated": request.user.is_authenticated
+                }
+            })  
+        except Exception as e:
+            logger.error(f"Error fetching income: {e}")
+            return JsonResponse({"error": "Failed to fetch income"}, status=500)
+    elif request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = data.get("amount")
+            source = data.get("source")
+            date_received = data.get("date_received")
+            date_intended = data.get("date_intended")
+
+            Income.objects.create(
+                user=request.user,
+                amount=amount,
+                source=source,
+                date_received=date_received,
+                date_intended=date_intended,
+            )
+            return JsonResponse({"status": "Income added successfully"}, status=201)
+        except Exception as e:
+            logger.error(f"Error adding income: {e}")
+            return JsonResponse({"error": "Failed to add income"}, status=500)
+    elif request.method == "DELETE":
+        try:
+            data = json.loads(request.body)
+            ids = data.get("ids", [])
+            Income.objects.filter(id__in=ids, user=request.user).delete()
+            return JsonResponse({"status": "deleted"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)

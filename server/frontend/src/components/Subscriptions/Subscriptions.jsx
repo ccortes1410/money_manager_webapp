@@ -10,7 +10,6 @@ const Subscriptions = () => {
     const [ frequencyInput, setFrequencyInput ] = useState("monthly");
     const [ activeInput, setActiveInput ] = useState(false);
     const [ subscriptions, setSubscriptions ] = useState([]);
-    // const [ collapsed, setCollapsed ] = useState(true);
     const [ user, setUser ] = useState(null);
     const [ selectedSubs, setSelectedSubs ] = useState([]);
 
@@ -195,36 +194,42 @@ const Subscriptions = () => {
                     </div>
                 </div>
             
-                <div className="input-header">
-                    <div>
+                <div className="subs-input-header">
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                         <input
+                            id='amount-input'
+                            className='subs-text-input'
                             type="number"
                             placeholder='Amount'
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
                             value={amountInput}
                             onChange={(e) => setAmountInput(e.target.value)}
                         />
-                        <input 
+                        <input
+                            id='description-input'
+                            className='subs-text-input'
                             type="text"
                             placeholder='Description'
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
                             value={descriptionInput}
                             onChange={(e) => setDescriptionInput(e.target.value)}
                         />
-                        <input 
+                        <input
+                            id='category-input'
+                            className='subs-text-input'
                             type="text"
                             placeholder='Category'
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
                             value={categoryInput}
                             onChange={(e) => setCategoryInput(e.target.value)}
                         />
-                        <input 
+                        <input
+                            id='date-input'
+                            className='date-input'
                             type="date"
-                            style={{ marginTop: '10px', marginLeft: '10px' }}
                             value={dateInput}
                             onChange={(e) => setDateInput(e.target.value)}
                         />
                         <select
+                            id='frequency-select'
+                            className='frequency-select'
                             name="frequency"
                             value={frequencyInput}
                             onChange={(e) => setFrequencyInput(e.target.value)}
@@ -236,6 +241,8 @@ const Subscriptions = () => {
                             ))}
                         </select>
                         <input
+                            id='active-checkbox'
+                            className='checkbox-container'
                             type="checkbox"
                             name="active"
                             value={activeInput}

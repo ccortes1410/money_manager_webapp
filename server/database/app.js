@@ -27,6 +27,7 @@ const sequelize = new Sequelize(
 const Transactions = require('./transactions')(sequelize, DataTypes);
 const Budget = require('./budget')(sequelize, DataTypes);
 const Subscription = require('./subscriptions')(sequelize, DataTypes);
+const Income = require('./income')(sequelize, DataTypes);
 
 // const transaction_data = JSON.parse(fs.readFileSync('transactions.js', 'utf8'));
 async function connectWithRetry() {
@@ -98,6 +99,17 @@ async function connectWithRetry() {
                     res.json(documents);
                 } catch (error) {
                     console.log("Error fetching subscriptions:", error);
+                    res.status(500).json({ error: "Internal Server Error" });
+                }
+            });
+
+            app.get('/fetchIncome', async (req, res) => {
+                try {
+                    const documents = await Income.findAll();
+                    console.log("Fetched income:", JSON.stringify(documents, null, 4));
+                    res.json(documents);
+                } catch (error) {
+                    console.log("Error fetching income:", error);
                     res.status(500).json({ error: "Internal Server Error" });
                 }
             });

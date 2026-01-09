@@ -84,3 +84,14 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"Recurring Transaction {self.id}: {self.amount} every {self.frequency} starting {self.start_date} by {self.user.username}"
+    
+class Income(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    source = models.CharField(max_length=255)
+    date_received = models.DateField()
+    date_intended = models.DateField()
+
+    def __str__(self):
+        return f"Income {self.id}: {self.amount} from {self.source} on {self.date_received} by {self.user.username}"

@@ -6,7 +6,6 @@ import "./Transactions.css";
 import Sidebar from '../Sidebar/Sidebar';
 
 const Transactions = () => {
-    const [collapsed, setCollapsed] = useState(true);
     const [data, setData] = useState([]);
     const [allData, setAllData ] = useState([]);
     const [user, setUser] = useState(null);

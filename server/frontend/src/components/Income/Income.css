@@ -1,0 +1,52 @@
+.income-container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    min-width: 0;
+    width: 100%;
+    background-color: #a4c3cc;
+    box-sizing: border-box;
+    transition: 'margin-left 0.2s';
+    position: relative;
+ 
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.income-header {
+    font-size: 36px;
+    margin-bottom: 15px;
+    background-color: #0a364b;
+    min-height: 60px;
+    color: white;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 16px;
+    position: relative;
+}
+
+.income-header h1 {
+    margin: 0 auto;
+    flex: 0 1 auto;
+    font-size: 36px;
+    width: 100%;
+    text-align: center;
+}
+
+.income-table-container {
+    display: block;
+    width: 50%;
+    margin-left: 50%;
+}
+
+.no-income-message{
+    margin-left: auto;
+    margin-right: auto;
+    font-family: 'Courier New', Courier, monospace;
+}

@@ -82,4 +82,14 @@ urlpatterns = [
         view=views.update_subs,
         name='update_subs'
     ),
+    path(
+        route='income',
+        view=views.income_list,
+        name='income_list'
+    ),
+    path(
+        route='user',
+        view=views.current_user,
+        name='current_user'
+    ),
 ]

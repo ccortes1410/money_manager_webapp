@@ -12,6 +12,7 @@ import homeIcon from '../assets/home.png';
 import subscriptionIcon from '../assets/subscription.png';
 import bankIcon from '../assets/bank.png';
 import friendIcon from '../assets/friend.png';
+import incomeIcon from '../assets/income.png';
 
 const Sidebar = ({ collapsed, onToggle }) => {
     const location = useLocation();
@@ -106,7 +107,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/budgets/' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/budgets/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a 
                             className="nav-link"
@@ -126,7 +127,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/subscriptions/' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/subscriptions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <a 
                             className={`nav-link`}
@@ -146,26 +147,26 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </a>
                     )}
                 </li>
-                <li className={`nav-item${currentPath === '/savings' ? ' active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/income/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a className={`nav-link`} href="/savings">
+                        <a className={`nav-link`} href="/income">
                             <img 
-                                src={travelIcon}
+                                src={incomeIcon}
                                 className="img_icon"
                             />
                         </a>
                     ) : (
                         <a
                             className="sidebar-link"
-                            href="/trips"
+                            href="/income"
                         >
-                            Trips
+                            Income
                         </a>
                     )}
                 </li>
-                {/* <li className={`nav-item${currentPath === '/friends' ? ' active' : ''}`}>
+                {/* <li className={`nav-item${currentPath === '/income' ? ' active' : ''}`}>
                     {collapsed ? (
-                        <a className={`nav-link`} href="/friends">
+                        <a className={`nav-link`} href="/income">
                             <img 
                                 src={friendIcon}
                                 className="img_icon"/>

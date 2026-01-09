@@ -4,7 +4,6 @@
     align-items: center;
     width: 100%;
     position: relative;
-    width: 100%;
     height: 60px;
     margin-left: 0px;
     overflow-x: auto;
@@ -13,6 +12,14 @@
     /* cursor: pointer; */
     padding: 0px 16px;
     background-color: #0a364b;
+}
+
+.subscriptions-header h1 {
+    margin: 0 auto;
+    flex: 0 1 auto;
+    font-size: 36px;
+    width: 100%;
+    text-align: center;
 }
 
 .subscriptions-container {
@@ -92,26 +99,62 @@
     box-sizing: border-box;
 }
 
+.date-input,
+.frequency-select {
+    margin-right: 0.2rem;
+    margin-left: 0.2rem;
+    border-radius: 4px;
+}
+
+.checkbox-container {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.subs-text-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
 .add-btn {
     background-color: #0d8128;
     border-radius: 8px;
-    padding: 0.2rem;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
 }
 
 .del-btn {
     background-color: #dc3545;
     border-radius: 8px;
-    padding: 0.2rem;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
 }
 
 .upd-btn {
     background-color: #007bff;
     border-radius: 8px;
-    padding: 0.2rem;
+    height: 2rem;
+    width: 6rem;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
 }
 
-.input-header {
+.subs-input-header {
     justify-content: space-between;
+    display: block;
+    flex-direction: row;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    margin-left: 10px;
+    border-radius: 4px;
 }
 
 .status-indicator {
