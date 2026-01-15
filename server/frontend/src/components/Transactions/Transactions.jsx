@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "./Transactions.css";
-import Sidebar from '../Sidebar/Sidebar';
+import { AuthContext } from '../../AuthContext';    
 
 const Transactions = () => {
     const [data, setData] = useState([]);
     const [allData, setAllData ] = useState([]);
-    const [user, setUser] = useState(null);
+    const { user } = useContext(AuthContext);
     const [searchQuery, setSearchQuery] = useState("");
     const [amountInput, setAmountInput] = useState("");
     const [dateInput, setDateInput] = useState("");
@@ -35,14 +35,12 @@ const Transactions = () => {
             const retobj = await res.json();
             if (retobj.transactions) {
                 let transactions = Array.from(retobj.transactions)
-                .filter(tx => tx.user_id === retobj.user.id);
+                .filter(tx => tx.user_id === user.id);
                 setAllData(transactions);
                 setData(transactions);
-                setUser(retobj.user);
             } else {
                 setAllData([]);
                 setData([]);
-                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching transactions:", error);
@@ -139,17 +137,17 @@ const Transactions = () => {
         get_transactions();
     }, []);
 
-    useEffect(() => {
-        if (data.length > 0) {
-            console.log("Transactions data updated:", data);
-        }
-    }, [data]);
+    // useEffect(() => {
+    //     if (data.length > 0) {
+    //         console.log("Transactions data updated:", data);
+    //     }
+    // }, [data]);
     
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/login");
-        }
-    }, [user]);
+    // useEffect(() => {
+    //     if (user !== null && !user.is_authenticated) {
+    //         navigate("/login");
+    //     }
+    // }, [user]);
 
     return (
         // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }} >
@@ -163,8 +161,54 @@ const Transactions = () => {
                     <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
                 </div>
         </div>
-        <div className="input-header">
-            <div>
+        <div className="tx-input-header">
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <input
+                            id='amount-input'
+                            className='tx-text-input'
+                            type="number"
+                            placeholder='Amount'
+                            value={amountInput}
+                            onChange={(e) => setAmountInput(e.target.value)}
+                        />
+                        <input
+                            id='description-input'
+                            className='tx-text-input'
+                            type="text"
+                            placeholder='Description'
+                            value={descriptionInput}
+                            onChange={(e) => setDescriptionInput(e.target.value)}
+                        />
+                        <input
+                            id='category-input'
+                            className='tx-text-input'
+                            type="text"
+                            placeholder='Category'
+                            value={categoryInput}
+                            onChange={(e) => setCategoryInput(e.target.value)}
+                        />
+                        <input
+                            id='date-input'
+                            className='tx-date-input'
+                            type="date"
+                            value={dateInput}
+                            onChange={(e) => setDateInput(e.target.value)}
+                        />
+                        <button
+                            className="add-btn"
+                            onClick={handleAddTransaction}
+                        >
+                            +
+                        </button>
+                        <button
+                            className="del-btn"
+                            onClick={() => handleDeleteTransaction(selectedTransactions)}
+                            style={{ marginLeft: '10px' }}
+                        >
+                            -
+                        </button>
+                    </div>
+            {/* <div>
                 <input
                     type="number"
                     placeholder="Amount"
@@ -213,7 +257,7 @@ const Transactions = () => {
                     onBlur={handleLostFocus}
                     value={searchQuery}
                     />
-            </div>
+            </div> */}
             </div>
             {/* <div> */}
                 {Array.isArray(data) && data.length > 0 ? (

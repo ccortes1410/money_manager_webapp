@@ -38,16 +38,48 @@
     text-align: center;
 }
 
-.input-header {
+.tx-input-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     width: 100%;
     height: 10%;
     overflow-x: auto;
     min-height: 40px;
     padding: 0 16px;
-    background-color: #07632a;
+    /* background-color: #07632a; */
+}
+
+.tx-text-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
+.tx-date-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
+.add-btn {
+    background-color: #0d8128;
+    border-radius: 8px;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
+}
+
+.del-btn {
+    background-color: #dc3545;
+    border-radius: 8px;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
 }
 
 .data-table {

@@ -3,7 +3,7 @@
     flex: 1;
     flex-direction: column;
     height: 100vh;
-    overflow-y: auto;
+    overflow-y: none;
     min-width: 0;
     width: 100%;
     background-color: #a4c3cc;
@@ -39,14 +39,147 @@
     text-align: center;
 }
 
+.income-layout {
+    display: grid;
+    grid-template-columns: 300px 200px 1fr;
+    height: calc(100vh - 64px);
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.income-table-col {
+    overflow: hidden;
+}
+
 .income-table-container {
-    display: block;
-    width: 50%;
-    margin-left: 50%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.income-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.income-table th, .income-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.selected-row {
+    background-color: rgba(37, 99, 235, 0.15);
+    transition: background-color 0.2s ease;
+
+}
+
+tbody tr {
+    cursor: pointer;
+}
+
+tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .no-income-message{
     margin-left: auto;
     margin-right: auto;
     font-family: 'Courier New', Courier, monospace;
+}
+
+.income-calendar-col {
+    overflow: hidden;
+    border-right: 1px solid #334155;
+}
+
+.income-calendar-container {
+    height: 100%;
+    overflow-y: scroll;
+    padding-right: 0.5rem;
+
+    scrollbar-width: none;
+}
+
+.calendar-year {
+    margin-bottom: 1rem;
+    font-size: larger;
+    text-align: center;
+}
+
+.year-header {
+    position: sticky;
+    top: 0;
+    background: #0f127a;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem;
+    z-index: 1;
+}
+
+.months-list {
+    list-style: none;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.month-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.highlighted-month {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+}
+
+.month-item:hover {
+    background-color: rgba(255,255,255,0.08);
+}
+.income-bar-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} 
+
+.income-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.income-progress-bar {
+    width: 70px;
+    height: 90%;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.income-progress-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to top, #22c55e, #4ade80);
+    transition: height 0.3s ease;
+}
+
+@media (max-width: 900px) {
+    .income-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        height: auto;
+    }
+
+    .income-bar-col {
+        order: 2;
+        height: 200px;
+    }
 }

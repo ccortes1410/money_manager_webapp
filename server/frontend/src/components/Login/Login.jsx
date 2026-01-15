@@ -1,39 +1,35 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import './Login.css';
-import Header from '../Sidebar/Sidebar';
-import Sidebar from '../Sidebar/Sidebar';
 
 const Login = () => {
-    const [collapsed, setCollapsed] = useState(true);
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
-    // const [open, setOpen] = useState(true);
-
-    let login_url ="/djangoapp/login";
-
+    const { user, setUser } = useContext(AuthContext);
     const navigate = useNavigate();
+    let login_url ="/djangoapp/login";
 
     const login = async (e) => {
         e.preventDefault();
 
         const res = await fetch(login_url, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userName: userName,
+                username: userName,
                 password: password
             }),
-            credentials: 'include',
         });
-
-        const json = await res.json();
-        if (json.status != null && json.status === "Authenticated") {
-            sessionStorage.setItem('username', json.userName);
-            // setOpen(false);
-            navigate('/dashboard');
+        console.log(res);
+        if (res.ok) {
+            const user = await res.json();
+            // sessionStorage.setItem('username', user.username);
+            setUser(user);
+            navigate('/dashboard')
         }
         else {
             alert("The user could not be authenticated");
@@ -56,7 +52,7 @@ const Login = () => {
                         <input
                             type="text"
                             placeholder="Username"
-                            name="username"
+                            name="userName"
                             className="input_field"
                             value={userName}
                             onChange={(e) => setUserName(e.target.value)}
@@ -75,7 +71,7 @@ const Login = () => {
                     </div>
                     <div>
                     <input className="action_button" type="submit" value="Login"/>
-                    <input className="action_button" type="button" value="Cancel" onClick={() => navigate('/home')}/>
+                    <input className="action_button" type="button" value="Cancel" onClick={() => navigate('/')}/>
                     </div>
                     {/* <a className="loginlink" href="/register">Register Now</a> */}
                 </form>

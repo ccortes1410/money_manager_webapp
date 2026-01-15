@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import './Subscriptions.css';
 
 const Subscriptions = () => {
@@ -10,7 +11,7 @@ const Subscriptions = () => {
     const [ frequencyInput, setFrequencyInput ] = useState("monthly");
     const [ activeInput, setActiveInput ] = useState(false);
     const [ subscriptions, setSubscriptions ] = useState([]);
-    const [ user, setUser ] = useState(null);
+    const { user } = useContext(AuthContext);
     const [ selectedSubs, setSelectedSubs ] = useState([]);
 
     const FREQUENCY_OPTIONS = [
@@ -41,7 +42,6 @@ const Subscriptions = () => {
 
             if (data.subscriptions && Array.isArray(data.subscriptions)) {
                 setSubscriptions(data.subscriptions);
-                setUser(data.user);
                 // if (data.subscriptions.length > 0) {
                 //     setSelectedSubscriptionId(data.subscriptions[0].id);
                 // }
@@ -49,7 +49,6 @@ const Subscriptions = () => {
         } catch (error) {
             alert("Error fetching subscriptions");
             setSubscriptions([]);
-            setUser(null);
             setSelectedSubs([]);
             console.error(error);
         }

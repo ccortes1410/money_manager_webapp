@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import './Dashboard.css';
 import '../assets/style.css';
 import { Line, Pie, Bar } from 'react-chartjs-2';
@@ -9,7 +10,7 @@ Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScal
 
 const Dashboard = () => {
     // const [collapsed, setCollapsed] = useState(true);
-    const [user, setUser] = useState(null);
+    const { user } = useContext(AuthContext);
     const [subscriptions, setSubscriptions] = useState([]);
     const [budgets, setBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -53,14 +54,12 @@ const Dashboard = () => {
             const retobj = await res.json();
             if (retobj.transactions) {
                 let transactions = Array.from(retobj.transactions)
-                .filter(tx => tx.user_id === retobj.user.id);
+                .filter(tx => tx.user_id === user.id);
                 setTransactions(transactions);
                 setData(transactions);
-                setUser(retobj.user);
             } else {
                 setTransactions([]);
                 setData([]);
-                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching transactions:", error);
@@ -78,12 +77,10 @@ const Dashboard = () => {
             const retobj = await res.json();
             if (retobj.subscriptions) {
                 let subscriptions = Array.from(retobj.subscriptions)
-                .filter(sub => sub.user_id === retobj.user.id);
+                .filter(sub => sub.user_id === user.id);
                 setSubscriptions(subscriptions);
-                setUser(retobj.user);
             } else {
                 setSubscriptions([]);
-                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching subscriptions: ", error);
@@ -100,12 +97,10 @@ const Dashboard = () => {
             const retobj = await res.json();
             if (retobj.budgets) {
                 let budgets = Array.from(retobj.budgets)
-                .filter(bud => bud.user_id === retobj.user.id);
+                .filter(bud => bud.user_id === user.id);
                 setBudgets(budgets);
-                setUser(retobj.user);
             } else {
                 setBudgets([]);
-                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching budgets: ", error);
@@ -395,15 +390,15 @@ const Dashboard = () => {
         get_budgets();
     }, []);
 
-    useEffect(() => {
-        if (data.length > 0) {
-            console.log("Sample transaction:", data[0]);
-        }
-    }, [data]);
+    // useEffect(() => {
+    //     if (data.length > 0) {
+    //         console.log("Sample transaction:", data[0]);
+    //     }
+    // }, [data]);
 
     useEffect(() => {
         if (user !== null && !user.is_authenticated) {
-            navigate('/');
+            navigate('/login');
         }
     }, [user]);
 

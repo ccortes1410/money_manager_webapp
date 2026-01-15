@@ -91,7 +91,12 @@ class Income(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     source = models.CharField(max_length=255)
     date_received = models.DateField()
-    date_intended = models.DateField()
+    period_start = models.DateField()
+    period_end = models.DateField()
 
+    def clean(self):
+        if self.period_end < self.period_start:
+            raise ValueError("End date must be after start date")
+        
     def __str__(self):
         return f"Income {self.id}: {self.amount} from {self.source} on {self.date_received} by {self.user.username}"

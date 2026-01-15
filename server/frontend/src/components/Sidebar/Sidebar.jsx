@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import "../assets/bootstrap.min.css";
 import "../assets/style.css";
 import "../Dashboard/Dashboard.css"
@@ -15,9 +17,10 @@ import friendIcon from '../assets/friend.png';
 import incomeIcon from '../assets/income.png';
 
 const Sidebar = ({ collapsed, onToggle }) => {
+    const { user, setUser } = useContext(AuthContext);
     const location = useLocation();
     const currentPath = location.pathname;
-
+    const navigate = useNavigate();
     // const toggleSidebar = () => {
     //     setCollapsed(!collapsed);
     // }
@@ -32,27 +35,30 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
         const json = await res.json();
         if (json && json.status === "logged_out") {
-            let username = sessionStorage.getItem('username');
-            sessionStorage.removeItem('username');
+            let username = user ? user.username : "";
+            // let username = sessionStorage.getItem('username');
             alert("Logging out " + username + "...")
-            window.location.href = "/login";
+            setUser(null);
+            navigate("/login")
         } else {
             alert("The user could not be logged out");
         }
     }
 
-    let home_page_items = <div></div>;
+    if (!user) return null;
 
-    let curr_user = sessionStorage.getItem('username');
+    // let home_page_items = <div></div>;
 
-    if ( curr_user !== null && curr_user !== "") {
-        home_page_items = <div className="input_panel">
-            <text className='username'>{sessionStorage.getItem("username")}</text>
-            <a className="nav_item" href="/djangoapp/logout" onClick={logout}>Logout</a>
-        </div>
-    }
+    // let curr_user = sessionStorage.getItem('username');
 
+    // if ( curr_user !== null && curr_user !== "") {
+    //     home_page_items = <div className="input_panel">
+    //         <text className='username'>{sessionStorage.getItem("username")}</text>
+    //         <a className="nav_item" href="/djangoapp/logout" onClick={logout}>Logout</a>
+    //     </div>
+    // }
     return (
+
         <aside 
             className={`sidebar ${collapsed ? "collapsed" : ""}`}>
             <button
@@ -67,101 +73,105 @@ const Sidebar = ({ collapsed, onToggle }) => {
             </a>
             <hr/>
             <nav className={`nav-links ${collapsed ? "collapsed" : ""}`}>
-                <li className={`nav-item ${currentPath === '/dashboard/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/dashboard' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a 
-                            className="nav-link"
+                        <NavLink 
+                            to="/dashboard"
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/dashboard' ? 'active' : ''}`}
                             aria-current="page"
-                            href="/dashboard"
                         >
                             <img 
                                 src={homeIcon}
                                 className="img_icon"/>
-                        </a>
+                        </NavLink>
                     ) : (
-                        <a
-                            className={`sidebar-link ${currentPath === "/dashboard/" ? 'active' : ''}`}
-                            href="/dashboard"
+                        <NavLink
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/dashboard' ? 'active' : ''}`}
+                            to="/dashboard"
                         >  
                             Dashboard
-                        </a>
+                        </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/transactions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/transactions' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a
-                            className={`nav-link`}
-                            href="/transactions"
+                        <NavLink
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/transactions' ? 'active' : ''}`}
+                            to="/transactions"
                         >
                             <img 
                                 src={detailIcon}
                                 className="img_icon"
                             />
-                        </a>
+                        </NavLink>
                     ) : (
-                        <a
-                            className={`sidebar-link ${currentPath === '/transactions/' ? 'active' : ''}`}
-                            href="/transactions"
+                        <NavLink
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/transactions' ? 'active' : ''}`}
+                            to="/transactions"
                         >
                             Transactions
-                        </a>
+                        </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/budgets/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/budgets' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a 
-                            className="nav-link"
-                            href="/budgets"
+                        <NavLink 
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/budgets' ? 'active' : ''}`}
+                            to="/budgets"
                         >
                             <img 
                                 src={budgetIcon}
                                 className="img_icon"
                             />
-                        </a>
+                        </NavLink>
                     ) : (
-                        <a
-                            className={`sidebar-link ${currentPath === '/budgets/' ? 'active' : ''}`}
-                            href="/budgets"
+                        <NavLink
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/budgets' ? 'active' : ''}`}
+                            to="/budgets"
                         >
                             Budgets
-                        </a>
+                        </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/subscriptions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/subscriptions' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a 
-                            className={`nav-link`}
-                            href="/subscriptions"
+                        <NavLink 
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/subscriptions' ? 'active' : ''}`}
+                            to="/subscriptions"
                         >
                             <img 
                                 src={subscriptionIcon}
                                 className="img_icon"
                             />
-                        </a>
+                        </NavLink>
                     ) : (
-                        <a
-                            className={`sidebar-link ${currentPath === '/subscriptions/' ? 'active' : ''}`}
-                            href="/subscriptions"
+                        <NavLink
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/subscriptions' ? 'active' : ''}`}
+                            to="/subscriptions"
                         >
                             Subscriptions
-                        </a>
+                        </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/income/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/income' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
-                        <a className={`nav-link`} href="/income">
+                        <NavLink 
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/income' ? 'active' : ''}`}
+                            to="/income"
+                            end
+                        >
                             <img 
                                 src={incomeIcon}
                                 className="img_icon"
                             />
-                        </a>
+                        </NavLink>
                     ) : (
-                        <a
-                            className="sidebar-link"
-                            href="/income"
+                        <NavLink
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/income' ? 'active' : ''}`}
+                            to="/income"
                         >
                             Income
-                        </a>
+                        </NavLink>
                     )}
                 </li>
                 {/* <li className={`nav-item${currentPath === '/income' ? ' active' : ''}`}>
@@ -184,18 +194,24 @@ const Sidebar = ({ collapsed, onToggle }) => {
             <hr/>
             <nav className={`nav-links logout ${collapsed ? 'collapsed' : ''}`}>
                 {collapsed ? (
-                    <a 
-                        className="nav-link"
-                        href="/"
+                    <NavLink 
+                        className={({isActive}) => `nav-link ${isActive || currentPath === '/' ? 'active' : ''}`}
+                        to="/"
                         onClick={logout}
                     >
                         <img 
                             src={logoutIcon}
                             className="img_icon"
                         />
-                    </a>
+                    </NavLink>
                 ) : (
-                    <a className="sidebar-link" href="/" onClick={logout}>Logout</a>
+                    <NavLink 
+                        className={(isActive) => `sidebar-link ${isActive || currentPath === '/' ? 'active' : ''}`}
+                        to="/" 
+                        onClick={logout}
+                    >
+                        Logout
+                    </NavLink>
                 )}
             </nav>
         </aside>

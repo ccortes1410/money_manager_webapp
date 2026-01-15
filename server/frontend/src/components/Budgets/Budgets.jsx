@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import './Budgets.css';
 import '../Dashboard/Dashboard.css';
 import Sidebar from '../Sidebar/Sidebar';
@@ -15,7 +16,7 @@ const Budgets = () => {
     // const [sharedBudgets, setSharedBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [selectedBudget, setSelectedBudget] = useState(null);
-    const [user, setUser] = useState(null);
+    const { user } = useContext(AuthContext);
 
     const budgets_url = '/djangoapp/budgets';
     const navigate = useNavigate();
@@ -31,7 +32,6 @@ const Budgets = () => {
 
             if (data.budgets && Array.isArray(data.budgets)) {
                 setBudgets(data.budgets);
-                setUser(data.user);
                 if (data.budgets.length > 0) {
                     setSelectedBudget(data.budgets[0].id);
                 }
@@ -39,7 +39,6 @@ const Budgets = () => {
         } catch (error) {
             alert('Error fetching budgets');
             setBudgets([]);
-            setUser(null);
             console.error(error);
         }
     }

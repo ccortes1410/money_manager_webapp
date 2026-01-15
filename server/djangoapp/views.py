@@ -58,41 +58,67 @@ def register_user(request):
 
     return render(request, "register.html")
 
-
+@csrf_exempt
 def login_request(request):
     
-    data = json.loads(request.body)
-    username = data['userName']
-    password = data['password']
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        res = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON."}, status=400)
+    
+    username = res.get("username")
+    password =  res.get("password")
 
-    user = authenticate(username=username, password=password)
-    data = {"userName": username}
+    print("LOGIN ATTEMPT:", username, password)
+    user = authenticate(
+        request,
+        username=res.get("username"),
+        password=res.get("password"),
+    )
+
     if user is not None:
-
         login(request, user)
-        data = {"userName": username, "status": "Authenticated"}
+        return JsonResponse({
+            "username": user.username,
+            "is_authenticated": True,
+            "id": user.id,
+        })
 
-    return JsonResponse(data)
+    return JsonResponse({"error": "Invalid username or password"}, status=401)
 
-
+@csrf_exempt
 def logout_request(request):
 
     logout(request)
-    data = {"userName": ""}
+    
     return JsonResponse({"status": "logged_out"})
 
-@login_required
-def current_user(request):
-    data = {
-        "id": request.user.id,
-        "username": request.user.username,
-        "is_authenticated": request.user.is_authenticated
-    }
-    return JsonResponse({"user": data})
 
-@login_required
+def current_user(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
+    return JsonResponse({
+        "user": {
+            "id": request.user.id,
+            "username": request.user.username,
+            "is_authenticated": request.user.is_authenticated
+            }
+        })
+
+
 def dashboard(request):
     # print(request.user)
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     category = request.GET.get("category")
     print(category)
     if request.method == "GET":
@@ -111,8 +137,12 @@ def dashboard(request):
         })
 
 
-@login_required
 def transaction_list(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     category = request.GET.get("category")
 
     if request.method == "GET":
@@ -159,8 +189,13 @@ def transaction_list(request):
             return JsonResponse({"error": str(e)}, status=400)
 
 
-@login_required
+
 def budget_list(request, budget_id=None):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     if request.method == "GET":
         try:
             budgets = Budget.objects.filter(user=request.user)
@@ -205,9 +240,14 @@ def budget_list(request, budget_id=None):
             return JsonResponse({"error": str(e)}, status=400)
 
 
-@login_required
+
 def budget_detail(request, budget_id):
     # budget_id = request.GET.get("id")
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     try:
         if not budget_id:
             logger.error("No Budget ID provided")
@@ -231,8 +271,12 @@ def budget_detail(request, budget_id):
         return JsonResponse({"error": "Budget not found"}, status=404)
 
 
-@login_required
 def subscriptions(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     try:
         if request.method == "GET":
             subscriptions = Subscription.objects.filter(user=request.user)
@@ -271,8 +315,13 @@ def subscriptions(request):
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
     return render(request, "money_manager/subscriptions.html")
 
-@login_required
+
 def delete_subs(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     data = json.loads(request.body)
     ids = data.get('ids', [])
     subs = Subscription.objects.filter(id__in=ids, user=request.user)
@@ -292,8 +341,12 @@ def delete_subs(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-@login_required
 def update_subs(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     data = json.loads(request.body)
     ids = data.get('ids', [])
     is_active = data.get('is_active')
@@ -315,8 +368,12 @@ def update_subs(request):
         return JsonResponse({"error": str(e)}, status=400)
     
 
-@login_required
 def add_transaction(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     try: 
         if request.method == "POST":
             Transaction.objects.create(
@@ -331,8 +388,12 @@ def add_transaction(request):
         return JsonResponse({"error": "Failed to add transaction"}, status=500)
     
 
-@login_required
 def income_list(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
     if request.method == "GET":
         try:
             incomes = Income.objects.filter(user=request.user)
@@ -354,14 +415,16 @@ def income_list(request):
             amount = data.get("amount")
             source = data.get("source")
             date_received = data.get("date_received")
-            date_intended = data.get("date_intended")
+            period_start = data.get("period_start")
+            period_end = data.get("period_end")
 
             Income.objects.create(
                 user=request.user,
                 amount=amount,
                 source=source,
                 date_received=date_received,
-                date_intended=date_intended,
+                period_start=period_start,
+                period_end=period_end
             )
             return JsonResponse({"status": "Income added successfully"}, status=201)
         except Exception as e:
