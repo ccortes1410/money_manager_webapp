@@ -4,7 +4,7 @@
 
 .app-layout {
     display: flex;
-    min-height: 100vh;
+    height: 100%;
 }
 
 html, body, #root {
@@ -18,7 +18,7 @@ html, body, #root {
     flex: 1;
     display: flex;
     overflow: hidden;
-    height: 100vh;
+    min-height: 0;
     transition: margin-left 0.25s ease;
     /* scrollbar-width: none; */
 }

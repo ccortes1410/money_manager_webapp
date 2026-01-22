@@ -89,14 +89,17 @@ const Income = () => {
     const years = useMemo(() => {
         if (!income.length) return [];
 
-        const yearsFromData = income.flatMap(item => {
-            const start = new Date(item.period_start + "T00:00:00Z").getUTCFullYear();
-            const end = new Date(item.period_end + "T00:00:00Z").getUTCFullYear();
+        const allYears = income.flatMap(item => {
+            const start = parseYearMonth(item.period_start);
+            const end = parseYearMonth(item.period_end);
+            if (!start || !end) return [];
             return [start, end];
         });
 
-        const minYear = Math.min(...yearsFromData);
-        const maxYear = Math.max(...yearsFromData);
+        if (!allYears.length) return [];
+
+        const minYear = Math.min(...allYears);
+        const maxYear = Math.max(...allYears);
 
         return Array.from(
             { length: maxYear - minYear +1 },
@@ -111,19 +114,45 @@ const Income = () => {
     ];
 
     function parseYearMonth(dateStr) {
-        const date = new Date(dateStr + "T00:00:00Z");
-        return {
-            year: date.getUTCFullYear(),
-            month: date.getUTCMonth(), // 0–11
-        };
-    }
+        if (!dateStr || typeof dateStr !== "string") {
+            return null;
+        }
 
-    const selectedDate = selectedIncome
-        ? parseYearMonth(selectedIncome.date_intended)
+        const parts = dateStr.split("-");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        const year = Number(parts[0]);
+        const monthIndex = Number(parts[1]) - 1;
+
+        if (Number.isNaN(year) || Number.isNaN(monthIndex)) {
+            return null;
+        }
+
+        return { year, monthIndex };
+    };
+
+
+    const selectedPeriod = selectedIncome
+        ? (() => {
+            const start = parseYearMonth(selectedIncome.period_start);
+            const end = parseYearMonth(selectedIncome.period_end);
+
+            if (!start || !end) return null;
+            return { start, end };
+        })()
         : null;
     
     const monthsRefs = useRef({});
 
+    function isMonthInPeriod(year, monthIndex, start, end) {
+        const value = year * 12 + monthIndex;
+        const startValue = start.year * 12 + start.monthIndex;
+        const endValue = end.year * 12 + end.monthIndex;
+
+        return value >= startValue && value <= endValue;
+    }
     // Add a new income source
     const handleAddIncomeSource = async () => {
         const amount = amountInput;
@@ -185,29 +214,22 @@ const Income = () => {
             console.error("Error deleting income source:", error);
         }
     }
-    // Handle checkbox selection for income sources
-    // const handleCheckboxChange = (id) => {
-    //     setSelectedIncome((prevSelected) =>
-    //         prevSelected.includes(id) ?
-    //         prevSelected.filter(incId => incId !== id) :
-    //         [...prevSelected, id]
-    //     );
-    // };
 
     useEffect(() => {
-        if (!selectedDate) return;
+        if (!selectedPeriod) return;
 
-        const key = `${selectedDate.year}-${selectedDate.month}`;
+        const { start } = selectedPeriod;
+        const key = `${start.year}-${start.monthIndex}`;
         const el = monthsRefs.current[key]
         console.log("Ref exists:", monthsRefs.current[key]);
-
+        console.log("Scroll key:", `${selectedPeriod.start.year}-${selectedPeriod.start.monthIndex}`);
         if (el) {
             el.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-        });
-    }
-    },[selectedDate]);
+                behavior: "smooth",
+                block: "center",
+            });
+        }
+    },[selectedPeriod]);
 
     // Initial data fetch and authentication check
     useEffect(() => {
@@ -226,13 +248,7 @@ const Income = () => {
         return;
     }
 
-    function isMonthInRange(year, month, start, end) {
-        const date = new Date(year,month,1);
-        return date >= start && date <= end;
-    }
-
-    console.log("Parsed date:", selectedDate);
-    console.log("Scroll key:", `${selectedDate.year}-${selectedDate.month}`);
+    console.log("Parsed date:", selectedPeriod);
 
     return (
         <div className="income-container">
@@ -249,23 +265,26 @@ const Income = () => {
                             <div key={year} className="calendar-year">
                                 <div className="year-header">{year}</div>
                                     <ul className="months-list">
-                                        {MONTHS.map((month, index) => {
+                                        {MONTHS.map((_, index) => {
                                             const isHighlighted =
-                                                selectedIncome &&
-                                                isMonthInRange(
+                                                selectedPeriod &&
+                                                isMonthInPeriod(
                                                     year,
                                                     index,
-                                                    new Date(selectedIncome.period_start),
-                                                    new Date(selectedIncome.period_end)
+                                                    selectedPeriod.start,
+                                                    selectedPeriod.end
                                                 );
                                             return (
                                                 <li 
                                                 key={`${year}-${index}`} 
+                                                ref={(el) => {
+                                                    if (el) monthsRefs.current[`${year}-${index}`] = el;
+                                                }}
                                                 className={`month-item ${
                                                     isHighlighted ? "highlighted-month" : ""
                                                 }`}
                                             >
-                                                {month}
+                                                {MONTHS[index]}
                                             </li>
                                             );
                                         })}  
@@ -287,10 +306,12 @@ const Income = () => {
                     </div>
                 </div>
                 <div className='income-table-container'>
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                    <div 
+                        className="income-table-inputs"
+                        >
                         <input
                             id='amount-input'
-                            className='subs-text-input'
+                            className='inc-text-input'
                             type="number"
                             placeholder='Amount'
                             value={amountInput}
@@ -298,37 +319,43 @@ const Income = () => {
                         />
                         <input
                             id='source-input'
-                            className='subs-text-input'
+                            className='inc-text-input'
                             type="text"
                             placeholder='Source'
                             value={sourceInput}
                             onChange={(e) => setSourceInput(e.target.value)}
                         />
-                        <label>
+                        <label
+                            className="date-label"
+                            >
                             Date Received
                             <input
                                 id="date-recevied-input"
-                                className="subs-text-input"
+                                className="inc-text-input"
                                 type="date"
                                 value={dateReceivedInput}
                                 onChange={(e) => setDateReceivedInput(e.target.value)}
                             />
                         </label>
-                        <label>
+                        <label
+                            className="date-label"
+                            >
                             Period Start
                             <input
                                 id="start-date-input"
-                                className="subs-text-input"
+                                className="inc-text-input"
                                 type="date"
                                 value={periodStart}
                                 onChange={(e) => setPeriodStart(e.target.value)}
                             />
                         </label>
-                        <label>
+                        <label 
+                            className="date-label"
+                            >
                             Period End
                             <input
                                 id="end-date-input"
-                                className="subs-text-input"
+                                className="inc-text-input"
                                 type="date"
                                 value={periodEnd}
                                 onChange={(e) => setPeriodEnd(e.target.value)}
@@ -365,12 +392,12 @@ const Income = () => {
 
                                 return (
                                     <tr 
-                                    key={inc.id}
-                                    className={
-                                        selectedIncome?.id === inc.id ? "selected-row" : ""
-                                    }
-                                    onClick={() => setSelectedIncome(isSelected ? null : inc)}
-                                >
+                                        key={inc.id}
+                                        className={
+                                            selectedIncome?.id === inc.id ? "selected-row" : ""
+                                        }
+                                        onClick={() => setSelectedIncome(isSelected ? null : inc)}
+                                    >
                                     <td>${Number(inc.amount)}</td>
                                     <td>{inc.source}</td>
                                     <td>{inc.date_received}</td>

@@ -264,7 +264,6 @@ const Transactions = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>Select</th>
                                 <th>Description</th>
                                 <th>Amount</th>
                                 <th>Category</th>
@@ -272,21 +271,31 @@ const Transactions = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((transaction) => (
-                                <tr key={transaction.id}>
-                                    <td style={{ width: '30px'}}>
+                            {data.map((transaction) => {
+                                const isSelected = selectedTransactions?.id === transaction.id;
+
+                                return (
+                                    <tr 
+                                        key={transaction.id}
+                                        className={
+                                            setSelectedTransactions?.id === transaction.id ? "selected-row" : ""
+                                        }
+                                        onClick={() => setSelectedTransactions(isSelected ? null : transaction)}
+                                    >      
+                                    {/* <td style={{ width: '30px'}}>
                                         <input
                                             type="checkbox"
                                             checked={selectedTransactions.includes(transaction.id)}
                                             onChange={() => handleCheckboxChange(transaction.id)}
-                                        />
-                                    </td>
+                                        /> 
+                                    </td>*/}
                                     <td>{transaction.description}</td>
                                     <td>${transaction.amount}</td>
                                     <td>{String(transaction.category)}</td>
                                     <td>{transaction.date}</td>
                                 </tr>
-                            ))}
+                            )}
+                            )}
                         </tbody>
                     </table>
                 ) : (

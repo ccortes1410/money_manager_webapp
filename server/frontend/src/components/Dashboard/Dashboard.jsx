@@ -14,6 +14,7 @@ const Dashboard = () => {
     const [subscriptions, setSubscriptions] = useState([]);
     const [budgets, setBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
+    const [income, setIncome] = useState([]);
     const [allData, setAllData] = useState([]);
     const [data, setData] = useState([]);
     
@@ -41,6 +42,7 @@ const Dashboard = () => {
     let trans_url = "/djangoapp/transactions";
     let subs_url = "/djangoapp/subscriptions";
     let budget_url = "/djangoapp/budgets";
+    let income_url = "/djangoapp/income";
 
     const navigate = useNavigate();
 
@@ -107,6 +109,28 @@ const Dashboard = () => {
         }
     }
     
+    const get_income = async () => {
+        try {
+            const res = await fetch(income_url, {
+                method: 'GET',
+                credentials: 'include',
+            });
+
+            const retobj = await res.json();
+            console.log(retobj)
+            if (retobj.incomes) {
+                let income = Array.from(retobj.incomes)
+                .filter(inc => inc.user_id === user.id);
+                setIncome(income);
+            } else {
+                setIncome([]);
+                console.log("Couldn't fetch income")
+            }
+        } catch (error) {
+            console.error("Error fetching income: ", error);
+        }
+    }
+
     const monthlySpending = useMemo(() => {
         const totals = Array(12).fill(0);
 
@@ -218,30 +242,50 @@ const Dashboard = () => {
             ]
         }
     }
-    
-    const pieChartOptions = {
+
+    const donutOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: "70%",
         plugins: {
-            legend: { display: true },
-            // title: { display: true, text: 'Spending by Category' },
+            legend: {
+                position: "bottom",
+                labels: {
+                    color: "#110101",
+                    boxWidth: 12,
+                    padding: 16,
+                },
+            },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
-                        let label = context.label || '';
-                        let value = context.raw || 0;
-                        return `$${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                    }
+                    label: function (context) {
+                        const value = context.raw;
+                        const percent = ((value / totalSpent) * 100).toFixed(1);
+                        return `$${value} (${percent}%)`;
+                    },
                 },
-                intersect: true,
-                mode: "nearest",
-                enables: true,
-            },   
+            },
         },
-        size: {
-            height: '250px',
-            width: '250px',
-        }
+    };
+
+    const centerTextPlugin = {
+        id: "centerText",
+        afterDraw(chart) {
+            const { ctx } = chart;
+            const centerX = chart.getDatasetMeta(0).data[0].x;
+            const centerY = chart.getDatasetMeta(0).data[0].y;
+
+            ctx.save();
+            ctx.font = "bold 18px sans-serif";
+            ctx.fillStyle = "#080202";
+            ctx.textAlign = "center";
+            ctx.fillText(`$${totalSpent}`, centerX, centerY - 5);
+
+            ctx.font = "12px sans-serif";
+            ctx.fillStyle = "#ccc";
+            ctx.fillText("Total Spent", centerX, centerY + 15);
+            ctx.restore();
+        },
     };
 
     const getPieChartData = () => {
@@ -294,6 +338,74 @@ const Dashboard = () => {
             ]
         };
     };
+    
+    function getCurrentMonthRange() {
+        const now = new Date();
+
+        const year = now.getUTCFullYear();
+        const month = now.getUTCMonth();
+
+        const start = new Date(year, month, 1);
+        const end = new Date(year, month + 1, 0);
+
+        return { start, end };
+    }
+
+    function overlapsMonth(periodStart, periodEnd, monthStart, monthEnd) {
+        return (
+            periodStart <= monthEnd &&
+            periodEnd >= monthStart
+        );
+    }
+
+    const { start: monthStart, end: monthEnd} = getCurrentMonthRange();
+    
+    const currentMonthIncome = useMemo(() => {
+        return income.filter(item => {
+            const start = new Date(item.period_start + "T00:00:00");
+            const end = new Date(item.period_end + "T23:59:59");
+
+            return overlapsMonth(start, end, monthStart, monthEnd);
+        });
+    }, [income]);
+
+    const currentMonthSpending = useMemo(() => {
+        return transactions.filter(item => {
+            const start = new Date(item.date + "T00:00:00");
+            const end = new Date(item.date + "T23:59:59");
+
+            return overlapsMonth(start, end, monthStart, monthEnd);
+        })
+    }, [transactions]);
+
+    const totalSpendingThisMonth = useMemo(() => {
+        return currentMonthSpending.reduce(
+            (sum, item) => sum + Number(item.amount),
+            0
+        );
+    }, [currentMonthSpending])
+
+    const totalIncomeThisMonth = useMemo(() => {
+        return currentMonthIncome.reduce(
+            (sum, item) => sum + Number(item.amount),
+            0
+        );
+    }, [currentMonthIncome]);
+
+    
+    // const remainingFundsPercent = (totalSpendingThisMonth / totalIncomeThisMonth) * 100;
+
+    const totalInc = totalIncomeThisMonth || 0;
+    const spentInc = totalSpendingThisMonth || 0;
+
+    const remainingFunds = Math.max(0, totalInc - spentInc );
+
+    const remainingFundsPercent = totalInc > 0 ? Math.min(100, (remainingFunds / totalInc ) * 100) : 0;
+
+    console.log("Current month spending: ", currentMonthSpending)
+    console.log("Total Spending: ", totalSpendingThisMonth)
+    console.log("Total Income: ", totalIncomeThisMonth)
+    console.log(remainingFundsPercent)
 
     const handleAddTransaction = async() => {
         const amount = amountInput;
@@ -378,16 +490,13 @@ const Dashboard = () => {
         }
     }
     
-    const handleLostFocus = () => {
-        if (!searchQuery) {
-            setData(allData);
-        }
-    }
+    
     
     useEffect(() => {
         get_transactions();
         get_subscriptions();
         get_budgets();
+        get_income();
     }, []);
 
     // useEffect(() => {
@@ -411,6 +520,14 @@ const Dashboard = () => {
     const activeSubs = subscriptions.filter(sub => sub.is_active)
     const inactiveSubs = subscriptions.filter(sub => !sub.is_active)
 
+    const activeTotalSubs = activeSubs.reduce((a, s) => a + Number(s.amount), 0);
+    const inactiveTotalSubs = inactiveSubs.reduce((a, s) => a + Number(s.amount), 0);
+    const sumSubs = activeTotalSubs + inactiveTotalSubs;
+
+    const totalBudget = budgets.reduce((a, b) => a + Number(b.amount), 0);
+    const totalSpent = transactions.reduce((a, t) => a + Number(t.amount), 0);
+    const budgetPercentUsed = Math.min(100, (totalSpent / totalBudget) * 100);
+
     return (
             <div className='main-section'>
                 <div className="dashboard-header">
@@ -424,66 +541,112 @@ const Dashboard = () => {
                     style={{
                         transition: "margin-left 0.2s"
                     }}>
-                    <div className="dashboard-card transactions">
-                        <h4 style={{ textAlign: 'center' }}>Transaction Overview</h4>
+                    <div className="dashboard-main">
+                        <div className="dashboard-card transactions">
+                        <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
                         <div className="chart-wrapper line-chart-wrapper">
                              {getMonthlySpending && getMonthlySpending.labels && getMonthlySpending.labels.length > 0 ? ( 
                             <>
-                            <div>
-                                <label>
-                                    Select Year: {' '}
-                                    <select
-                                        value={selectedYear}
-                                        onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                        >
-                                            {years.map((y) => (
-                                                <option key={y} value={y}>
-                                                    {y}
-                                                </option>
-                                            ))}
-                                        </select>
-                                </label>
-                             </div>
-                            <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
-                          </>
-                        ) : (
-                            <p style={{ textAlign: 'center' }}>No data available</p>
-                        )}
-                        </div>
-                    </div>
-                    <div className="dashboard-card categories">
-                        <h4 style={{ textAlign: 'center' }}>Spending by Category</h4>
-                        <div className="chart-wrapper pie-chart-wrapper">
-                            {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
-                                <Pie data={pieChartData} options={pieChartOptions} />
+                                <div>
+                                    <label>
+                                        Select Year: {' '}
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                            >
+                                                {years.map((y) => (
+                                                    <option key={y} value={y}>
+                                                        {y}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                    </label>
+                                </div>
+                                <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
+                            </>
                             ) : (
                                 <p style={{ textAlign: 'center' }}>No data available</p>
                             )}
                         </div>
+                        </div>
+                        <div className="dashboard-card categories">
+                            <h3 style={{ textAlign: 'center' }}>Spending by Category</h3>
+                            <div className="chart-wrapper pie-chart-wrapper">
+                                {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
+                                    <Pie data={pieChartData} options={donutOptions} plugins={[centerTextPlugin]}/>
+                                ) : (
+                                    <p style={{ textAlign: 'center' }}>No data available</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="dashboard-card subscriptions">
+                            <h3 style={{ textAlign: 'center' }}>Subscriptions Total</h3>
+                            {subscriptions && subscriptions.length > 0 ? (
+                                <div className="subscription-wrapper">
+                                    <div    
+                                        className="subs-stacked-bar"
+                                        >
+                                    <div
+                                        className="subs-active-bar"
+                                        style={{ width: `${(activeTotalSubs / sumSubs) * 100}%`}}
+                                    />
+                                    <div
+                                        className="subs-inactive-bar"
+                                        style={{ width: `${(inactiveTotalSubs / sumSubs) * 100}%`}}
+                                    />
+                                    </div>
+                                    <div className="subs-bar-labels">
+                                        <span>Active: ${activeTotalSubs}</span>
+                                        <span>Inactive: ${inactiveTotalSubs}</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p>No Data Available</p>
+                            )}
+                        </div>
+                        <div className="dashboard-card budgets">
+                            <h3 style={{ textAlign: 'center' }}>Budget Total</h3>
+                            {budgets && budgets.length > 0 ? (
+                                <div className="budget-wrapper">
+                                    <div className="bud-bar">
+                                        <div
+                                            className="bud-bar-fill"
+                                            style={{ width: `${budgetPercentUsed}%`}}>
+                                        </div>
+                                    </div>
+                                    <p>{budgetPercentUsed.toFixed(0)}% used</p>
+                                </div>
+                            ) : (
+                                <p>No Data Available</p>
+                            )}
+                        </div>
                     </div>
-                    <div className="dashboard-card subscriptions">
-                        <h2 style={{ textAlign: 'center' }}>Subscriptions Total</h2>
-                        {subscriptions && subscriptions.length > 0 ? (
-                            <div className="subscription-wrapper">
-                                <h4>Active Subscriptions</h4>
-                                <p style={{ fontSize: '20px', textAlign: 'center' }}>${activeSubs.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                    <div className="dashboard-income">
+                        <div className="dashboard-card income">
+                        {/* <h4 style={{ justifyContent: 'flex-start', marginTop: '5px' }}>Income (This Month)</h4> */}
+                        {income && income.length > 0 ? (
+                            <div className="income-wrapper">
+                                <h4>Income</h4>
+                                <div className="inc-bar-labels">
+                                    <span>Remaining Funds: ${remainingFunds.toFixed(0)}</span>
+                                </div>
+                                <div className="inc-progress-bar">
+                                    <div 
+                                        className="inc-progress-fill"
+                                        style={{ height: `${remainingFundsPercent}%` }}
+                                        /* Future feature: Dynamic fill based on income goals */
+                                    />
+                                </div>
 
-                                <h4> Inactive Subcriptions</h4>
-                                <p style={{ fontSize: '20px', textAlign: 'center' }}>${inactiveSubs.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+                                <div className="inc-bar-labels">
+                                    
+                                    <span>Income this month: ${totalIncomeThisMonth.toFixed(0)}</span>
+                                </div>
                             </div>
                         ) : (
                             <p>No Data Available</p>
                         )}
-                    </div>
-                    <div className="dashboard-card budgets">
-                        <h4 style={{ textAlign: 'center' }}>Budget Total</h4>
-                        {budgets && budgets.length > 0 ? (
-                            <div className="budget-wrapper">
-                                <p style={{ fontSize: '36px', textAlign: 'center' }}>${budgets.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
-                            </div>
-                        ) : (
-                            <p>No Data Available</p>
-                        )}
+                        </div>
                     </div>
             </div>
         </div>

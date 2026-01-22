@@ -1,11 +1,10 @@
 .dashboard-container {
-    /* flex: 1; */
+    flex: 1;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 1.5rem;
-    padding: 1.5rem;
+    grid-template-columns: 1fr 320px;
     height: 100%;
+    gap: 1rem;
+    padding: 1rem;
     overflow-y: hidden;
     box-sizing: border-box;
     background-color: #a4c3cc;
@@ -46,6 +45,18 @@
     text-align: center;
 }
 
+.dashboard-main {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}  
+
+.dashboard-income {
+    display: flex;
+    flex-direction: column;
+}
+
 .dashboard-card {
     background: #fff;
     border-radius: 10px;
@@ -61,6 +72,7 @@
     box-sizing: border-box;
 }
 
+.active-user
 .chart-wrapper {
     display: flex;
     align-items: center;
@@ -90,10 +102,87 @@
     font-style: bold;
 }
 
+.subs-stacked-bar {
+    display: flex;
+    width: 100%;
+    height: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e5e7eb;
+    margin: 12px 0;
+}
+
+.subs-active-bar {
+    background-color: #16a34a;
+    transition: width 0.3s ease;
+}
+
+.subs-inactive-bar {
+    background-color: #9ca3af;
+    transition: width 0.3s ease;
+}
+
+.subs-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #374151;
+}
+
 .budget-wrapper {
     align-items: center;
     justify-content: center;
     font-style: bold;
+}
+
+.bud-bar {
+    width: 100%;
+    height: 16px;
+    background:#e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 12px 0;
+}
+
+.bud-bar-fill {
+    height: 100%;
+    background-color: #dc2626;
+    transition: width 0.3s ease;
+}
+
+.income-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: center;
+}
+
+.inc-progress-bar {
+    width: 32px;
+    height: 90%;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
+    margin-bottom: 1rem;
+}
+
+.inc-progress-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(to top, #22c55e, #4ade80);
+    transition: height 0.3s ease;
+}
+
+.inc-bar-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 14px;
+    color: #111827;
 }
 
 .dashboard-card.transactions {
@@ -110,6 +199,11 @@
 
 .dashboard-card.budgets {
     border-top: 5px solid #dc3545;
+}
+
+.dashboard-card.income {
+    border-top: 5px solid #0a364b;
+    flex: 1;
 }
 
 .input-header {
@@ -207,3 +301,10 @@
     box-sizing: border-box;
 }
 
+.dashboard-container,
+.dashboard-main,
+.dashboard-income,
+.dashboard-card,
+.chart-wrapper {
+    min-height: 0;
+}

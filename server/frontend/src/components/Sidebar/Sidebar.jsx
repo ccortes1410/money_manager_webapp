@@ -45,6 +45,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
         }
     }
 
+    console.log("Current path:", currentPath)
     if (!user) return null;
 
     // let home_page_items = <div></div>;
@@ -73,11 +74,11 @@ const Sidebar = ({ collapsed, onToggle }) => {
             </a>
             <hr/>
             <nav className={`nav-links ${collapsed ? "collapsed" : ""}`}>
-                <li className={`nav-item ${currentPath === '/dashboard' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/dashboard' || currentPath === '/dashboard/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <NavLink 
                             to="/dashboard"
-                            className={({isActive}) => `nav-link ${isActive || currentPath === '/dashboard' ? 'active' : ''}`}
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/dashboard' || currentPath === '/dashboard/' ? 'active' : ''}`}
                             aria-current="page"
                         >
                             <img 
@@ -86,17 +87,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </NavLink>
                     ) : (
                         <NavLink
-                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/dashboard' ? 'active' : ''}`}
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/dashboard' || currentPath === '/dashboard/' ? 'active' : ''}`}
                             to="/dashboard"
                         >  
                             Dashboard
                         </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/transactions' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/transactions' || currentPath === '/transactions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <NavLink
-                            className={({isActive}) => `nav-link ${isActive || currentPath === '/transactions' ? 'active' : ''}`}
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/transactions' || currentPath === '/transactions/' ? 'active' : ''}`}
                             to="/transactions"
                         >
                             <img 
@@ -106,17 +107,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </NavLink>
                     ) : (
                         <NavLink
-                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/transactions' ? 'active' : ''}`}
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/transactions' || currentPath === '/transactions/' ? 'active' : ''}`}
                             to="/transactions"
                         >
                             Transactions
                         </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/budgets' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/budgets' || currentPath === '/budgets/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <NavLink 
-                            className={({isActive}) => `nav-link ${isActive || currentPath === '/budgets' ? 'active' : ''}`}
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/budgets' || currentPath === '/budgets/' ? 'active' : ''}`}
                             to="/budgets"
                         >
                             <img 
@@ -126,17 +127,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </NavLink>
                     ) : (
                         <NavLink
-                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/budgets' ? 'active' : ''}`}
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/budgets' || currentPath === '/budgets/' ? 'active' : ''}`}
                             to="/budgets"
                         >
                             Budgets
                         </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/subscriptions' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/subscriptions' || currentPath=== '/subscriptions/' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <NavLink 
-                            className={({isActive}) => `nav-link ${isActive || currentPath === '/subscriptions' ? 'active' : ''}`}
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/subscriptions' || currentPath=== '/subscriptions/' ? 'active' : ''}`}
                             to="/subscriptions"
                         >
                             <img 
@@ -146,17 +147,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </NavLink>
                     ) : (
                         <NavLink
-                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/subscriptions' ? 'active' : ''}`}
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/subscriptions' || currentPath=== '/subscriptions/' ? 'active' : ''}`}
                             to="/subscriptions"
                         >
                             Subscriptions
                         </NavLink>
                     )}
                 </li>
-                <li className={`nav-item ${currentPath === '/income' ? 'active' : ''} ${collapsed ? 'collapsed': ''}`}>
+                <li className={`nav-item ${currentPath === '/income' ? 'active' || currentPath === '/income/' : ''} ${collapsed ? 'collapsed': ''}`}>
                     {collapsed ? (
                         <NavLink 
-                            className={({isActive}) => `nav-link ${isActive || currentPath === '/income' ? 'active' : ''}`}
+                            className={({isActive}) => `nav-link ${isActive || currentPath === '/income' || currentPath === '/income/' ? 'active' : ''}`}
                             to="/income"
                             end
                         >
@@ -167,7 +168,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                         </NavLink>
                     ) : (
                         <NavLink
-                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/income' ? 'active' : ''}`}
+                            className={({isActive}) => `sidebar-link ${isActive || currentPath === '/income' || currentPath === '/income/' ? 'active' : ''}`}
                             to="/income"
                         >
                             Income

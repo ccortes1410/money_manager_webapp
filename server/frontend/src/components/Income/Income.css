@@ -45,6 +45,7 @@
     height: calc(100vh - 64px);
     gap: 1rem;
     padding: 1rem;
+    overflow: hidden;
 }
 
 .income-table-col {
@@ -68,6 +69,26 @@
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid #ddd;
+}
+
+.income-table-inputs {
+    display: flex;
+    justify-content: baseline;
+    align-items: center;
+}
+
+.inc-text-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
+.date-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .selected-row {
