@@ -5,7 +5,7 @@ import './Budgets.css';
 
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
-const Budget = ({ budget, transactions }) => {
+const Budget = ({ budget }) => {
 
     if (!budget) {
         return (
@@ -15,11 +15,45 @@ const Budget = ({ budget, transactions }) => {
         )
     }
 
+    if (!Array.isArray(budget.transactions)) {
+        return <p>No transactions for this budget</p>
+    }
+    
+    // const get_budget = async (budget) => {
+    //     const budget_url = `/djangoapp/budgets/${budget.id}`;
+    //     try {
+    //         const response = await fetch(budget_url, {
+    //             method: 'GET',
+    //             credentials:'include',
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+            
+    //         const data = await response.json()
+
+    //         if (!response.ok) {
+    //             throw new Error("Error fetching budget")
+    //         }
+
+    //         if (data.budget && data.isArray(data.budget)) {
+    //             setBudgetDetail(data.budget)
+    //         }
+
+    //     } catch (error) {
+    //         console.log("Couldn't fetch budget:", error)
+    //         setBudgetDetail([])
+    //     }
+    // }
+
+    console.log("Budget spent: ", budget.spent)
+    console.log("Remaining budget:", budget.remaining)
+
     return (
         <div className="budget-details">
             <h3>{budget.category}</h3>
             <p>Total Budget: ${budget.amount}</p>
-            <p>Amount Spent: ${transactions.reduce((acc, item) => acc + Number(item.amount), 0)}</p>
+            <p>Amount Spent: ${budget.spent}</p>
                 <table>
                 <thead>
                     <tr>
@@ -29,7 +63,7 @@ const Budget = ({ budget, transactions }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {transactions.map((tx) => (
+                    {budget.transactions.map((tx) => (
                         <tr key={tx.id}>
                             <td>{tx.date}</td>
                             <td>{tx.description}</td>

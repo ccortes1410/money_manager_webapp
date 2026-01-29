@@ -208,56 +208,6 @@ const Transactions = () => {
                             -
                         </button>
                     </div>
-            {/* <div>
-                <input
-                    type="number"
-                    placeholder="Amount"
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                    value={amountInput}
-                    onChange={(e) => setAmountInput(e.target.value)}
-                />
-                <input 
-                    type="text"
-                    placeholder="Description"
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                    value={descriptionInput}
-                    onChange={(e) => setDescriptionInput(e.target.value)}
-                />
-                <input
-                    type="text"
-                    placeholder="Category"
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                    value={categoryInput}
-                    onChange={(e) => setCategoryInput(e.target.value)}
-                />
-                <input
-                    type="date"
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                    value={dateInput}
-                    onChange={(e) => setDateInput(e.target.value)}
-                />
-                <button
-                    className="button-add"
-                    onClick={handleAddTransaction}
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                >
-                    +
-                </button>
-                <button
-                    className="button-delete"
-                    onClick={handleDeleteTransaction}
-                    style={{ marginTop: '10px' , marginLeft: '10px' }}
-                >
-                    -
-                </button>
-                <input
-                    type="text"
-                    placeholder="Search"
-                    onChange={handleInputChange}
-                    onBlur={handleLostFocus}
-                    value={searchQuery}
-                    />
-            </div> */}
             </div>
             {/* <div> */}
                 {Array.isArray(data) && data.length > 0 ? (

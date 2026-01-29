@@ -605,7 +605,7 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="dashboard-card budgets">
-                            <h3 style={{ textAlign: 'center' }}>Budget Total</h3>
+                            <h3 style={{ textAlign: 'center' }}>Budgets Total</h3>
                             {budgets && budgets.length > 0 ? (
                                 <div className="budget-wrapper">
                                     <div className="bud-bar">

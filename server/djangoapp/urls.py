@@ -58,9 +58,14 @@ urlpatterns = [
         name='delete_budget'
     ),
     path(
-        route='add-budget',
+        route='budgets/add',
         view=views.budget_list,
         name='add_budget'
+    ),
+    path(
+        route='budgets/<int:budget_id>/update',
+        view=views.update_budget,
+        name='update_budget'
     ),
     path(
         route='budget/<int:budget_id>',

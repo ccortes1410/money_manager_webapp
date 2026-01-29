@@ -21,6 +21,67 @@
     scrollbar-width: none; */
 }
 
+.bud-input-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 5%;
+    overflow-x: auto;
+    min-height: 40px;
+    padding: 0 16px;
+}
+
+.bud-text-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
+.bud-start-input
+.bud-end-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content
+}
+
+
+.bud-rec-input {
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.add-btn {
+    background-color: #0d8128;
+    border-radius: 8px;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
+}
+
+.del-btn {
+    background-color: #dc3545;
+    border-radius: 8px;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
+}
+
+.stop-btn {
+    background-color: #dbd826;
+    border-radius: 8px;
+    margin-left: 0.2rem;
+    margin-right: 0.2rem;
+    height: 2rem;
+    width: 2rem;
+}
+
 .budget-card {
     background: #fff;
     border-radius: 8px;

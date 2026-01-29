@@ -6,7 +6,7 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ('description',)
 
 class BudgetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'category', 'amount', 'period')
+    list_display = ('id', 'user', 'category', 'amount', 'period_start', 'period_end', 'recurrence', 'is_active', 'is_recurring', 'is_shared', 'created_at')
     search_fields = ('category',)
 
 class SubscriptionAdmin(admin.ModelAdmin):

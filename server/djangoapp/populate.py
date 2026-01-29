@@ -20,9 +20,9 @@ def initiate():
 
     # Create budgets
 
-    Food = Budget.objects.create(user_id=Krlp.id, category="Food", amount=2000.00, period='monthly',reset_day=1,expires_at='2025-12-31')
-    Transport = Budget.objects.create(user_id=user1.id, category="Transport", amount=300.00, period='monthly',reset_day=1,expires_at='2025-12-31')
-    Housing = Budget.objects.create(user_id=Krlp.id, category="Housing", amount=800.00, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Food = Budget.objects.create(user_id=Krlp.id, category="Food", amount=100000, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Transport = Budget.objects.create(user_id=user1.id, category="Transport", amount=25000, period='monthly',reset_day=1,expires_at='2025-12-31')
+    Housing = Budget.objects.create(user_id=Krlp.id, category="Housing", amount=450000, period='monthly',reset_day=1,expires_at='2025-12-31')
     Coffee = Budget.objects.create(user_id=Krlp.id, category="Coffee", amount=5000, period='weekly',reset_day=1,expires_at='2025-12-31')
 
     # Sample data to populate the database

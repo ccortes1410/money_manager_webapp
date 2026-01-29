@@ -16,7 +16,7 @@ class Transaction(models.Model):
 
 
 class Budget(models.Model):
-    PERIOD_CHOICES = [
+    RECURRENCE_CHOICES = [
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
@@ -25,44 +25,31 @@ class Budget(models.Model):
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+
     category = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    period = models.CharField(max_length=20, choices=PERIOD_CHOICES)
-    reset_day = models.PositiveSmallIntegerField(
-        default=1,
-        help_text="Day of the month when the budget resets (1-31)"
+
+    period_start = models.DateField()
+    period_end = models.DateField()
+    recurrence = models.CharField(
+        max_length=10,
+        choices=RECURRENCE_CHOICES,
+        null=True,
+        blank=True
     )
-    expires_at = models.DateField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+    is_recurring = models.BooleanField(default=True)
+    is_shared = models.BooleanField(default=False)
+
+    created_at = models.DateField(auto_now_add=True)
    
     class Meta:
         unique_together = ('category', 'user')
-
+    
     def __str__(self):
-        return f"Category: {self.name} by {self.user.username}"
-    
-    @property
-    def is_expired(self):
-        if self.expires_at and timezone.now().date() > self.expires_at:
-            return True
-        return False
-    
-    @property
-    def next_reset_date(self):
-        """ Compute next reset day based on current month and reset_day. """
-        from datetime import date, timedelta
-        import calendar
-        today = timezone.now().date()
-        _, days_in_month = calendar.monthrange(today.year, today.month)
-        reset_day = min(self.reset_day, days_in_month)
-        reset_date = date(today.year, today.month, reset_day)
-        if reset_date <= today:
-            # move to next month
-            month = 1 if today.month == 12 else today.month + 1
-            year = today.year + 1 if today.month == 12 else today.year
-            _, days_in_next = calendar.monthrange(year, month)
-            reset_day = min(self.reset_day, days_in_next)
-            reset_date = date(year, month, reset_day)
-        return reset_date
+        return f"Category: {self.category} by {self.user.username}"
+
 
 
 class Subscription(models.Model):

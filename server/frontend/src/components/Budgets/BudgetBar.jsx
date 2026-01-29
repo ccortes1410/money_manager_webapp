@@ -5,7 +5,7 @@ const BudgetBar = ({ budget, onDelete, onSelect }) => {
     // const { name, total, spent, members = [] } = budget;
     // const [transactions, setTransactions] = useState([]);
     // const [spent, setSpent] = useState(0);
-
+    
     const spentPct = budget.amount ? (budget.spent/budget.amount) * 100 : 0;
     const overBudget = budget.spent > budget.amount;
     const remainingPct = Math.max(100 - spentPct, 0);
@@ -42,7 +42,7 @@ const BudgetBar = ({ budget, onDelete, onSelect }) => {
                 <div
                     className='progress-fill remaining'
                     style={{ width: `${remainingPct}%`}}
-                    label={ `${(budget.amount - budget.spent).toFixed(2)}` }
+                    label={ `${(budget.remaining).toFixed(2)}` }
                 ></div>
 
                 <div
