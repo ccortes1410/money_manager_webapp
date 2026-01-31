@@ -11,8 +11,12 @@ const BudgetBar = ({ budget, onDelete, onSelect }) => {
     const remainingPct = Math.max(100 - spentPct, 0);
     const expired = new Date(budget.expires_at) < new Date();
 
+    
     return (
-        <div className={`budget-bar ${expired ? "expired" :  ""}`} onClick={() => onSelect && onSelect(budget)}>
+        <div 
+            className={`budget-bar ${expired ? "expired" :  ""}`} 
+            onClick={() => onSelect && onSelect(budget)}
+        >
             <div className='budget-info'>
                 <span>{budget.category}</span>
                 {expired ? (

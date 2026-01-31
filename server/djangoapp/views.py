@@ -1,18 +1,27 @@
 from django.forms import model_to_dict
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
+from django.db.models import Sum, Count
 from .models import Transaction, Budget, Subscription, Income
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
+from collections import defaultdict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .restapi import get_request
 from .services.budgets import reset_expired_budgets, compute_budget_spent, get_transactions_for_budget
+from .services.date_filter import (
+    filter_queryset_by_period,
+    get_date_range,
+    get_period_label,
+    get_period_display_dates
+)
+from .services.transactions import get_transactions_chart_data
 
 import logging
 
@@ -121,25 +130,126 @@ def dashboard(request):
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
         )
-    
-    category = request.GET.get("category")
-    print(category)
+
+    period = request.GET.get("period", "monthly")
+
     if request.method == "GET":
-        if category:
-            transactions = Transaction.objects.filter(user=request.user, category=category)
-        else:
-            transactions = Transaction.objects.filter(user=request.user)
-        data = list(transactions.values())
+        
+        # transactions = filter_queryset_by_period(
+        #         Transaction.objects.filter(user=request.user),
+        #         period=period,
+        #         date_field="date"
+        # )
+
+        transactions = get_transactions_chart_data(request.user, period)
+
+        categories = get_category_spending(request.user, period)
+
+        subscriptions = filter_queryset_by_period(
+            Subscription.objects.filter(user=request.user),
+            period=period,
+            date_field="due_date"
+        )
+
+        budgets = filter_queryset_by_period(
+            Budget.objects.filter(user=request.user),
+            period=period,
+            date_field="period_start"
+        )
+
+        income = filter_queryset_by_period(
+            Income.objects.filter(user=request.user),
+            period=period,
+            date_field="period_start"
+        )
+
         return JsonResponse({
-            "transactions": data,
+            "dashboard": {
+                "transactions": transactions,
+                "categories": categories,
+                "subscriptions": list(subscriptions.values()),
+                "budgets": list(budgets.values()),
+                "income": list(income.values()),
+                "period": {
+                    "value": period,
+                    "label": get_period_label(period),
+                    **get_period_display_dates(period)
+                },
+            },
             "user": {
                 "id": request.user.id,
                 "username": request.user.username,
                 "is_authenticated": request.user.is_authenticated
             }
         })
+    
+def get_category_spending(user, period: str):
+    """Spending by category for donut chart"""
+    transactions = filter_queryset_by_period(
+        Transaction.objects.filter(user=user),
+        period=period,
+        date_field="date"
+    )
 
+    transactions_spending = transactions.values(
+        "category"
+    ).annotate(
+        total=Sum("amount")
+    )
 
+    subscriptions = filter_queryset_by_period(
+        Subscription.objects.filter(user=user),
+        period=period,
+        date_field="due_date"
+    )
+
+    subscriptions_spending = subscriptions.values(
+        "category"
+    ).annotate(
+        total=Sum("amount")
+    )
+
+    category_totals = defaultdict(lambda: {
+        "transactions": 0,
+        "subscriptions": 0,
+        "total": 0
+    })
+
+    for item in transactions_spending:
+        category = item["category"] or "Uncategorized"
+        amount = float(item["total"] or 0)
+        category_totals[category]["transactions"] += amount
+        category_totals[category]["total"] += amount
+
+    for item in subscriptions_spending:
+        category = item["category"] or "Uncategorized"
+        amount = float(item["total"] or 0)
+        category_totals[category]["subscriptions"] += amount
+        category_totals[category]["total"] += amount
+
+    grand_total = sum(cat["total"] for cat in category_totals.values())
+
+    result = [
+        {
+            "category": category,
+            "total": data["total"],
+            "transactions": data["transactions"],
+            "subscriptions": data["subscriptions"],
+            "percentage": round((data["total"] / grand_total) * 100, 1) if grand_total > 0 else 0
+        }
+        for category, data in category_totals.items()
+    ]
+
+    result.sort(key=lambda x: x["total"], reverse=True)
+
+    return {
+            "categories": result,
+            "total": grand_total,
+            "transaction_total": sum(cat["transactions"] for cat in result),
+            "subscription_total": sum(cat["subscriptions"] for cat in result)
+        }
+
+    
 def transaction_list(request):
     if not request.user.is_authenticated:
         return JsonResponse(

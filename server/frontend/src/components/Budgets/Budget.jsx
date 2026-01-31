@@ -15,7 +15,7 @@ const Budget = ({ budget }) => {
         )
     }
 
-    if (!Array.isArray(budget.transactions)) {
+    if (!Array.isArray(budget.transactions) || budget.transactions.length === 0) {
         return <p>No transactions for this budget</p>
     }
     

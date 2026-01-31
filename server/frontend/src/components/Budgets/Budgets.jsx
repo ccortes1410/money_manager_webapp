@@ -191,6 +191,12 @@ const Budgets = () => {
         }
     };
 
+    const handleSelectBudget = (budgetId) => {
+        setSelectedBudgetId(prev =>
+            prev === budgetId ? null : budgetId
+        );
+    };
+
     useEffect(() => {
         get_budgets();
         get_transactions();
@@ -216,9 +222,6 @@ const Budgets = () => {
             navigate('/');
         }
     }, [user]); 
-
-    console.log("Selected Budget:", selectedBudgetId)
-    console.log("Budget detail:", budgetDetail)
 
     return (
         // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
@@ -307,7 +310,7 @@ const Budgets = () => {
                                 <BudgetBar
                                     key={b.id}
                                     budget={b}
-                                    onSelect={() => setSelectedBudgetId(b.id)}
+                                    onSelect={() => handleSelectBudget(b.id)}
                                     onDelete={() => handleDeleteBudget(b.id)}
                                 />                               
                             ))}

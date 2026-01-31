@@ -1,0 +1,26 @@
+.dashboard-period-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 12px;
+    gap: 8px;
+    background-color: #a4c3cc;
+}
+
+.period-btn {
+    padding: 8px 16px;
+    border: 1px solid #3a3a3a;
+    color: #000000;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.period-btn:hover {
+    background: #2a2a2a;
+}
+
+.period-btn.active {
+    background: #2f80ed;
+    border-color: #2f80ed;
+}

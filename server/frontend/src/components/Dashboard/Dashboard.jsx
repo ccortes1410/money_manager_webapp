@@ -5,12 +5,36 @@ import './Dashboard.css';
 import '../assets/style.css';
 import { Line, Pie, Bar } from 'react-chartjs-2';
 import { BarElement, ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
+import PeriodSelector from './PeriodSelector';
+import TransactionsCard from './Dashboard Cards/TransactionsCard';
+import CategorySpendingCard from './Dashboard Cards/CategorySpendingCard';
 
 Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
+
+const PERIODS = ["daily", "weekly", "monthly", "yearly", "total"];
 
 const Dashboard = () => {
     // const [collapsed, setCollapsed] = useState(true);
     const { user } = useContext(AuthContext);
+    const [ dashboard, setDashboard ] = useState({
+        transactions: [],
+        categories: {
+            categories: [],
+            total: 0,
+            transaction_total: 0,
+            subscription_total: 0
+        },
+        subscriptions: [],
+        budgets: [],
+        income: {
+        total: 0,
+        by_source: []
+        },
+        period: {
+        value: "monthly",
+        label: "Last 30 Days"
+        }
+    });
     const [subscriptions, setSubscriptions] = useState([]);
     const [budgets, setBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -18,6 +42,9 @@ const Dashboard = () => {
     const [allData, setAllData] = useState([]);
     const [data, setData] = useState([]);
     
+    const [error, setError] = useState(null);
+    const [ loading, setLoading ] = useState(true);
+    const [ selectedPeriod, setSelectedPeriod ] = useState("monthly");
     const [searchQuery, setSearchQuery] = useState("");
     const [amountInput, setAmountInput] = useState('');
     const [dateInput, setDateInput] = useState('');
@@ -39,12 +66,41 @@ const Dashboard = () => {
     };
 
     // Set the urls from where to get data
+    let dashboard_url = "/djangoapp/dashboard";
+
     let trans_url = "/djangoapp/transactions";
     let subs_url = "/djangoapp/subscriptions";
     let budget_url = "/djangoapp/budgets";
     let income_url = "/djangoapp/income";
+    
 
     const navigate = useNavigate();
+    useEffect(() => {
+        const get_dashboard = async () => {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const res = await fetch(dashboard_url+`?period=${selectedPeriod}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!res.ok) throw new Error("Failed to fetch dashboard");
+
+                const data = await res.json();
+                setDashboard(data.dashboard)
+            } catch (error) {
+                console.log("Couldn't fetch dashboard:", error)
+                setError("Failed to load dashboard data");
+            } finally {
+                setLoading(false);
+            }
+        }
+        get_dashboard();
+    }, [selectedPeriod])
+    
+
 
     const get_transactions = async () => {
         try {
@@ -97,10 +153,8 @@ const Dashboard = () => {
             });
 
             const retobj = await res.json();
-            if (retobj.budgets) {
-                let budgets = Array.from(retobj.budgets)
-                .filter(bud => bud.user_id === user.id);
-                setBudgets(budgets);
+            if (res.ok) {
+                setBudgets(retobj.budgets);
             } else {
                 setBudgets([]);
             }
@@ -402,95 +456,10 @@ const Dashboard = () => {
 
     const remainingFundsPercent = totalInc > 0 ? Math.min(100, (remainingFunds / totalInc ) * 100) : 0;
 
-    console.log("Current month spending: ", currentMonthSpending)
-    console.log("Total Spending: ", totalSpendingThisMonth)
-    console.log("Total Income: ", totalIncomeThisMonth)
-    console.log(remainingFundsPercent)
-
-    const handleAddTransaction = async() => {
-        const amount = amountInput;
-        const date = dateInput || getToday();
-        const description = descriptionInput;
-        const category = categoryInput || "General";
-
-        // Add validation if needed
-
-        const newTransaction = {
-            amount: parseFloat(amount),
-            date: date,
-            description: description,
-            category: category
-        };
-
-        try {
-            const response = await fetch(trans_url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(newTransaction)
-            });
-            const result = await response.json();
-            if (response.status === 201 || result.status === 201) {
-                get_transactions();
-                setAmountInput('');
-                setDateInput('');
-                setDescriptionInput('');
-                setCategoryInput('');
-            } else {
-                alert("Error adding transaction");
-            }
-        } catch (error) {
-            alert("Failed to add transaction.");
-            console.error(error);
-        }
-    }
-    
-    const handleCheckboxChange =(id) => {
-        setSelectedTransactions(prev => 
-            prev.includes(id) ?
-            prev.filter(tid => tid !== id) :
-            [...prev, id]
-        );
-    };
-
-    const handleDeleteTransaction = async () => {
-        if (selectedTransactions.length === 0) return;
-        try {
-            const response = await fetch(trans_url, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ ids: selectedTransactions })
-            });
-            if (response.status === 200) {
-                get_transactions();
-                setSelectedTransactions([]);
-            } else {
-                alert("Failed to delete transactions");
-            }
-        } catch (error) {
-            alert("Error deleting transactions");
-            console.error(error);
-        }
-    }
-
-    const handleInputChange = (e) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-
-        const filtered = allData.filter((transaction) =>
-            transaction.description.toLowerCase().includes(query.toLowerCase())
-        );
-        if (filtered.length > 0 || query === "") {
-            setData(filtered.length > 0 ? filtered : allData);
-        }
-    }
-    
-    
+    // console.log("Current month spending: ", currentMonthSpending)
+    // console.log("Total Spending: ", totalSpendingThisMonth)
+    // console.log("Total Income: ", totalIncomeThisMonth)
+    // console.log(remainingFundsPercent)   
     
     useEffect(() => {
         get_transactions();
@@ -499,11 +468,6 @@ const Dashboard = () => {
         get_income();
     }, []);
 
-    // useEffect(() => {
-    //     if (data.length > 0) {
-    //         console.log("Sample transaction:", data[0]);
-    //     }
-    // }, [data]);
 
     useEffect(() => {
         if (user !== null && !user.is_authenticated) {
@@ -525,9 +489,33 @@ const Dashboard = () => {
     const sumSubs = activeTotalSubs + inactiveTotalSubs;
 
     const totalBudget = budgets.reduce((a, b) => a + Number(b.amount), 0);
-    const totalSpent = transactions.reduce((a, t) => a + Number(t.amount), 0);
-    const budgetPercentUsed = Math.min(100, (totalSpent / totalBudget) * 100);
+    const budgetsSpent = budgets.reduce((acc, sum) => acc + Number(sum.spent), 0);
+    const budgetPercentUsed = Math.min(100, (budgetsSpent / totalBudget) * 100);
 
+    const totalSpent = transactions.reduce((a,b) => a + Number(b.amount), 0);
+
+    console.log("Dashboard fetched:", dashboard)
+    // console.log("Categories:", dashboard.categories)
+
+    // if (!dashboard) {
+    //     return (
+    //     <div className="dashboard-loading">
+    //         <p>Loading {selectedPeriod} data...</p>
+    //     </div>
+    //     );
+    // }
+
+    if (error) {
+        return (
+        <div className="dashboard-error">
+            <p>{error}</p>
+            <button onClick={() => setSelectedPeriod(selectedPeriod)}>
+            Retry
+            </button>
+        </div>
+        );
+    }
+    
     return (
             <div className='main-section'>
                 <div className="dashboard-header">
@@ -536,40 +524,54 @@ const Dashboard = () => {
                             <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
                     </div>
                 </div>
+                <PeriodSelector
+                    periods={PERIODS}
+                    selected={selectedPeriod}
+                    onSelect={setSelectedPeriod}
+                />
                 <div 
                     className="dashboard-container"
                     style={{
                         transition: "margin-left 0.2s"
                     }}>
                     <div className="dashboard-main">
-                        <div className="dashboard-card transactions">
-                        <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
-                        <div className="chart-wrapper line-chart-wrapper">
-                             {getMonthlySpending && getMonthlySpending.labels && getMonthlySpending.labels.length > 0 ? ( 
-                            <>
-                                <div>
-                                    <label>
-                                        Select Year: {' '}
-                                        <select
-                                            value={selectedYear}
-                                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                            >
-                                                {years.map((y) => (
-                                                    <option key={y} value={y}>
-                                                        {y}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                    </label>
-                                </div>
-                                <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
-                            </>
-                            ) : (
-                                <p style={{ textAlign: 'center' }}>No data available</p>
-                            )}
-                        </div>
-                        </div>
-                        <div className="dashboard-card categories">
+                        <TransactionsCard
+                            transactions={dashboard?.transactions || []}
+                            period={selectedPeriod}
+                        />
+                        {/* <div className="dashboard-card transactions">
+                            <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
+                            <div className="chart-wrapper line-chart-wrapper">
+                                {getMonthlySpending && getMonthlySpending.labels && getMonthlySpending.labels.length > 0 ? ( 
+                                <>
+                                    <div>
+                                        <label>
+                                            Select Year: {' '}
+                                            <select
+                                                value={selectedYear}
+                                                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                                >
+                                                    {years.map((y) => (
+                                                        <option key={y} value={y}>
+                                                            {y}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                        </label>
+                                    </div>
+                                    <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
+                                </>
+                                ) : (
+                                    <p style={{ textAlign: 'center' }}>No data available</p>
+                                )}
+                            </div>
+                        </div> */}
+                        <CategorySpendingCard
+                            key={dashboard.categories.total}
+                            categories={dashboard?.categories || []}
+                            period={selectedPeriod}
+                        />
+                        {/* <div className="dashboard-card categories">
                             <h3 style={{ textAlign: 'center' }}>Spending by Category</h3>
                             <div className="chart-wrapper pie-chart-wrapper">
                                 {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
@@ -578,7 +580,7 @@ const Dashboard = () => {
                                     <p style={{ textAlign: 'center' }}>No data available</p>
                                 )}
                             </div>
-                        </div>
+                        </div> */}
                         <div className="dashboard-card subscriptions">
                             <h3 style={{ textAlign: 'center' }}>Subscriptions Total</h3>
                             {subscriptions && subscriptions.length > 0 ? (

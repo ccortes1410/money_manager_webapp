@@ -85,14 +85,6 @@ const Transactions = () => {
         }
     };
 
-    const handleCheckboxChange = (id) => {
-        setSelectedTransactions(prevSelected => 
-            prevSelected.includes(id) ?
-            prevSelected.filter(txId => txId !== id) :
-            [...prevSelected, id]
-        );
-    };
-
     const handleDeleteTransaction = async () => {
         if (selectedTransactions.length === 0) return;
         try {
@@ -136,18 +128,6 @@ const Transactions = () => {
     useEffect(() => {
         get_transactions();
     }, []);
-
-    // useEffect(() => {
-    //     if (data.length > 0) {
-    //         console.log("Transactions data updated:", data);
-    //     }
-    // }, [data]);
-    
-    // useEffect(() => {
-    //     if (user !== null && !user.is_authenticated) {
-    //         navigate("/login");
-    //     }
-    // }, [user]);
 
     return (
         // <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', overflow: 'hidden' }} >
