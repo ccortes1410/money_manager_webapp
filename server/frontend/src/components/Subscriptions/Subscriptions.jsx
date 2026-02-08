@@ -1,20 +1,31 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../../AuthContext';
+import SubscriptionCard from './SubscriptionCard';
+import SubscriptionModal from './SubscriptionModal';
 import './Subscriptions.css';
 
-const Subscriptions = () => {
-    const [ amountInput, setAmountInput ] = useState("");
-    const [ dateInput, setDateInput ] = useState("");
-    const [ descriptionInput, setDescriptionInput ] = useState("");
-    const [ categoryInput, setCategoryInput ] = useState("");
-    const [ frequencyInput, setFrequencyInput ] = useState("monthly");
-    const [ activeInput, setActiveInput ] = useState(false);
-    const [ subscriptions, setSubscriptions ] = useState([]);
-    const { user } = useContext(AuthContext);
-    const [ selectedSubs, setSelectedSubs ] = useState([]);
 
-    const FREQUENCY_OPTIONS = [
+const Subscriptions = () => {
+    const { user } = useContext(AuthContext);
+    const [ subscriptions, setSubscriptions ] = useState([]);
+    const [ loading, setLoading ] = useState(true);
+    const [ showModal, setShowModal ] = useState(false);
+    const [ editingSubscription, setEditingSubscription ] = useState(null);
+    const [ filter, setFilter ] = useState("all");
+
+    // const [ nameInput, setNameInput ] = useState("");
+    // const [ amountInput, setAmountInput ] = useState("");
+    // const [ dateInput, setDateInput ] = useState("");
+    // const [ descriptionInput, setDescriptionInput ] = useState("");
+    // const [ categoryInput, setCategoryInput ] = useState("");
+    // const [ billingCycleInput, setBillingCycleInput ] = useState("");
+    // const [ billingDayInput, setBillingDayInput ] = useState("");
+    // const [ startDateInput, setStartDateInput ] = useState("");
+    // const [ subscriptions, setSubscriptions ] = useState([]);
+    // const { user } = useContext(AuthContext);
+    // const [ selectedSubs, setSelectedSubs ] = useState([]);
+
+    const BILLING_CYCLE_OPTIONS = [
         { value: "daily", label: "Daily" },
         { value: "weekly", label: "Weekly" },
         { value: "monthly", label: "Monthly" },
@@ -29,9 +40,11 @@ const Subscriptions = () => {
     const subscription_url = "/djangoapp/subscriptions";
     // const addSubscription_url = "/djangoapp/addSubscription";
 
-    const navigate = useNavigate();
+    useEffect(() => {
+        fetchSubscriptions();
+    }, []);
 
-    const get_subscriptions = async () => {
+    const fetchSubscriptions = async () => {
         try {
             const response = await fetch(subscription_url, {
                 method: "GET",
@@ -39,261 +52,235 @@ const Subscriptions = () => {
             });
 
             const data = await response.json();
-
-            if (data.subscriptions && Array.isArray(data.subscriptions)) {
-                setSubscriptions(data.subscriptions);
-                // if (data.subscriptions.length > 0) {
-                //     setSelectedSubscriptionId(data.subscriptions[0].id);
-                // }
-            }
+            setSubscriptions(data.subscriptions || []);
         } catch (error) {
-            alert("Error fetching subscriptions");
-            setSubscriptions([]);
-            setSelectedSubs([]);
-            console.error(error);
+            console.error("Error fetching subscriptions");
+        } finally {
+            setLoading(false);
         }
     }
 
-    const handleAddSub = async () => {
-        const amount = amountInput;
-        const date = dateInput || getToday();
-        const description = descriptionInput;
-        const category = categoryInput;
-        const frequency = frequencyInput;
-        const is_active = activeInput;
-
-        const newSubscription = {
-            amount: parseFloat(amount),
-            due_date: date,
-            description: description,
-            category: category,
-            frequency: frequency,
-            is_active: is_active || false,
-        };
-
+    const handleCreate = async (subscriptionData) => {
         try {
-            const response = await fetch(subscription_url, {
+            const response = await fetch(subscription_url+'/create', {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newSubscription),
+                headers: { "Content-Type": "application/json"},
+                body: JSON.stringify(subscriptionData),
             });
 
-            const result = await response.json();
-            if (response.ok || result.ok) {
-                get_subscriptions();
-                setAmountInput("");
-                setDateInput("");
-                setDescriptionInput("");
-                setCategoryInput("");
-                setFrequencyInput("");
-                setActiveInput(false);
-                setSelectedSubs([]);
-            } else {
-                alert("Error adding subscription");
+            if (response.ok) {
+                fetchSubscriptions();
+                setShowModal(false);
             }
         } catch (error) {
-            alert("Error adding subscription");
-            console.error(error);
+            console.error("Error creating subscription", error);
         }
-    }
+    };
 
-    const handleDeleteSubs = async ([]) => {
-        if (selectedSubs === 0) return;
-
-        const delete_url = `/djangoapp/subscriptions/delete/`;
+    const handleUpdate = async (id, subscriptionData) => {
         try {
-            const response = await fetch(delete_url, {
+            const response = await fetch(subscription_url+`/${id}/update`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(subscriptionData),
+            });
+
+            if (response.ok) {
+                fetchSubscriptions();
+                setShowModal(false);
+                setEditingSubscription(null);
+            }
+        } catch (error) {
+            console.error("Error updating subscription:", error);
+        }
+    };
+
+    const handleStatusChange = async (id, newStatus) => {
+        try {
+            const response = await fetch(subscription_url+`/${id}/status`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "aplication/json" },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+                setSubscriptions((prev) =>
+                prev.map((sub) =>
+                    sub.id === id ? { ...sub, status: newStatus } : sub
+                )
+            );
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Delete this subscription?")) return;
+
+        try {
+            const response = await fetch(subscription_url+`/${id}/delete`, {
                 method: "DELETE",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ ids: selectedSubs }),
             });
-            if (!response.ok) {
-                throw new Error("Failed to delete subscriptions");
+
+            if (response.ok) {
+                setSubscriptions((prev) => prev.filter((sub) => sub.id !== id));
             }
-            alert("Subscriptions deleted successfully");
-            window.location.href = '/subscriptions'; // Redirect to subscriptions page
         } catch (error) {
-            alert("Error deleting subscriptions: " + error.message);
-            console.error(error);
+            console.error("Error deleting subscription:", error);
         }
+    };
+
+
+    const handleEdit = (subscription) => {
+        setEditingSubscription(subscription);
+        setShowModal(true);
     }
 
-    const handleSelect = (id) => {
-        setSelectedSubs(prev =>
-            prev.includes(id) ? 
-            prev.filter(sId => sId !== id) :
-            [...prev, id]
-        )
-    }
-
-    useEffect(() => {
-        get_subscriptions();
-    }, []);
-
-    const handleUpdateSubs = async ([]) => {
-        if (selectedSubs.length === 0) return;
-
-        const shouldActivate = subscriptions
-            .filter((s) => selectedSubs.includes(s.id))
-            .some((s) => !s.is_active);
-
-        const updated = subscriptions.map((s) => 
-            selectedSubs.includes(s.id) ? { ...s, is_active: shouldActivate} : s  
-        );
-
-        setSubscriptions(updated);
-        const update_url = "/djangoapp/subscriptions/update/"
+    const handleTogglePayment = async (paymentId, subscriptionId) => {
         try {
-            const res = await fetch(update_url, {
+            const response = await fetch(`/djangoapp/payments/${paymentId}/toggle`, {
                 method: "PATCH",
-                credentials: 'include',
-                body: JSON.stringify({ ids: selectedSubs, is_active: shouldActivate }),
-                headers: {
-                    "Content-Type": "application/json"
-                }
+                credentials: "include",
             });
-            if (!res.ok) {
-                alert("Error updating subscriptions")
-            } else {
-                setActiveInput(false);
-                setAmountInput("");
-                setCategoryInput("");
-                setDateInput("");
-                setSelectedSubs([]);
-                alert("Subscriptions updated successfully.");
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update local state
+                setSubscriptions((prev) =>
+                    prev.map((sub) => {
+                        if (sub.id === subscriptionId) {
+                            return {
+                                ...sub,
+                                payments: sub.payments.map((p) =>
+                                    p.id === paymentId ? { ...p, is_paid: data.payment.is_paid } : p
+                                ),
+                            };
+                        }
+                        return sub;
+                    })
+                );
             }
         } catch (error) {
-            alert("Error updating subscriptions: ", error.message);
-            console.log(error);
+            console.error("Error toggling payment:", error);
         }
-    }
+    };
 
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate('/');
-        }
-    }, [user]);
+    // Filter subscriptions
+    const filteredSubscriptions =
+        filter === "all"
+            ? subscriptions
+            : subscriptions.filter((sub) => sub.status === filter);
 
-    useEffect(() => {
-        setActiveInput(subscriptions.is_active)
-    },[])
+    // Calculate totals
+    const totals = {
+        active: subscriptions
+            .filter((s) => s.status === "active")
+            .reduce((sum, s) => sum + s.amount, 0),
+        paused: subscriptions
+            .filter((s) => s.status === "paused")
+            .reduce((sum, s) => sum + s.amount, 0),
+        cancelled: subscriptions
+            .filter((s) => s.status === "cancelled").length,
+    };
+    
+    console.log("Subscriptions fetched:", subscriptions)
 
     return (
-            <div className="subscriptions-container">
-                <div className="subscriptions-header">
-                    <h1 style={{ color: '#fff' }}>Subscriptions</h1>
-                    <div className="active-user">
-                        <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
-                    </div>
-                </div>
-            
-                <div className="subs-input-header">
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                        <input
-                            id='amount-input'
-                            className='subs-text-input'
-                            type="number"
-                            placeholder='Amount'
-                            value={amountInput}
-                            onChange={(e) => setAmountInput(e.target.value)}
-                        />
-                        <input
-                            id='description-input'
-                            className='subs-text-input'
-                            type="text"
-                            placeholder='Description'
-                            value={descriptionInput}
-                            onChange={(e) => setDescriptionInput(e.target.value)}
-                        />
-                        <input
-                            id='category-input'
-                            className='subs-text-input'
-                            type="text"
-                            placeholder='Category'
-                            value={categoryInput}
-                            onChange={(e) => setCategoryInput(e.target.value)}
-                        />
-                        <input
-                            id='date-input'
-                            className='date-input'
-                            type="date"
-                            value={dateInput}
-                            onChange={(e) => setDateInput(e.target.value)}
-                        />
-                        <select
-                            id='frequency-select'
-                            className='frequency-select'
-                            name="frequency"
-                            value={frequencyInput}
-                            onChange={(e) => setFrequencyInput(e.target.value)}
-                        >
-                            {FREQUENCY_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
-                        <input
-                            id='active-checkbox'
-                            className='checkbox-container'
-                            type="checkbox"
-                            name="active"
-                            value={activeInput}
-                            onChange={(e) => setActiveInput(!activeInput)}
-                        />
-                        <button
-                            className="add-btn"
-                            onClick={handleAddSub}
-                        >
-                            +
-                        </button>
-                        <button
-                            className="del-btn"
-                            onClick={() => handleDeleteSubs(selectedSubs)}
-                            style={{ marginLeft: '10px' }}
-                        >
-                            -
-                        </button>
-                        <button
-                            className="upd-btn"
-                            onClick={() => handleUpdateSubs(selectedSubs)}
-                        >
-                            Update
-                        </button>
-                    </div>
-                </div>
-            <div className="subscription-grid">
-                {Array.isArray(subscriptions) && subscriptions.length > 0 ? (
-                        subscriptions.map((s) => (                    
-                        <div 
-                            className={`subscription-card ${selectedSubs.includes(s.id) ? "selected" : ""}`}
-                            key={s.id}
-                            onClick={() => handleSelect(s.id)}
-                        >
-                            <h4>{s.description}</h4>
-                            <p>${s.amount}</p>
-                            <p>Due: {s.due_date}</p>
-                            <div
-                                className={`status-indicator ${s.is_active ? "active" : "inactive"}`}
-                                title={s.is_active ? "Active" : "Inactive"}
-                            >
-                                {s.is_active ? "Active" : "Inactive"}
-                            </div>
-                        </div>
-                
-                ))
-        ) : (
-            <p>No subscriptions found.</p>
-        )}
-        </div>
+        <div className="subscriptions-page">
+            <div className="subscriptions-header">
+                <h1>Subscriptions</h1>
+                <button
+                    className="subscriptions-add-btn"
+                    onClick={() => {
+                        setEditingSubscription(null);
+                        setShowModal(true);
+                    }}
+                >
+                    + Add Subscription
+                </button>
             </div>
+
+            {/* Summary Cards */}
+
+            <div className="subscriptions-summary">
+                <div className="sub-summary-card active">
+                    <span className="label">Active Monthly</span>
+                    <span className="value">${totals.active.toFixed(2)}</span>
+                </div>
+                <div className="sub-summary-card paused">
+                    <span className="label">Paused Monthly</span>
+                    <span className="value">${totals.paused.toFixed(2)}</span>
+                </div>
+                <div className="sub-summary-card cancelled">
+                    <span className="label">Cancelled</span>
+                    <span className="value">{totals.cancelled}</span>
+                </div>
+            </div>
+
+            {/* Filter tabs */}
+            <div className="filter-tabs">
+                {["all", "active", "paused", "cancelled"].map((status) => (
+                    <button
+                        key={status}
+                        className={`filter-tab ${filter === status ? "active" : ""}`}
+                        onClick={() => setFilter(status)}
+                    >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        <span className="count">
+                            {status === "all"
+                                ? subscriptions.length
+                                : subscriptions.filter((s) => s.status === status).length}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
+            {/*  Subscriptions list */}
+            <div className="subscriptions-list">
+                {filteredSubscriptions.length === 0 ? (
+                    <p className="empty-state">No subscriptions found.</p>
+                ) : (
+                    filteredSubscriptions.map((subscription) => (
+                        <SubscriptionCard
+                            key={subscription.id}
+                            subscription={subscription}
+                            onEdit={() => handleEdit(subscription)}
+                            onDelete={() => handleDelete(subscription.id)}
+                            onStatusChange={(status) =>
+                                handleStatusChange(subscription.id, status)
+                            }
+                            onTogglePayment={(paymentId) =>
+                                handleTogglePayment(paymentId, subscription.id)
+                            }
+                        />
+                    ))
+                )}
+            </div>
+
+            {/* Modal */}
+            {showModal && (
+                <SubscriptionModal
+                    subscription={editingSubscription}
+                    onClose={() => {
+                        setShowModal(false);
+                        setEditingSubscription(null);
+                    }}
+                    onSave={(data) => {
+                        if (editingSubscription) {
+                            handleUpdate(editingSubscription.id, data);
+                        } else {
+                            handleCreate(data);
+                        }
+                    }}
+                />
+            )}
+        </div>
     );
-}
+};
 
 export default Subscriptions;

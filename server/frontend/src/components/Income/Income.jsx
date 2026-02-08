@@ -1,240 +1,260 @@
 import React, { useRef, useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../AuthContext";
+import IncomeModal from './IncomeModal';
 import "./Income.css";
 
 const Income = () => {
-    const [ amountInput, setAmountInput ] = useState("");
-    const [ dateReceivedInput, setDateReceivedInput ] = useState("");
-    const [ periodStart, setPeriodStart ] = useState("");
-    const [ periodEnd, setPeriodEnd ] = useState("");
-    const [ sourceInput, setSourceInput ] = useState("");
     const [ income, setIncome ] = useState([]);
-    const [ transactions, setTransactions ] = useState([]);
+    const [ summary, setSummary ] = useState({
+        total_income: 0,
+        total_spent: 0,
+        transaction_spent: 0,
+        subscription_spent: 0,
+        remaining: 0,
+        percent_remaining: 0,
+        is_negative: false,
+        this_month: {
+            income: 0,
+            spent: 0,
+            transaction_spent: 0,
+            subscription_spent: 0,
+            remaining: 0,
+            percent_remaining: 0,
+            is_negative: false,
+        }
+    });
+    const [ bySource, setBySource ] = useState([]);
+    const [ loading, setLoading ] = useState(true);
+    const [ showModal, setShowModal ] = useState(false);
+    const [ editingIncome, setEditingIncome ] = useState(null);
+    const [ selectedIncome, setSelectedIncome ] = useState(null);
+    const [ selectedIncomeIds, setSelectedIncomeIds ] = useState([]);
+    const [ filter, setFilter ] = useState("all");
+    const [ searchQuery, setSearchQuery ] = useState("");
+
     const { user } = useContext(AuthContext);
-    const [ selectedIncome, setSelectedIncome ] = useState([]);
-
     const navigate = useNavigate();
-
-    const income_url = "/djangoapp/income";
-
-    const getToday = () => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    }
+    const monthsRefs = useRef({}); 
+    
+    const income_url = "/djangoapp/incomes";
 
     // Fetch income data for the logged-in user
-    const get_income = async () => {
+    const fetchIncome = async () => {
         try {
             const res = await fetch(income_url, {
                 method: "GET",
                 credentials: "include",
             });
 
-            const retobj = await res.json();
-            if (retobj.incomes && Array.isArray(retobj.incomes)) {
-                let income_list = Array.from(retobj.incomes)
-                .filter(inc => inc.user_id === retobj.user.id);
-                setIncome(income_list);
-                // console.log("Fetched income data:", JSON.stringify(income_list, null, 4));
+            const data = await res.json();
+            if (data.incomes && Array.isArray(data.incomes)) {
+                setIncome(data.incomes);
             } else {
                 setIncome([]);
-                console.log("No income data found for user ", user);
+            }
+
+            if (data.summary) {
+                setSummary(data.summary)
+            }
+
+            if (data.by_source) {
+                setBySource(data.by_source)
             }
         } catch (error) {
             console.error("Error fetching income data:", error);
+            setIncome([]);
+        } finally {
+            setLoading(false);
         }
-    }
-    // Fetch transaction data for the logged-in user
-    const get_transactions = async () => {
+    };
+
+    const handleCreate = async (incomeData) => {
         try {
-            const res = await fetch("/djangoapp/transactions", {
-                method: "GET",
-                credentials: "include",
+            const res = await fetch(income_url+`/create`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(incomeData),
             });
-            const retobj = await res.json();
-            if (retobj.transactions && Array.isArray(retobj.transactions)) {
-                let transaction_list = Array.from(retobj.transactions)
-                .filter(txn => txn.user_id === retobj.user.id);
-                setTransactions(transaction_list);
-                // Process transactions as needed
+
+            const data = await res.json();
+
+            if (res.ok) {
+                fetchIncome();
+                setShowModal(false);
             } else {
-                console.log("No transaction data found for user ", user);
+                console.error("Error adding income:", data.error);
+                alert(data.error || "Faile to add income");
             }
         } catch (error) {
-            console.error("Error fetching transaction data:", error);
+            console.error("Error adding income:", error);
         }
-    }
-    // Calculate total income and remaining funds
-    const totalIncome = useMemo(() => {
-        return income.reduce(
-            (total, inc) => total + parseFloat(inc.amount), 0);
-    }, [income]);
+    };
 
-    const totalSpent = useMemo(() => {
-        return transactions.reduce(
-            (sum, tx) => sum + Number(tx.amount),
-            0
-        );
-    }, [transactions]);
+    const handleUpdate = async (id, incomeData) => {
+        try {
+            const res = await fetch(income_url+`/${id}/update`, {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(incomeData),
+            });
 
-    const remainingFunds = totalIncome - totalSpent;
+            const data = await res.json();
 
-    const percentageRemaining = totalIncome > 0
-        ? Math.max(0, (remainingFunds / totalIncome) * 100)
-        : 0;
+            if (res.ok) {
+                fetchIncome();
+                setShowModal(false);
+                setEditingIncome(null);
+            } else {
+                console.error("Error updating income:", data.error);
+                alert(data.error || "Failed to update income");
+            }
+        } catch (error) {
+            console.error("Error updating income:", error);
+        }
+    };
 
-    const YEARS = Array.from({ length: 10 }, (_, i) => 2024 + i);
+    const handleDelete = async () => {
+        if (selectedIncomeIds.length === 0) return;
+        if (!window.confirm(`Delete ${selectedIncomeIds.length} income record(s)?`)) return;
 
-    const years = useMemo(() => {
-        if (!income.length) return [];
+        try {
+            const res = await fetch(income_url+`delete`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ income_ids: selectedIncomeIds }),
+            });
 
-        const allYears = income.flatMap(item => {
-            const start = parseYearMonth(item.period_start);
-            const end = parseYearMonth(item.period_end);
-            if (!start || !end) return [];
-            return [start, end];
+            const data = await res.json();
+
+            if (res.ok) {
+                fetchIncome();
+                setSelectedIncomeIds([]);
+                setSelectedIncome(null);
+            } else {
+                alert(data.error || "Failed to delete income");
+            }
+        } catch (error) {
+            console.error("Error deleting income:", error);
+        }
+    };
+
+    const handleToggleSelect = (incomeId) => {
+        setSelectedIncomeIds(prev => {
+            if (prev.includes(incomeId)) {
+                return prev.filter(id => id !== incomeId);
+            }
+            return [...prev, incomeId];
         });
+    };
 
-        if (!allYears.length) return [];
+    const handleSelectAll = () => {
+        if(selectedIncomeIds.length === filteredIncome.length) {
+            setSelectedIncomeIds([]);
+        } else {
+            setSelectedIncomeIds(filteredIncome.map(inc => inc.id));
+        }
+    };
 
-        const minYear = Math.min(...allYears);
-        const maxYear = Math.max(...allYears);
+    const handleSelectForCalendar = (inc) => {
+        setSelectedIncome(prev => prev?.id === inc.id ? null : inc);
+    };
 
-        return Array.from(
-            { length: maxYear - minYear +1 },
-            (_, i) => minYear + i
-        );
+    const handleEdit = (inc) => {
+        setEditingIncome(inc);
+        setShowModal(true);
+    };
+
+    const sources = useMemo(() => {
+        return bySource.map(item => item.source);
+    }, [bySource]);
+
+    const filteredIncome = useMemo(() => {
+        let result = [...income];
+
+        if (searchQuery) {
+            const query = searchQuery.toLocaleLowerCase();
+            result = result.filter(inc =>
+                inc.source?.toLocaleLowerCase().includes(query) ||
+                inc.amount?.toString().includes(query) ||
+                inc.date_received?.includes(query)
+            );
+        }
+
+        if (filter !== "all") {
+            result = result.filter(inc => inc.source === filter);
+        }
+
+        return result;
+    }, [income, searchQuery, filter]);
+
+    const filteredTotal = useMemo(() => {
+        return filteredIncome.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+    }, [filteredIncome]);
+
+    const calendarYears = useMemo(() => {
+        if (!income.length) {
+            const currentYear = new Date().getFullYear();
+            return [currentYear - 1, currentYear, currentYear + 1];
+        }
+
+        const years = income.flatMap(inc => {
+            const startYear = new Date(inc.period_start).getFullYear();
+            const endYear = new Date(inc.period_end).getFullYear();
+            return [startYear, endYear];
+        }).filter(y => !isNaN(y));
+
+        if (!years.length) {
+            const currentYear = new Date().getFullYear();
+            return [currentYear - 1, currentYear, currentYear + 1];
+        }
+
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years);
+
+        return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + 1);
     }, [income]);
-
 
     const MONTHS = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
 
-    function parseYearMonth(dateStr) {
-        if (!dateStr || typeof dateStr !== "string") {
-            return null;
-        }
 
-        const parts = dateStr.split("-");
-        if (parts.length < 2) {
-            return null;
-        }
+    const isMonthInPeriod = (year, monthIndex) => {
+        if (!selectedIncome) return false;
 
-        const year = Number(parts[0]);
-        const monthIndex = Number(parts[1]) - 1;
+        const start = new Date(selectedIncome.period_start);
+        const end = new Date(selectedIncome.period_end);
 
-        if (Number.isNaN(year) || Number.isNaN(monthIndex)) {
-            return null;
-        }
+        const monthStart = new Date(year, monthIndex, 1);
+        const monthEnd = new Date(year, monthIndex + 1, 0);
 
-        return { year, monthIndex };
+        return monthStart <= end && monthEnd >= start;
     };
 
-
-    const selectedPeriod = selectedIncome
-        ? (() => {
-            const start = parseYearMonth(selectedIncome.period_start);
-            const end = parseYearMonth(selectedIncome.period_end);
-
-            if (!start || !end) return null;
-            return { start, end };
-        })()
-        : null;
-    
-    const monthsRefs = useRef({});
-
-    function isMonthInPeriod(year, monthIndex, start, end) {
-        const value = year * 12 + monthIndex;
-        const startValue = start.year * 12 + start.monthIndex;
-        const endValue = end.year * 12 + end.monthIndex;
-
-        return value >= startValue && value <= endValue;
-    }
-    // Add a new income source
-    const handleAddIncomeSource = async () => {
-        const amount = amountInput;
-        const date_received = dateReceivedInput || getToday();
-        const period_start = periodStart;
-        const period_end = periodEnd;
-        const source = sourceInput;
-
-        const newIncome = {
-            amount: parseFloat(amount),
-            date_received: date_received,
-            period_start: period_start,
-            period_end: period_end,
-            source: source,
-        };
-
-        try {
-            const res = await fetch(income_url, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newIncome),
-            });
-
-            if (res.ok) {
-                get_income();
-                setAmountInput("");
-                setDateReceivedInput("");
-                setPeriodStart("");
-                setPeriodEnd("");
-                setSourceInput("");
-            } else {
-                console.error("Error adding income source:", res.statusText);
-            }
-        } catch (error) {
-            console.error("Error adding income source:", error);
-        }
-    }
-    // Delete selected income sources
-    const handleDeleteIncome = async (incomeId) => {
-        if (selectedIncome.length === 0) return;
-        try {
-            const res = await fetch(income_url, {
-                method: "DELETE",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ income_ids: selectedIncome }),
-            });
-
-            if (res.ok) {
-                get_income();
-                setSelectedIncome([]);
-            }
-        } catch (error) {
-            console.error("Error deleting income source:", error);
-        }
-    }
+    const isCurrentMonth = (year, monthIndex) => {
+        const now = new Date();
+        return year === now.getFullYear() && monthIndex === now.getMonth();
+    };
 
     useEffect(() => {
-        if (!selectedPeriod) return;
+        if (!selectedIncome) return;
 
-        const { start } = selectedPeriod;
-        const key = `${start.year}-${start.monthIndex}`;
-        const el = monthsRefs.current[key]
-        console.log("Ref exists:", monthsRefs.current[key]);
-        console.log("Scroll key:", `${selectedPeriod.start.year}-${selectedPeriod.start.monthIndex}`);
+        const start = new Date(selectedIncome.period_start);
+        const key = `${start.getFullYear()}-${start.getMonth()}`;
+        const el = monthsRefs.current[key];
+
         if (el) {
-            el.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
-    },[selectedPeriod]);
+    }, [selectedIncome]);
 
-    // Initial data fetch and authentication check
     useEffect(() => {
-        get_income();
-        get_transactions();
+        fetchIncome();
     }, []);
 
     useEffect(() => {
@@ -243,176 +263,371 @@ const Income = () => {
         }
     }, [user]);
 
-    if (new Date(periodEnd) < new Date(periodStart)) {
-        alert ("End date cannot be before start date");
-        return;
-    }
-
-    console.log("Parsed date:", selectedPeriod);
+    const formatCurrency = (value) => {
+        const num = parseFloat(value) || 0;
+        return num.toFixed(2);
+    };
 
     return (
-        <div className="income-container">
+        <div className="income-page">
+            {/* Header */}
             <div className="income-header">
                 <h1>Income</h1>
-                <div className="active-user">
-                    <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
+                <button
+                    className="income-add-btn"
+                    onClick={() => {
+                        setEditingIncome(null);
+                        setShowModal(true);
+                    }}
+                >
+                    + Add Income
+                </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="income-summary">
+                <div className="inc-summary-card total-income">
+                    <span className="label">Total Income</span>
+                    <span className="value">${formatCurrency(summary.total_income)}</span>
+                </div>
+                <div className="inc-summary-card this-month">
+                    <span className="label">This Month Income</span>
+                    <span className="value">${formatCurrency(summary.this_month)}</span>
+                </div>
+                <div className="inc-summary-card spent">
+                    <span className="label">Total Spent</span>
+                    <span className="value">${formatCurrency(summary.total_spent)}</span>
+                    <div className="inc-breakdown">
+                        <span className="inc-breakdown-item">
+                            <span className="inc-breakdown-dot transactions"></span>
+                            Transactions: ${formatCurrency(summary.transaction_spent)}
+                        </span>
+                        <span className="inc-breakdown-item">
+                            <span className="inc-breakdown-dot subscriptions"></span>
+                            Susbcriptions: ${formatCurrency(summary.subscription_spent)}
+                        </span>
+                    </div>
+                </div>
+                <div className="inc-summary-card remaining">
+                    <span className="label">Remaining</span>
+                    <span className={`value ${summary.is_negative ? 'negative' : ''}`}>
+                        ${formatCurrency(summary.remaining)}
+                    </span>
+                    <span className="inc-percent">
+                        {summary.percent_remaining?.toFixed(1) || 0}% of income
+                    </span>
                 </div>
             </div>
-            <div className="income-layout">
-                <div className="income-calendar-col">
-                    <div className="income-calendar-container">
-                        {YEARS.map((year) => (
+
+            {/* This Month Summary */}
+            <div className="inc-this-month-summary">
+                <h3>This Month Overview</h3>
+                <div className="inc-this-month-cards">
+                    <div className="mini-card">
+                        <span className="mini-label">Income</span>
+                        <span className="mini-value positive">
+                            ${formatCurrency(summary.this_month?.income)}
+                        </span>
+                    </div>
+                    <div className="mini-card">
+                        <span className="mini-label">Transactions</span>
+                        <span className="mini-value negative">
+                            ${formatCurrency(summary.this_month?.transaction_spent)}
+                        </span>
+                    </div>
+                    <div className="mini-card">
+                        <span className="mini-label">Subscriptions</span>
+                        <span className="mini-value negative">
+                            ${formatCurrency(summary.this_month?.subscription_spent)}
+                        </span>
+                    </div>
+                    <div className="mini-card">
+                        <span className="mini-label">Remaining</span>
+                        <span className={`mini-value ${summary.this_month?.is_negative ? 'negative' : 'positive'}`}>
+                            ${formatCurrency(summary.this_month?.remaining)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="income-content">
+                {/* Left: Calendar */}
+                <div className="income-calendar-panel">
+                    <h2>Income Calendar</h2>
+                    <p className="calendar-hint">
+                        {selectedIncome
+                            ? `Showing: ${selectedIncome.source}`
+                            : "Select an income to highlight its period"}
+                    </p>
+
+                    <div className="calendar-container">
+                        {calendarYears.map(year => (
                             <div key={year} className="calendar-year">
-                                <div className="year-header">{year}</div>
-                                    <ul className="months-list">
-                                        {MONTHS.map((_, index) => {
-                                            const isHighlighted =
-                                                selectedPeriod &&
-                                                isMonthInPeriod(
-                                                    year,
-                                                    index,
-                                                    selectedPeriod.start,
-                                                    selectedPeriod.end
-                                                );
-                                            return (
-                                                <li 
-                                                key={`${year}-${index}`} 
-                                                ref={(el) => {
+                                <div className="year-label">{year}</div>
+                                <div className="months-grid">
+                                    {MONTHS.map((month, index) => {
+                                        const isHighlighted = isMonthInPeriod(year, index);
+                                        const isCurrent = isCurrentMonth(year, index);
+
+                                        return (
+                                            <div 
+                                                key={`${year}-${index}`}
+                                                ref={el => {
                                                     if (el) monthsRefs.current[`${year}-${index}`] = el;
                                                 }}
-                                                className={`month-item ${
-                                                    isHighlighted ? "highlighted-month" : ""
-                                                }`}
+                                                className={`month-cell
+                                                    ${isHighlighted ? 'highlighted' : ''}
+                                                    ${isCurrent ? 'current' : ''}`}
                                             >
-                                                {MONTHS[index]}
-                                            </li>
-                                            );
-                                        })}  
-                                    </ul>
+                                                {month}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         ))}
                     </div>
-                </div>
-                <div className="income-bar-col">
-                    <div className="income-bar-wrapper">
-                        <div className="income-progress-bar">
-                            <div 
-                                className="income-progress-fill"
-                                style={{ height: `${percentageRemaining}%` }}>
-                                {/* Future feature: Dynamic fill based on income goals */}
+
+                    {/* Funds Progress Bar */}
+                    <div className="funds-section">
+                        <h3>Funds Remaining</h3>
+                        <div className="funds-progress">
+                            <div className="inc-progress-bar-vertical">
+                                <div
+                                    className={`inc-progress-fill ${summary.is_negative ? 'negative' : ''}`}
+                                    style={{ height: `${Math.min(Math.max(summary.percent_remaining || 0, 0), 100)}%`}}
+                                />
+                            </div>
+                            <div className="funds-info">
+                                <span className="funds-percent">
+                                    {(summary.percent_remaining || 0).toFixed(1)}%
+                                </span>
+                                <span className="funds-label">remaining</span>
                             </div>
                         </div>
-                        <h2>Funds</h2>
                     </div>
-                </div>
-                <div className='income-table-container'>
-                    <div 
-                        className="income-table-inputs"
-                        >
-                        <input
-                            id='amount-input'
-                            className='inc-text-input'
-                            type="number"
-                            placeholder='Amount'
-                            value={amountInput}
-                            onChange={(e) => setAmountInput(e.target.value)}
-                        />
-                        <input
-                            id='source-input'
-                            className='inc-text-input'
-                            type="text"
-                            placeholder='Source'
-                            value={sourceInput}
-                            onChange={(e) => setSourceInput(e.target.value)}
-                        />
-                        <label
-                            className="date-label"
-                            >
-                            Date Received
-                            <input
-                                id="date-recevied-input"
-                                className="inc-text-input"
-                                type="date"
-                                value={dateReceivedInput}
-                                onChange={(e) => setDateReceivedInput(e.target.value)}
-                            />
-                        </label>
-                        <label
-                            className="date-label"
-                            >
-                            Period Start
-                            <input
-                                id="start-date-input"
-                                className="inc-text-input"
-                                type="date"
-                                value={periodStart}
-                                onChange={(e) => setPeriodStart(e.target.value)}
-                            />
-                        </label>
-                        <label 
-                            className="date-label"
-                            >
-                            Period End
-                            <input
-                                id="end-date-input"
-                                className="inc-text-input"
-                                type="date"
-                                value={periodEnd}
-                                onChange={(e) => setPeriodEnd(e.target.value)}
-                            />
-                        </label>
-                        
-                        <button
-                            className="add-btn"
-                            onClick={handleAddIncomeSource}
-                        >
-                            +
-                        </button>
-                        <button
-                            className="del-btn"
-                            onClick={() => handleDeleteIncome(selectedIncome)}
-                            style={{ marginLeft: '10px' }}
-                        >
-                            -
-                        </button>
-                    </div>
-                    {Array.isArray(income) && income.length > 0 ? (
-                        <table className="income-table">
-                        <thead>
-                            <tr>
-                                <th>Amount</th>
-                                <th>Source</th>
-                                <th>Date Received</th>
-                                <th>Applies to</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {income.map((inc) => {
-                                const isSelected = selectedIncome?.id === inc.id;
 
-                                return (
-                                    <tr 
-                                        key={inc.id}
-                                        className={
-                                            selectedIncome?.id === inc.id ? "selected-row" : ""
-                                        }
-                                        onClick={() => setSelectedIncome(isSelected ? null : inc)}
-                                    >
-                                    <td>${Number(inc.amount)}</td>
-                                    <td>{inc.source}</td>
-                                    <td>{inc.date_received}</td>
-                                    <td>{inc.period_start}:{inc.period_end} </td>
-                                </tr>
-                                )                                
-                            })}
-                        </tbody>
-                    </table>
-                    ) : (
-                    <p className="no-income-message">No income sources found. Please add an income source.</p>
+                    {/* Spending Breakdown */}
+                    <div className="spending-breakdown-section">
+                        <h3>Spending Breakdown</h3>
+                        <div className="breakdown-bars">
+                            <div className="breakdown-bar-item">
+                                <div className="breakdown-bar-header">
+                                    <span className="breakdown-bar-label">Transactions</span>
+                                    <span className="breakdown-bar-value">
+                                        ${formatCurrency(summary.transaction_spent)}
+                                    </span>
+                                </div>
+                                <div className="breakdown-bar">
+                                    <div 
+                                        className="breakdown-bar-fill transactions"
+                                        style={{
+                                            width: `${summary.total_spent > 0
+                                                ? ((summary.transaction_spent || 0) / summary.total_spent) * 100
+                                                : 0}%`
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="breakdown-bar-item">
+                                <div className="breakdown-bar-header">
+                                    <span className="breakdown-bar-label">Subscriptions</span>
+                                    <span className="breakdown-bar-value">
+                                        ${formatCurrency(summary.subscription_spent)}
+                                    </span>
+                                </div>
+                                <div className="breakdown-bar">
+                                    <div
+                                        className="breakdown-bar-fill subscriptions"
+                                        style={{
+                                            width: `${summary.total_spent > 0
+                                                ? ((summary.subscription_spent || 0) / summary.total_spent) * 100
+                                                : 0}%`
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Income by Source */}
+                    {bySource.length > 0 && (
+                        <div className="income-by-source">
+                            <h3>Income by Source</h3>
+                            <ul className="source-list">
+                                {bySource.map(item => (
+                                    <li key={item.source} className="source-item">
+                                        <span className="source-name">{item.source}</span>
+                                        <span className="source-amount">
+                                            ${formatCurrency(item.total)}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     )}
-                    
+                </div>
+
+                {/* Right: Income Table */}
+                <div className="income-table-panel">
+                    {/* Controls */}
+                    <div className="income-controls">
+                        <div className="search-box">
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search income..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            {searchQuery && (
+                                <button
+                                className="clear-search"
+                                onClick={() => setSearchQuery("")}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="filter-controls">
+                            <select
+                                value={filter}
+                                onChange={(e) => setFilter(e.target.value)}
+                                className="source-filter"
+                            >
+                                <option value="all">All Sources</option>
+                                {sources.map(source => (
+                                    <option key={source} value={source}>{source}</option>
+                                ))}
+                            </select>
+
+                            {selectedIncomeIds.length > 0 && (
+                                <button
+                                    className="delete-selected-btn"
+                                    onClick={handleDelete}
+                                >
+                                    🗑️ Delete ({selectedIncomeIds.length})
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="income-table-container">
+
+                        {loading ? (
+                            <div className="loading-state">Loading income data...</div>
+                        ) : filteredIncome.length === 0 ? (
+                            <div className="empty-state">
+                                {searchQuery || filter !== "all"
+                                    ? "No income matches your filters."
+                                    : "No income records yet. Add your first one!"}
+                            </div>
+                        ) : (
+                            <table className="income-table">
+                                <thead>
+                                    <tr>
+                                        <th className="checkbox-col">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    selectedIncomeIds.length === filteredIncome &&
+                                                    filteredIncome.length > 0
+                                                }
+                                                onChange={handleSelectAll}
+                                            />
+                                        </th>
+                                        <th>Source</th>
+                                        <th>Amount</th>
+                                        <th>Date Received</th>
+                                        <th>Period</th>
+                                        <th className="actions-col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredIncome.map(inc => (
+                                        <tr
+                                            key={inc.id}
+                                            className={`
+                                                ${selectedIncomeIds.includes(inc.id) ? 'selected' : ''}
+                                                ${selectedIncome?.id === inc.id ? 'highlighted' : ''}
+                                                `}
+                                        >
+                                            <td className="checkbox-col">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIncomeIds.includes(inc.id)}
+                                                    onChange={() => handleToggleSelect(inc.id)}
+                                                />
+                                            </td>
+                                            <td className="source-col">
+                                                <span className="source-badge">{inc.source}</span>
+                                            </td>
+                                            <td clasName="amount=col">
+                                                ${formatCurrency(inc.amount)}
+                                            </td>
+                                            <td className="date-col">{inc.date_received}</td>
+                                            <td className="period-col">
+                                                <span className="period-text">
+                                                    {inc.period_start} → {inc.period_end}
+                                                </span>
+                                            </td>
+                                            <td className="actions-col">
+                                                <button
+                                                    className="calendar-btn"
+                                                    onClick={() => handleSelectForCalendar(inc)}
+                                                    title="Show in Calendar"
+                                                >
+                                                    📅
+                                                </button>
+                                                <button
+                                                    className="edit-btn"
+                                                    onClick={() => handleEdit(inc)}
+                                                    title="Edit"
+                                                >
+                                                    ✏️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="2" className="total-label">
+                                            Total ({filteredIncome.length} records)
+                                        </td>
+                                        <td className="total-amount">
+                                            ${formatCurrency(filteredTotal)}
+                                        </td>
+                                        <td colSpan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            {/* Modal*/}
+            {showModal && (
+                <IncomeModal
+                    income={editingIncome}
+                    sources={sources}
+                    onClose={() => {
+                        setShowModal(false);
+                        setEditingIncome(null);
+                    }}
+                    onSave={(data) => {
+                        if (editingIncome) {
+                            handleUpdate(editingIncome.id, data);
+                        } else {
+                            handleCreate(data);
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 }

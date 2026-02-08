@@ -53,25 +53,68 @@ class Budget(models.Model):
 
 
 class Subscription(models.Model):
-    FREQUENCY_CHOICES = [
+    BILLING_CYCLE_CHOICES = [
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
         ('yearly', 'Yearly'),
     ]
 
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('paused', 'Paused'),
+        ('cancelled', 'Cancelled')
+    ]
+
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    category = models.CharField(max_length=100, null=True, blank=True)
+    category = models.CharField(max_length=100)
+
+    billing_cycle = models.CharField(max_length=20, choices=BILLING_CYCLE_CHOICES, default='monthly')
+    billing_day = models.PositiveBigIntegerField(default=1, help_text="Day of month for monthly billing (1-31)")
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+
     description = models.CharField(max_length=255, blank=True)
-    due_date = models.DateField()
-    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
-    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
-        return f"Recurring Transaction {self.id}: {self.amount} every {self.frequency} starting {self.start_date} by {self.user.username}"
+        return f"{self.name} - ${self.amount}/{self.billing_cycle}"
+
+
+class SubscriptionPayment(models.Model):
+    """ Records each individual payment/charge for a subscription."""
+
+    subscription = models.ForeignKey(
+        Subscription,
+        on_delete=models.CASCADE,
+        related_name='payments'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+
+    is_paid = models.BooleanField(default=True)
+    paid_date = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+
+        unique_together = ['subscription', 'date']
+
+    def __str__(self):
+        return f"{self.subscription.name} - ${self.amount} on {self.date}"
     
+
 class Income(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)

@@ -1,11 +1,7 @@
-import { Pie } from "react-chartjs-2";
+import { Doughnut } from "react-chartjs-2";
 import { useMemo } from 'react';
 
-const CategorySpendingCard = ({ categories = {}, period }) => {
-    const categoryList = categories?.categories || [];
-    const grandTotal = categories?.total || 0;
-
-    const COLORS = [
+const COLORS = [
         'rgba(75,192,192,1)',
         'rgba(153,102,255,1)',
         'rgba(255,159,64,1)',
@@ -15,11 +11,29 @@ const CategorySpendingCard = ({ categories = {}, period }) => {
         'rgba(243, 0, 41, 1)',
         'rgba(62, 219, 75, 1)',
         'rgba(200, 91, 233, 1)',
-    ];
+];
 
-    const getPieChartData = () => {
-        if (!Array.isArray(categoryList) || categoryList.length === 0) {
-            return null;
+const CategorySpendingCard = ({ categories = {}, period }) => {
+    const categoryList = categories?.categories || [];
+    const grandTotal = categories?.total || 0;
+    const transactionTotal = categories?.transaction_total || 0;
+    const subscriptionTotal = categories?.subscription_total || 0;
+    
+    // Move the early return BEFORE useMemo hooks that depend on categoryList
+    const hasValidData = Array.isArray(categoryList) && categoryList.length > 0;
+    console.log("valid?", hasValidData)
+    const chartData = useMemo(() => {
+        
+        if (!hasValidData) {
+            return {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [],
+                    borderWidth: 0,
+                    hoverOffset: 4,
+                }],
+            };
         }
 
         return {
@@ -28,135 +42,138 @@ const CategorySpendingCard = ({ categories = {}, period }) => {
                 {
                     data: categoryList.map((c) => c.total),
                     backgroundColor: COLORS.slice(0, categoryList.length),
-                    borderWidth: 1,
-                }
-            ]
-        }
-    }
+                    borderWidth: 0,
+                    hoverOffset: 4,
+                },
+            ],
+        };
+    }, [categoryList, hasValidData]);
 
-    const pieData = getPieChartData();
+    console.log("Categories recevied:", categories)
 
-    const chartData = {
-        labels: categories.categories.map((c) => c.category),
-        datasets: [
-            {
-                data: categories.categories.map((c) => c.total),
-                backgroundColor: COLORS.slice(0, categories.categories.length),
-                borderWidth: 1
-            },
-        ],
-    };
-
-    const donutOptions = {
+    const chartOptions = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         cutout: "70%",
         plugins: {
             legend: {
-                position: "bottom",
-                labels: {
-                    color: "#110101",
-                    boxWidth: 12,
-                    padding: 16,
-                },
+                display: false,
             },
             tooltip: {
                 callbacks: {
-                    label: function (context) {
-                        const value = context.raw;
-                        const percent = ((value / categories.total) * 100).toFixed(1);
-                        return `$${value} (${percent}%)`;
+                    label: (context) => {
+                        const category = categoryList[context.dataIndex];
+                        const percent = grandTotal > 0
+                            ? ((category.total / grandTotal) * 100).toFixed(1)
+                            : 0;
+                        return `$${category.total.toFixed(0)} (${percent}%)`;
                     },
                 },
             },
         },
-    };
-    console.log("Categories recevied:", categories)
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-        legend: {
-            position: "right",
-            labels: {
-            color: "#fff",
-            padding: 12,
-            usePointStyle: true,
-            },
-        },
-        tooltip: {
-            callbacks: {
-            label: (context) => {
-                const category = categoryList[context.dataIndex];
-                const lines = [`Total: $${category.total.toFixed(2)}`];
-                
-                if (category.transactions > 0) {
-                lines.push(`Transactions: $${category.transactions.toFixed(2)}`);
-                }
-                if (category.subscriptions > 0) {
-                lines.push(`Subscriptions: $${category.subscriptions.toFixed(2)}`);
-                }
-                lines.push(`${category.percentage}%`);
-                
-                return lines;
-            },
-            },
-        },
-        },
-    };
+    }), [categoryList, grandTotal]);
 
     const centerTextPlugin = useMemo(() => ({
-        id: "centerText",
+        id: "centerTextCategory",
         afterDraw(chart) {
             const meta = chart.getDatasetMeta(0);
-            if (!meta || !meta.data || meta.data.length === 0) {
-                return; // No data, don't draw center text
-            }
+            if (!meta?.data?.length) return;
 
             const { ctx } = chart;
-            const centerX = chart.getDatasetMeta(0).data[0].x;
-            const centerY = chart.getDatasetMeta(0).data[0].y;
-
-            // const total = categories?.total || 0;
-            const formattedTotal = grandTotal.toLocaleString();
+            const centerX = meta.data[0].x;
+            const centerY = meta.data[0].y;
 
             ctx.save();
             ctx.font = "bold 18px sans-serif";
-            ctx.fillStyle = "#080202";
+            ctx.fillStyle = "#fff";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(`$${formattedTotal}`, centerX, centerY - 5);
+            ctx.fillText(`$${grandTotal.toLocaleString()}`, centerX, centerY - 5);
 
-            ctx.font = "12px sans-serif";
-            ctx.fillStyle = "#ccc";
+            ctx.font = "11px sans-serif";
+            ctx.fillStyle = "#888";
             ctx.fillText("Total Spent", centerX, centerY + 15);
             ctx.restore();
         },
     }), [grandTotal]);
 
-    
-
     if (!categoryList.length) {
         return (
-            <div className="dashboard-card categories">
-                <h3>Category Spending ({period})</h3>
-                <p>No spending data for this period</p>
+            <div className="card-inner">
+                <h3>Categories ({period})</h3>
+                <div className="no-data-container">
+                    <p>No spending data for this period</p>
+                </div>
             </div>
         );
     }
 
+    const topCategories = categoryList.slice(0, 5);
+    const otherCategories = categoryList.slice(5);
+    const otherTotal = otherCategories.reduce((sum, c) => sum + c.total, 0);
+
     return (
-        <div className="dashboard-card categories">
-            <h3>Category Spending ({period})</h3>
-            <Pie data={pieData} options={donutOptions} plugins={[centerTextPlugin]}/>
-            {/* <ul className="category-list">
-                {categories.categories.map((c) => (
-                    <li key={c.category}>
-                        <span>{c.category}</span>
-                        <span>${c.total.toFixed(0)} ({c.percentage}%)</span>
-                    </li>
-                ))}
-            </ul> */}
+        <div className="card-inner">
+            <h3>Categories ({period})</h3>
+            <div className="chart-with-legend">
+                <div className="chart-container">
+                    <Doughnut
+                        key={`category-${grandTotal}-${categoryList.length}`}
+                        data={chartData}
+                        options={chartOptions}
+                        plugins={[centerTextPlugin]}    
+                    />
+                </div>
+
+                <div className="custom-legend scrollable">
+                    {topCategories.map((cat, index) => {
+                        const percent = grandTotal > 0
+                            ? ((cat.total / grandTotal) * 100).toFixed(0)
+                            : 0;
+                        return (
+                            <div key={cat.category} className="legend-item">
+                                <span
+                                    className="legend-color"
+                                    style={{ backgroundColor: COLORS[index] }}
+                                />
+                                <div className="legend-text">
+                                    <span className="legend-label">{cat.category}</span>
+                                    <span className="legend-value">
+                                        ${cat.total.toFixed(0)} · {percent}%
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {otherCategories.length > 0 && (
+                        <div className="legend-item">
+                            <span
+                                className="legend-color"
+                                style={{ backgroundColor: '#666'}}
+                            />
+                            <div className="legend-text">
+                                <span className="legend-label">Other ({otherCategories.length})</span>
+                                <span className="legend-value">${otherTotal.toFixed(0)}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Summary row */}
+                    <div className="legend-item summary">
+                        <div className="legend-text">
+                            <div className="summary-row">
+                                <span className="summary-label">Transactions</span>
+                                <span className="summary-value">${transactionTotal.toFixed(0)}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span className="summary-label">Subscriptions</span>
+                                <span className="summary-value">${subscriptionTotal.toFixed(0)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

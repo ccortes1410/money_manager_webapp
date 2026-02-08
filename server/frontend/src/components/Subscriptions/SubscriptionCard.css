@@ -1,0 +1,221 @@
+.subscription-card {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #888;
+}
+
+.subscription-card.active {
+    border-left-color: #27ae60;
+}
+
+.subscription-card.paused {
+    border-left-color: #f39c12;
+}
+
+.subscription-card.cancelled {
+    border-left-color: #e74c3c;
+    opacity: 0.7;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-title h3 {
+    margin: 0;
+    color: white;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: white;
+    text-transform: capitalize;
+}
+
+.card-amount {
+    text-align: right;
+}
+
+.card-amount .amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.card-amount .cycle {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.card-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #333;
+}
+
+.card-details .detail {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.card-details .label {
+    color: #888;
+}
+
+/* Status actions */
+.status-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.status-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.status-btn.activate {
+    background: #27ae60;
+    color: white;
+}
+
+.status-btn.pause {
+    background: #f39c12;
+    color: white;
+}
+
+.status-btn.cancel {
+    background: #e74c3c;
+    color: white;
+}
+
+/* Payments */
+.payments-section {
+    margin-bottom: 16px;
+}
+
+.toggle-payments {
+    background: none;
+    border: 1px solid #333;
+    color: #888;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.toggle-payments:hover {
+    background: #2a2a2a;
+}
+
+.payments-list {
+    margin-top: 12px;
+    background: #161616;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #222;
+}
+
+.payment-item:last-child {
+    border-bottom: none;
+}
+
+.payment-date {
+    color: #888;
+}
+
+.payment-amount {
+    color: white;
+    font-weight: 600;
+}
+
+.payment-status {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.payment-status.paid {
+    background: #27ae60;
+    color: white;
+}
+
+.payment-status.unpaid {
+    background: #333;
+    color: #888;
+}
+
+.payment-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #333;
+    color: #888;
+}
+
+.no-payments {
+    color: #666;
+    text-align: center;
+    padding: 12px;
+}
+
+/* Card actions */
+.card-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.edit-btn,
+.delete-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: #333;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #444;
+}
+
+.delete-btn {
+    background: #e74c3c;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #c0392b;
+}

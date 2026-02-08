@@ -7,7 +7,6 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Transactions from './components/Transactions/Transactions';
 import Budget from './components/Budgets/Budget';
 import Budgets from './components/Budgets/Budgets';
-import AddBudget from './components/Budgets/AddBudget';
 import Subscriptions from './components/Subscriptions/Subscriptions';
 import Sidebar from './components/Sidebar/Sidebar';
 import Income from './components/Income/Income';
@@ -76,7 +75,6 @@ function App() {
                     <Route path="transactions" element={<Transactions />} />
                     <Route path="budgets" element={<Budgets />} />
                     <Route path="budget/:budget_id" element={<Budget />} />
-                    <Route path="add-budget" element={<AddBudget />} />
                     <Route path="subscriptions" element={<Subscriptions />} />
                     <Route path="income" element={<Income />} />
                 </Route>

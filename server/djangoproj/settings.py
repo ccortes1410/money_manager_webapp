@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENV = os.environ.get('DJANGO_ENV', 'aws')
+ENV = os.environ.get('DJANGO_ENV', 'local')
 
 if ENV == 'aws':
     load_dotenv(BASE_DIR / '.env.aws', override=True)

@@ -11,39 +11,6 @@ const TransactionsCard = ({ transactions, period }) => {
         );
     }
 
-    // const getChartData = () => {
-    //     if (!Array.isArray(transactions) || transactions.length === 0) return null;
-
-    //     const dateMap = {};
-    //     transactions.forEach(tx => {
-    //         if (tx.date && tx.amount && !isNaN(Number(tx.amount))) {
-    //             if(!dateMap[tx.date]) {
-    //                 dateMap[tx.date] = 0;
-    //             }
-    //             dateMap[tx.date] += Number(tx.amount);
-    //         }
-    //     });
-
-    //     const dates = Object.keys(dateMap).sort();
-    //     const amounts = dates.map(date => dateMap[date]);
-
-    //     if (dates.length === 0) return null;
-
-    //     return {
-    //         labels: transactions.map((t) => t.date),
-    //         datasets: [
-    //             {
-    //                 label: "Spending",
-    //                 data: amounts,
-    //                 fill: false,
-    //                 borderColor: 'rgba(75,192,192,1)',
-    //                 backgroundColor: 'rgba(75,192,192,0.2)',
-    //                 tension: 0.2,
-    //             },
-    //         ],
-    //     }
-    // };
-
     const chartData = {
         labels: transactions.map((t) => t.label),
         datasets: [
@@ -96,9 +63,11 @@ const TransactionsCard = ({ transactions, period }) => {
     // const chartData = getChartData();
 
     return (
-        <div className="dashboard-card transactions">
+        <div className="card-inner">
             <h3>Transactions ({period})</h3>
-            <Bar data={chartData} options={chartOptions}/>
+            <div className="chart-container">
+                <Bar data={chartData} options={chartOptions}/>
+            </div>
         </div>
     )
 };

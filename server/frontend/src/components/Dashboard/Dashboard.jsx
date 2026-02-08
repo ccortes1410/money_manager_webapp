@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import './Dashboard.css';
 import '../assets/style.css';
-import { Line, Pie, Bar } from 'react-chartjs-2';
 import { BarElement, ArcElement, Chart, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title} from 'chart.js';
 import PeriodSelector from './PeriodSelector';
 import TransactionsCard from './Dashboard Cards/TransactionsCard';
 import CategorySpendingCard from './Dashboard Cards/CategorySpendingCard';
-
+import SubscriptionsCard from './Dashboard Cards/SubscriptionsCard';
+import BudgetsCard from './Dashboard Cards/BudgetsCard';
+import IncomeCard from './Dashboard Cards/IncomeCard';
 Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const PERIODS = ["daily", "weekly", "monthly", "yearly", "total"];
@@ -495,15 +496,9 @@ const Dashboard = () => {
     const totalSpent = transactions.reduce((a,b) => a + Number(b.amount), 0);
 
     console.log("Dashboard fetched:", dashboard)
-    // console.log("Categories:", dashboard.categories)
+    console.log("Categories:", dashboard.categories)
+    console.log("Transactions:", dashboard.transactions)
 
-    // if (!dashboard) {
-    //     return (
-    //     <div className="dashboard-loading">
-    //         <p>Loading {selectedPeriod} data...</p>
-    //     </div>
-    //     );
-    // }
 
     if (error) {
         return (
@@ -516,140 +511,92 @@ const Dashboard = () => {
         );
     }
     
-    return (
-            <div className='main-section'>
+    if (loading) {
+        return (
+            <div className="dashboard-page">
                 <div className="dashboard-header">
-                    <h1 style={{ color: '#fff' }}>Dashboard</h1>
-                    <div className="active-user">
-                            <p style={{ marginTop: '10px' }}>{user ? user.username : "Not Logged In"}</p>
-                    </div>
+                    <h1>Dashboard</h1>
                 </div>
+                <div className="period-selector-wrapper">
+                    <PeriodSelector
+                        periods={PERIODS}
+                        selected={selectedPeriod}
+                        onSelect={setSelectedPeriod}
+                    />
+                </div>
+                <div className="dashboard-loading">
+                    <p>Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+    return (  
+        <div className="dashboard-page">
+            {/* Fixed header */}
+            <div className="dashboard-header">
+                <h1>Dashboard</h1>
+                {/* <div className="active-user">
+                    <p>{user ? user.username : "Not Logged In"}</p>
+                </div> */}
+            </div>
+
+            {/* Fixed period selector */}
+            <div className="period-selector-wrapper">
                 <PeriodSelector
                     periods={PERIODS}
                     selected={selectedPeriod}
                     onSelect={setSelectedPeriod}
                 />
-                <div 
-                    className="dashboard-container"
-                    style={{
-                        transition: "margin-left 0.2s"
-                    }}>
-                    <div className="dashboard-main">
+            </div>
+
+            {/* Scrollable content */}
+            <div className="dashboard-content">
+                {/* Main cards grid */}
+                <div className="dashboard-main">
+                    <div className="dashboard-card transactions">
+                        {console.log("TransactionsCard data:", dashboard?.transactions, "isArray:", Array.isArray(dashboard?.transactions))}
                         <TransactionsCard
                             transactions={dashboard?.transactions || []}
                             period={selectedPeriod}
                         />
-                        {/* <div className="dashboard-card transactions">
-                            <h3 style={{ textAlign: 'center' }}>Transaction Overview</h3>
-                            <div className="chart-wrapper line-chart-wrapper">
-                                {getMonthlySpending && getMonthlySpending.labels && getMonthlySpending.labels.length > 0 ? ( 
-                                <>
-                                    <div>
-                                        <label>
-                                            Select Year: {' '}
-                                            <select
-                                                value={selectedYear}
-                                                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                                >
-                                                    {years.map((y) => (
-                                                        <option key={y} value={y}>
-                                                            {y}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                        </label>
-                                    </div>
-                                    <Bar data={getMonthlySpending} options={monthlySpendingOptions}/>
-                                </>
-                                ) : (
-                                    <p style={{ textAlign: 'center' }}>No data available</p>
-                                )}
-                            </div>
-                        </div> */}
+                    </div>
+
+                    <div className="dashboard-card categories">
+                        {console.log("CategorySpendingCard data:", dashboard?.categories)}
                         <CategorySpendingCard
-                            key={dashboard.categories.total}
-                            categories={dashboard?.categories || []}
+                            key={dashboard?.categories?.total}
+                            categories={dashboard?.categories || {}}
                             period={selectedPeriod}
                         />
-                        {/* <div className="dashboard-card categories">
-                            <h3 style={{ textAlign: 'center' }}>Spending by Category</h3>
-                            <div className="chart-wrapper pie-chart-wrapper">
-                                {pieChartData && pieChartData.labels && pieChartData.labels.length > 0 ? (
-                                    <Pie data={pieChartData} options={donutOptions} plugins={[centerTextPlugin]}/>
-                                ) : (
-                                    <p style={{ textAlign: 'center' }}>No data available</p>
-                                )}
-                            </div>
-                        </div> */}
-                        <div className="dashboard-card subscriptions">
-                            <h3 style={{ textAlign: 'center' }}>Subscriptions Total</h3>
-                            {subscriptions && subscriptions.length > 0 ? (
-                                <div className="subscription-wrapper">
-                                    <div    
-                                        className="subs-stacked-bar"
-                                        >
-                                    <div
-                                        className="subs-active-bar"
-                                        style={{ width: `${(activeTotalSubs / sumSubs) * 100}%`}}
-                                    />
-                                    <div
-                                        className="subs-inactive-bar"
-                                        style={{ width: `${(inactiveTotalSubs / sumSubs) * 100}%`}}
-                                    />
-                                    </div>
-                                    <div className="subs-bar-labels">
-                                        <span>Active: ${activeTotalSubs}</span>
-                                        <span>Inactive: ${inactiveTotalSubs}</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <p>No Data Available</p>
-                            )}
-                        </div>
-                        <div className="dashboard-card budgets">
-                            <h3 style={{ textAlign: 'center' }}>Budgets Total</h3>
-                            {budgets && budgets.length > 0 ? (
-                                <div className="budget-wrapper">
-                                    <div className="bud-bar">
-                                        <div
-                                            className="bud-bar-fill"
-                                            style={{ width: `${budgetPercentUsed}%`}}>
-                                        </div>
-                                    </div>
-                                    <p>{budgetPercentUsed.toFixed(0)}% used</p>
-                                </div>
-                            ) : (
-                                <p>No Data Available</p>
-                            )}
-                        </div>
                     </div>
-                    <div className="dashboard-income">
-                        <div className="dashboard-card income">
-                        {/* <h4 style={{ justifyContent: 'flex-start', marginTop: '5px' }}>Income (This Month)</h4> */}
-                        {income && income.length > 0 ? (
-                            <div className="income-wrapper">
-                                <h4>Income</h4>
-                                <div className="inc-bar-labels">
-                                    <span>Remaining Funds: ${remainingFunds.toFixed(0)}</span>
-                                </div>
-                                <div className="inc-progress-bar">
-                                    <div 
-                                        className="inc-progress-fill"
-                                        style={{ height: `${remainingFundsPercent}%` }}
-                                        /* Future feature: Dynamic fill based on income goals */
-                                    />
-                                </div>
 
-                                <div className="inc-bar-labels">
-                                    
-                                    <span>Income this month: ${totalIncomeThisMonth.toFixed(0)}</span>
-                                </div>
-                            </div>
-                        ) : (
-                            <p>No Data Available</p>
-                        )}
-                        </div>
+                    <div className="dashboard-card subscriptions">
+                        {console.log("SubscriptionsCard data:", dashboard?.subscriptions, "isArray:", Array.isArray(dashboard?.subscriptions))}
+                        <SubscriptionsCard
+                            subscriptions={dashboard?.subscriptions}
+                            period={selectedPeriod}
+                        />
                     </div>
+
+                    <div className="dashboard-card budgets">
+                        {console.log("BudgetsCard data:", dashboard?.budgets, "isArray:", Array.isArray(dashboard?.budgets))}
+                        <BudgetsCard
+                            budgets={dashboard?.budgets}
+                            period={selectedPeriod}
+                        />
+                    </div>
+                </div>
+
+                {/* Income sidebar */}
+                <div className="dashboard-sidebar">
+                    <div className="dashboard-card income">
+                        {console.log("IncomeCard data:", dashboard?.income)}
+                        <IncomeCard
+                            income={dashboard?.income}
+                            period={selectedPeriod}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     )

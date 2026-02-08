@@ -1,32 +1,50 @@
 from django.forms import model_to_dict
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
-from django.db.models import Sum, Count
-from .models import Transaction, Budget, Subscription, Income
+from django.db.models import Sum, Q
+from .models import Transaction, Budget, Subscription, SubscriptionPayment, Income
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
+from datetime import datetime, date, timezone
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
-from collections import defaultdict
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .restapi import get_request
-from .services.budgets import reset_expired_budgets, compute_budget_spent, get_transactions_for_budget
+from .services.budgets import (
+    reset_expired_budgets,
+    compute_budget_spent,
+    get_transactions_for_budget,
+    update_budget,
+    get_subscriptions_for_budget
+)
 from .services.date_filter import (
     filter_queryset_by_period,
-    get_date_range,
     get_period_label,
     get_period_display_dates
 )
 from .services.transactions import get_transactions_chart_data
-
+from .services.category_service import compute_spending_by_category
+from .services.subscription_service import (
+    get_subscriptions_for_period,
+    compute_subscription_summary,
+    compute_subscription_total
+    )
+from .services.income import (
+        compute_income_by_source,
+        compute_income_summary,
+        compute_monthly_income,
+        get_income_with_details,
+        compute_total_spent
+    )
 import logging
 
 logger = logging.getLogger(__name__)
 
+# ======================= AUTH VIEWS ======================= #
 def register_user(request):
     context = {}
     if request.method == "GET":
@@ -123,7 +141,7 @@ def current_user(request):
             }
         })
 
-
+# ========================== DASHBOARD VIEW ======================= #
 def dashboard(request):
     # print(request.user)
     if not request.user.is_authenticated:
@@ -134,122 +152,51 @@ def dashboard(request):
     period = request.GET.get("period", "monthly")
 
     if request.method == "GET":
-        
-        # transactions = filter_queryset_by_period(
-        #         Transaction.objects.filter(user=request.user),
-        #         period=period,
-        #         date_field="date"
-        # )
+        try:
+            # transactions = filter_queryset_by_period(
+            #         Transaction.objects.filter(user=request.user),
+            #         period=period,
+            #         date_field="date"
+            # )
 
-        transactions = get_transactions_chart_data(request.user, period)
+            transactions = get_transactions_chart_data(request.user, period)
 
-        categories = get_category_spending(request.user, period)
+            categories = compute_spending_by_category(request.user, period)
 
-        subscriptions = filter_queryset_by_period(
-            Subscription.objects.filter(user=request.user),
-            period=period,
-            date_field="due_date"
-        )
+            from .services.subscription_service import generate_subscription_payments
+            generate_subscription_payments(request.user)
 
-        budgets = filter_queryset_by_period(
-            Budget.objects.filter(user=request.user),
-            period=period,
-            date_field="period_start"
-        )
+            subscriptions = get_subscriptions_for_period(request.user, period)
 
-        income = filter_queryset_by_period(
-            Income.objects.filter(user=request.user),
-            period=period,
-            date_field="period_start"
-        )
+            budgets = get_budgets_data(request.user, period)
 
-        return JsonResponse({
-            "dashboard": {
-                "transactions": transactions,
-                "categories": categories,
-                "subscriptions": list(subscriptions.values()),
-                "budgets": list(budgets.values()),
-                "income": list(income.values()),
-                "period": {
-                    "value": period,
-                    "label": get_period_label(period),
-                    **get_period_display_dates(period)
+            income = get_income_data(request.user, period)
+
+            return JsonResponse({
+                "dashboard": {
+                    "transactions": transactions,
+                    "categories": categories,
+                    "subscriptions": subscriptions,
+                    "budgets": budgets,
+                    "income": income,
+                    "period": {
+                        "value": period,
+                        "label": get_period_label(period),
+                        **get_period_display_dates(period)
+                    },
                 },
-            },
-            "user": {
-                "id": request.user.id,
-                "username": request.user.username,
-                "is_authenticated": request.user.is_authenticated
-            }
-        })
+                "user": {
+                    "id": request.user.id,
+                    "username": request.user.username,
+                    "is_authenticated": request.user.is_authenticated
+                }
+            })
+        except Exception as e: 
+            logger.error(f"Error fetching dashboard: {e}")
+            return JsonResponse({"error": "Failed to fetch dashboard"}, status=500)
     
-def get_category_spending(user, period: str):
-    """Spending by category for donut chart"""
-    transactions = filter_queryset_by_period(
-        Transaction.objects.filter(user=user),
-        period=period,
-        date_field="date"
-    )
 
-    transactions_spending = transactions.values(
-        "category"
-    ).annotate(
-        total=Sum("amount")
-    )
-
-    subscriptions = filter_queryset_by_period(
-        Subscription.objects.filter(user=user),
-        period=period,
-        date_field="due_date"
-    )
-
-    subscriptions_spending = subscriptions.values(
-        "category"
-    ).annotate(
-        total=Sum("amount")
-    )
-
-    category_totals = defaultdict(lambda: {
-        "transactions": 0,
-        "subscriptions": 0,
-        "total": 0
-    })
-
-    for item in transactions_spending:
-        category = item["category"] or "Uncategorized"
-        amount = float(item["total"] or 0)
-        category_totals[category]["transactions"] += amount
-        category_totals[category]["total"] += amount
-
-    for item in subscriptions_spending:
-        category = item["category"] or "Uncategorized"
-        amount = float(item["total"] or 0)
-        category_totals[category]["subscriptions"] += amount
-        category_totals[category]["total"] += amount
-
-    grand_total = sum(cat["total"] for cat in category_totals.values())
-
-    result = [
-        {
-            "category": category,
-            "total": data["total"],
-            "transactions": data["transactions"],
-            "subscriptions": data["subscriptions"],
-            "percentage": round((data["total"] / grand_total) * 100, 1) if grand_total > 0 else 0
-        }
-        for category, data in category_totals.items()
-    ]
-
-    result.sort(key=lambda x: x["total"], reverse=True)
-
-    return {
-            "categories": result,
-            "total": grand_total,
-            "transaction_total": sum(cat["transactions"] for cat in result),
-            "subscription_total": sum(cat["subscriptions"] for cat in result)
-        }
-
-    
+# ====================== TRANSACTIONS VIEW ========================= # 
 def transaction_list(request):
     if not request.user.is_authenticated:
         return JsonResponse(
@@ -301,41 +248,76 @@ def transaction_list(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
 
+# ========================= BUDGETS VIEWS ========================= #
+def get_budgets_data(user, period):
+    """Get budget summary for dashboard."""
+
+    # Get budgets for the period
+    budgets = filter_queryset_by_period(
+        Budget.objects.filter(user=user),
+        period=period,
+        date_field="period_start"
+    )
+
+    transactions = filter_queryset_by_period(
+        Transaction.objects.filter(user=user),
+        period=period,
+        date_field="date"
+    )
+
+    # Calculate totals
+    total_budgeted = float(budgets.aggregate(total=Sum("amount"))["total"]or 0)
+    total_spent = float(transactions.aggregate(total=Sum("amount"))["total"] or 0)
+    remaining = total_budgeted - total_spent
+    percent_used = round((total_spent / total_budgeted) * 100,1) if total_budgeted > 0 else 0
+
+    return {
+        "total_budgeted": total_budgeted,
+        "total_spent": total_spent,
+        "remaining": remaining,
+        "percent_used": percent_used,
+        "is_over": remaining < 0
+    }
 
 
-def budget_list(request, budget_id=None):
+def get_budgets(request, budget_id=None):
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
         )
     
     reset_expired_budgets(request.user)
+
+    budgets = Budget.objects.filter(
+        user=request.user,
+        is_active=True).order_by('-period_start')
     
+    budgets_data = []
+    print(budgets)
     if request.method == "GET":
         try:
-            budgets = Budget.objects.filter(
-                user=request.user,
-                is_active=True
-            )
-
-            data = []
             for budget in budgets:
-                spent = compute_budget_spent(budget)
+                spent_breakdown = compute_budget_spent(budget)
+                spent = spent_breakdown["total"]
 
-                data.append({
+                budgets_data.append({
                     "id": budget.id,
                     "category": budget.category,
                     "amount": float(budget.amount),
-                    "period_start": str(budget.period_start),
-                    "period_end": str(budget.period_end),
+                    "period_start": budget.period_start.isoformat(),
+                    "period_end": budget.period_end.isoformat(),
                     "recurrence": budget.recurrence,
                     "is_recurring": budget.is_recurring,
+                    "is_active": budget.is_active,
+                    "is_shared": budget.is_shared,
                     "spent": float(spent),
+                    "transaction_spent": spent_breakdown["transactions"],
+                    "subscription_spent" : spent_breakdown["subscriptions"],
                     "remaining": float(budget.amount - spent),
                 })
             
             return JsonResponse({
-                "budgets": data,
+                "budgets": budgets_data,
                 "user": {
                     "id": request.user.id,
                     "username": request.user.username,
@@ -345,97 +327,126 @@ def budget_list(request, budget_id=None):
         except Exception as e:
             logger.error(f"Error fetching budget: {e}")
             return JsonResponse({"error": "Failed to fetch budget"}, status=500)
-    elif request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            category = data.get("category")
-            amount = data.get("amount")
-            period_start = data.get("period_start")
-            period_end = data.get("period_end")
-            recurrence = data.get("recurrence")
-
-            Budget.objects.create(
-                user=request.user,
-                category=category,
-                amount=amount,
-                period_start=period_start,
-                period_end=period_end,
-                recurrence=recurrence,
-            )
-            return JsonResponse({"status": "Budget added successfully"}, status=201)
-        except Exception as e:
-            logger.error(f"Error adding budget: {e}")
-            return JsonResponse({"error": "Failed to add budget"}, status=500)
-    elif request.method == "DELETE" and budget_id is not None:
-        try:
-            Budget.objects.filter(id=budget_id, user=request.user).delete()
-            return JsonResponse({"status": "deleted"})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
 
 
-
-def budget_detail(request, budget_id):
-    # budget_id = request.GET.get("id")
+def get_budget(request, budget_id):
+    """Get a single budget with its transactions and subscriptions."""
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
         )
     
-    if request.method == "GET":
+    if request.method != "GET":
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        budget = Budget.objects.get(id=budget_id, user=request.user)
+    except Budget.DoesNotExist:
+        return JsonResponse({"error": "Budget not found"}, status=404)
+    
+    spent_breakdown = compute_budget_spent(budget)
 
-        try:
-            if not budget_id:
-                logger.error("No Budget ID provided")
-                return JsonResponse({"error": "Budget ID is required"}, status=400)
+    transactions = get_transactions_for_budget(budget).order_by('-date')
 
-            logger.info(f"Fetching budget with ID: {budget_id} for user: {request.user.username}")
+    tx_data = [
+        {
+            "id": t.id,
+            "amount": float(t.amount),
+            "date": t.date.isoformat(),
+            "description": t.description,
+            "categorry": t.category,
+            "type": "transaction"
+        }
+        for t in transactions
+    ]
 
-            budget = Budget.objects.get(id=budget_id, user=request.user)
-            logger.info(f"Budget found: {budget}")
+    subscriptions = get_subscriptions_for_budget(budget)
+    subs_data = [
+        {
+            "id": sub.id,
+            "name": sub.name,
+            "amount": float(sub.amount),
+            "billing_cycle": sub.billing_cycle,
+            "billing_day": sub.billing_day,
+            "category": sub.category,
+            "type": "subscription",
+        }
+        for sub in subscriptions
+    ]
 
-            transactions = get_transactions_for_budget(budget)
-            spent = compute_budget_spent(budget)
-            remaining = budget.amount - spent
+    budget_data = {
+        "id": budget.id,
+        "category": budget.category,
+        "amount": float(budget.amount),
+        "period_start": budget.period_start.isoformat(),
+        "period_end": budget.period_end.isoformat() if budget.period_end else None,
+        "recurrence": budget.recurrence,
+        "is_active": budget.is_active,
+        "is_recurring": budget.is_recurring,
+        "is_shared": budget.is_shared,
+        "spent": spent_breakdown["total"],
+        "transaction_spent": spent_breakdown["transactions"],
+        "subscriptions_spent": spent_breakdown["subscriptions"],
+        "remaining": float(budget.amount) - spent_breakdown["total"],
+        "transactions": tx_data,
+        "subscriptions": subs_data
+    }
 
-            data = [
-                {
-                    "id": t.id,
-                    "amount": float(t.amount),
-                    "date": str(t.date),
-                    "description": t.description,
-                }
-                for t in transactions
-            ]
+    logger.debug(f"Budget details: {budget_data}")
+    return JsonResponse({
+        "budget": budget_data,
+        "user": {
+            "id": request.user.id,
+            "username": request.user.username,
+            "is_authenticated": request.user.is_authenticated
+        }       
+    })
 
-            logger.debug(f"Budget details: {data}")
-            return JsonResponse({
-                "budget": {
-                        "id": budget.id,
-                        "amount": budget.amount,
-                        "category": budget.category,
-                        "period_start": str(budget.period_start),
-                        "period_end": str(budget.period_end),
-                        "recurrence": budget.recurrence,
-                        "is_active": budget.is_active,
-                        "is_recurring": budget.is_recurring,
-                        "is_shared": budget.is_shared,
-                        "spent": spent,
-                        "remaining": remaining,
-                        "transactions": data
-                },
-                "user": {
-                    "id": request.user.id,
-                    "username": request.user.username,
-                    "is_authenticated": request.user.is_authenticated
-                }       
-            })
-        except Budget.DoesNotExist:
-            return JsonResponse({"error": "Budget not found"}, status=404)
+
+@csrf_exempt
+def budget_create(request):
+    """Create a new budget."""
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Unauthorized"}, status=401
+        )
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error":"Invalid JSON"}, status=400)
+    
+    required_fields = ["category", "amount", "period_start", "period_end"]
+    for field in required_fields:
+        if field not in data:
+            return JsonResponse({"error":f"Missing field: {field}"}, status=400)
+        
+    budget = Budget.objects.create(
+        user=request.user,
+        category=data["category"],
+        amount=data["amount"],
+        period_start=data["period_start"],
+        period_end=data["period_end"],
+        recurrence=data.get("recurrence", "monthly"),
+        is_recurring=data.get("is_recurring", False),
+        is_active=True,
+        is_shared=data.get("is_shared", False),
+    )
+
+    return JsonResponse({
+        "message": "Budget created successfully",
+        "budget": {
+            "id": budget.id,
+            "category": budget.category,
+            "amount": budget.amount,
+        }
+    }, status =201)
+
 
 @csrf_exempt
 @require_http_methods(["PATCH"])
-def update_budget(request, budget_id):
+def update_budget_view(request, budget_id):
+    """Update budget details."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Unauthorized"}, status=401)
     
@@ -444,32 +455,128 @@ def update_budget(request, budget_id):
     except json.JSONDecodeError:
         return JsonResponse({"error":"Invalid JSON"}, status=400)
     
-    try:
-        budget = Budget.objects.get(id=budget_id, user=request.user)
-    except Budget.DoesNotExist:
-        return JsonResponse({"error":"Not found"}, status=404)
-    
-    if "is_recurring" in data:
-        budget.is_recurring = bool(data["is_recurring"])
-        budget.save(update_fields=["is_recurring"])
-    
+    from .services.budgets import update_budget
+    result = update_budget(budget_id, request.user, data)
+
+    if result["success"]:
+        budget = result["budget"]
+        spent = compute_budget_spent(budget)
+        return JsonResponse({
+            "message": "Budget updated successfully",
+            "budget": {
+                "id": budget.id,
+                "category": budget.category,
+                "amount": float(budget.amount),
+                "period_start": budget.period_start.isoformat(),
+                "period_end": budget.period_end.isoformat(),
+                "recurrence": budget.recurrence,
+                "is_recurring": budget.is_recurring,
+                "is_active": budget.is_active,
+                "is_shared": budget.is_shared,
+                "spent": float(spent),
+                "remaining": float(budget.amount - spent),
+            }
+        })
     return JsonResponse({
         "id": budget.id,
         "is_recurring": budget.is_recurring,
     })
 
+@csrf_exempt
+def toggle_recurring(request, budget_id):
+    """Toggle budget recurring status."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "PATCH":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error":"Invalid JSON"}, status=400)
+    
+    is_recurring = data.get("is_recurring", False)
+    recurrence = data.get("recurrence")
 
+    try:
+        budget = Budget.objects.get(id=budget_id, user=request.user)
+        budget.is_recurring = is_recurring
 
-def subscriptions(request):
+        if recurrence:
+            budget.recurrence = recurrence
+
+        budget.save(update_fields=["is_recurring", "recurrence"])
+
+        return JsonResponse({
+            "message": "Budget recurring status updated",
+            "budget": {
+                "id": budget.id,
+                "is_recurring": budget.is_recurring,
+                "recurrence": budget.recurrence,
+            }
+        })
+    except Budget.DoesNotExist:
+        return JsonResponse({"error": "Budget not found"}, status=404)
+    
+@csrf_exempt
+def budget_delete(request, budget_id):
+    """Delete a budget"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        budget = Budget.objects.get(id=budget_id, user=request.user)
+        budget.delete()
+        return JsonResponse({"message": "Budget deleted successfully"})
+    except Budget.DoesNotExist:
+         return JsonResponse({"error": "Budget not found"}, status=404)
+
+# ============================ SUBSCRIPTIONS VIEWS ====================== #
+def subscriptions_list(request):
+    """GET: List allsubscriptions for user"""
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
         )
     
+    subscriptions = Subscription.objects.filter(user=request.user).order_by('-created_at')
+
+    data = []
     try:
         if request.method == "GET":
-            subscriptions = Subscription.objects.filter(user=request.user)
-            data = list(subscriptions.values())
+            for sub in subscriptions:
+                recent_payments = sub.payments.order_by('-date')[:5]
+
+                data.append({
+                    "id": sub.id,
+                    "name": sub.name,
+                    "amount": float(sub.amount),
+                    "category": sub.category,
+                    "billing_cycle": sub.billing_cycle,
+                    "billing_day": sub.billing_day,
+                    "start_date": sub.start_date.isoformat() if sub.start_date else None,
+                    "end_date": sub.end_date.isoformat() if sub.end_date else None,
+                    "status": sub.status,
+                    "description": sub.description,
+                    "created_at": sub.created_at.isoformat(),
+                    "payments": [
+                        {
+                            "id": p.id,
+                            "amount": float(p.amount),
+                            "date": p.date.isoformat(),
+                            "is_paid": p.is_paid,
+                        }
+                        for p in recent_payments
+                    ],
+                    "total_paid": float(sub.payments.filter(is_paid=True).aggregate(
+                        total=Sum('amount'))['total'] or 0
+                    ),
+                    "payment_count": sub.payments.count()
+                })
             return JsonResponse({
                 "subscriptions": data,
                 "user": {
@@ -481,21 +588,21 @@ def subscriptions(request):
         
         elif request.method == "POST":
             data = json.loads(request.body)
-            description = data.get("description")
+            name = data.get("name")
             amount = data.get("amount")
             category = data.get("category")
-            due_date = data.get("due_date")
-            frequency = data.get("frequency")
-            is_active = data.get("is_active")
+            billing_cycle = data.get("billing_cycle")
+            billing_day = data.get("billing_day")
+            start_date = data.get("start_date")
 
             Subscription.objects.create(
                 user=request.user,
-                description=description,
+                name=name,
                 amount=amount,
                 category=category,
-                due_date=due_date,
-                frequency=frequency,
-                is_active=is_active,
+                billing_cycle=billing_cycle,
+                billing_day=billing_day,
+                start_date=start_date
             )
             return JsonResponse({"status": "Subscription added successfully"}, status=201)   
                   
@@ -504,57 +611,238 @@ def subscriptions(request):
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
     return render(request, "money_manager/subscriptions.html")
 
-
-def delete_subs(request):
+@csrf_exempt
+def subscriptions_detail(request, subscription_id):
+    """GET: Single subscription with all payments"""
     if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Unauthorized"}, status=401
-        )
-    
-    data = json.loads(request.body)
-    ids = data.get('ids', [])
-    subs = Subscription.objects.filter(id__in=ids, user=request.user)
-    count = subs.count()
+        return JsonResponse({"error": "Unauthorized"}, status=401)
 
     try:
-        if request.method == "DELETE":
-            subs.delete()
-            return JsonResponse(
-                {
-                "deleted": ids,
-                "message": f"{count} subscriptions deleted succesfully."
-                },
-                status=200,
-            )
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-
-
-def update_subs(request):
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Unauthorized"}, status=401
-        )
+        subscription = Subscription.objects.get(id=subscription_id, user=request.user)
+    except Subscription.DoesNotExist:
+        return JsonResponse({"error": "Subscription not found"}, status=404)
     
-    data = json.loads(request.body)
-    ids = data.get('ids', [])
-    is_active = data.get('is_active')
-    subs = Subscription.objects.filter(id__in=ids, user=request.user)
-    count = subs.count()
+    payments = subscription.payments.order_by('-date')
 
+    return JsonResponse({
+        "subscription": {
+            "id": subscription.id,
+            "name": subscription.name,
+            "amount": subscription.amount,
+            "category": subscription.category,
+            "billing_cycle": subscription.billing_cycle,
+            "billing_day": subscription.billing_day,
+            "start_date": subscription.start_date.isoformat(),
+            "end_date": subscription.end_date.isoformat(),
+            "status": subscription.status,
+            "description": subscription.description,
+        },
+        "payments": [
+            {
+                "id": p.id,
+                "amount": float(p.amount),
+                "date": p.date.isoformat(),
+                "is_paid": p.is_paid,
+            }
+            for p in payments
+        ],
+    })
+
+
+@csrf_exempt
+def subscriptions_create(request):
+    """POST: Create new subscription"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
     try:
-        if request.method == "PATCH":
-            subs.update(is_active=is_active)
-            return JsonResponse(
-                {
-                    "updated": ids,
-                    "is_active": is_active,
-                    "message": f"{count} subscriptions updated succesfully"
-                },
-                status=200
-            )
+        data = json.loads(request.body)
+
+        subscription = Subscription.objects.create(
+            user=request.user,
+            name=data.get("name"),
+            amount=data.get("amount"),
+            category=data.get("category"),
+            billing_cycle=data.get("billing_cycle"),
+            billing_day=data.get("billing_day"),
+            start_date=data.get("start_date"),
+            end_date=data.get("end_date", None),
+            status=data.get("status", "active"),
+            description=data.get("description", ""),
+        )
+
+        from .services.subscription_service import generate_payments_for_subscription
+        from django.utils import timezone
+
+        try:
+            generate_payments_for_subscription(subscription, timezone.now().date())
+            print("Payments generated")
+        except Exception as e:
+            print("Payment generation failed (non-critical):", e)
+
+        return JsonResponse({
+            "meesage": "Subscription created",
+            "subscription": {
+                "id": subscription.id,
+                "name": subscription.name,
+            }
+        }, status=201)
+    
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+    
+@csrf_exempt
+def subscription_update(request, subscription_id):
+    """PATCH: Update subscription"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "PATCH":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        subscription = Subscription.objects.get(id=subscription_id, user=request.user)
+    except Subscription.DoesNotExist:
+        return JsonResponse({"error": "Subscription not found"}, status=404)
+    
+    try:
+        from django.utils import timezone
+
+        data = json.loads(request.body)
+
+        # Update allowed fields
+        if "name" in data:
+            subscription.name = data["name"]
+        if "amount" in data:
+            subscription.amount = data["amount"]
+        if "category" in data:
+            subscription.category = data["category"]
+        if "billing_cycle" in data:
+            subscription.billing_cycle = data["blling_cycle"]
+        if "billing_day" in data:
+            subscription.billing_day = data["billing_day"]
+        if "status" in data:
+            subscription.status = data["status"]
+            # If cancelling, set end_date
+            if data["status"] == "cancelled" and not subscription.end_date:
+                subscription.end_date = timezone.now().date()
+        if "description" in data:
+            subscription.description = data["description"]
+        if "end_date" in data:
+            subscription.end_date = data["end_date"] or None
+        
+        subscription.save()
+
+        return JsonResponse({
+            "message": "Subscription updated",
+            "subscription": {
+                "id": subscription.id,
+                "name": subscription.name,
+                "status": subscription.status,
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
+@csrf_exempt
+def subscription_delete(request, subscription_id):
+    """DELETE: Delete subscription and its payments"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        subscription = Subscription.objects.get(id=subscription_id, user=request.user)
+        subscription.delete()
+
+        return JsonResponse({"message": "Subscription deleted"})
+    except Subscription.DoesNotExist:
+        return JsonResponse({"error": "Subscription not found"}, status=404)
+    
+
+@csrf_exempt
+def subscription_update_status(request, subscription_id):
+    """PATCH: Quick status update (active/paused/cancelled)"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "PATCH":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        subscription = Subscription.objects.get(id=subscription_id, user=request.user)
+
+    except Subscription.DoesNotExist:
+        return JsonResponse({"error": "Subscription not found"}, status=404)
+    
+    try:
+        data = json.loads(request.body)
+        new_status = data.get("status")
+
+        if new_status not in ["active", "paused", "cancelled"]:
+            return JsonResponse({"error": "Invalid status"}, status=400)
+        
+        subscription.status = new_status
+
+        from django.utils import timezone
+        # Set end_date when cancelling
+        if new_status == "cancelled" and not subscription.end_date:
+            subscription.end_date = timezone.now().date()
+
+        # Clear end_date when reactivating
+        if new_status == "active":
+            subscription.end_date = None
+        
+        subscription.save()
+
+        return JsonResponse({
+            "message": f"Subscription {new_status}",
+            "subscription": {
+                "id": subscription.id,
+                "status": subscription.status,
+                "end_date": subscription.end_date.isoformat() if subscription.end_date else None,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
+@csrf_exempt
+def payment_toggle_paid(request, payment_id):
+    """PATCH: Toggle payment is_paid status"""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != "PATCH":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        payment = SubscriptionPayment.objects.get(
+            id=payment_id,
+            subscription__user=request.user
+        )
+    except SubscriptionPayment.DoesNotExist:
+        return JsonResponse({"error": "Payment not found"}, status=404)
+    
+    from django.utils import timezone
+    
+    payment.is_paid = not payment.is_paid
+    payment.paid_date = timezone.now().date() if payment.is_paid else None
+    payment.save()
+
+    return JsonResponse({
+        "message": "Payment updated",
+        "payment": {
+            "id": payment.id,
+            "is_paid": payment.is_paid,
+            "paid_date": payment.paid_date.isoformat() if payment.paid_date else None,
+        }
+    })
     
 
 def add_transaction(request):
@@ -575,9 +863,50 @@ def add_transaction(request):
     except Exception as e:
         logger.error(f"Error adding transaction: {e}")
         return JsonResponse({"error": "Failed to add transaction"}, status=500)
-    
 
-def income_list(request):
+
+# ====================== INCOME VIEWS ======================#
+def get_income_data(user, period):
+    """Get income vs spending for dashboard."""
+
+    # Get income for the period
+    income = filter_queryset_by_period(
+        Income.objects.filter(user=user),
+        period=period,
+        date_field="period_start"
+    )
+
+    # Get all spending (transactions + subscriptions payments)
+    transactions = filter_queryset_by_period(
+        Transaction.objects.filter(user=user),
+        period=period,
+        date_field="date"
+    )
+
+    subscription_payments = filter_queryset_by_period(
+        SubscriptionPayment.objects.filter(subscription__user=user),
+        period=period,
+        date_field="date"
+    )
+
+    # Calculate totals
+    total_income = float(income.aggregate(total=Sum("amount"))["total"] or 0)
+    transaction_spending = float(transactions.aggregate(total=Sum("amount"))["total"] or 0)
+    subscription_spending = float(subscription_payments.aggregate(total=Sum("amount"))["total"] or 0)
+    total_spent = transaction_spending + subscription_spending
+    remaining = total_income - total_spent
+
+    return {
+        "total_income": total_income,
+        "total_spent": total_spent,
+        "remaining": remaining,
+        "percent_remaining": round((remaining / total_income) * 100, 1) if total_income > 0 else 0,
+        "is_negative": remaining < 0
+    }
+
+
+def get_incomes(request):
+    # Get all income records with summary
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
@@ -585,10 +914,29 @@ def income_list(request):
     
     if request.method == "GET":
         try:
-            incomes = Income.objects.filter(user=request.user)
-            data = list(incomes.values())
+            incomes = Income.objects.filter(user=request.user).order_by('date_received')
+            print(incomes)
+            # Get summary calculations (includes transactions + subscriptions)
+            summary = compute_income_summary(request.user)
+            by_source = compute_income_by_source(request.user)
+
+            incomes_data = [
+                {
+                    "id": inc.id,
+                    "amount": float(inc.amount),
+                    "source": inc.source,
+                    "date_received": inc.date_received.isoformat(),
+                    "period_start": inc.period_start.isoformat(),
+                    "period_end": inc.period_end.isoformat() or None,
+                }
+                for inc in incomes
+            ]
+            
             return JsonResponse({
-                "incomes": data,
+                "incomes": incomes_data,
+                "summary": summary,
+                "by_source": by_source,
+                "count": len(incomes_data),
                 "user": {
                     "id": request.user.id,
                     "username": request.user.username,
@@ -598,34 +946,252 @@ def income_list(request):
         except Exception as e:
             logger.error(f"Error fetching income: {e}")
             return JsonResponse({"error": "Failed to fetch income"}, status=500)
-    elif request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            amount = data.get("amount")
-            source = data.get("source")
-            date_received = data.get("date_received")
-            period_start = data.get("period_start")
-            period_end = data.get("period_end")
+    # elif request.method == "POST":
+    #     try:
+    #         data = json.loads(request.body)
+    #         amount = data.get("amount")
+    #         source = data.get("source")
+    #         date_received = data.get("date_received")
+    #         period_start = data.get("period_start")
+    #         period_end = data.get("period_end")
 
-            Income.objects.create(
-                user=request.user,
-                amount=amount,
-                source=source,
-                date_received=date_received,
-                period_start=period_start,
-                period_end=period_end
-            )
-            return JsonResponse({"status": "Income added successfully"}, status=201)
-        except Exception as e:
-            logger.error(f"Error adding income: {e}")
-            return JsonResponse({"error": "Failed to add income"}, status=500)
-    elif request.method == "DELETE":
-        try:
-            data = json.loads(request.body)
-            ids = data.get("ids", [])
-            Income.objects.filter(id__in=ids, user=request.user).delete()
-            return JsonResponse({"status": "deleted"})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+    #         Income.objects.create(
+    #             user=request.user,
+    #             amount=amount,
+    #             source=source,
+    #             date_received=date_received,
+    #             period_start=period_start,
+    #             period_end=period_end
+    #         )
+    #         return JsonResponse({"status": "Income added successfully"}, status=201)
+    #     except Exception as e:
+    #         logger.error(f"Error adding income: {e}")
+    #         return JsonResponse({"error": "Failed to add income"}, status=500)
+    # elif request.method == "DELETE":
+    #     try:
+    #         data = json.loads(request.body)
+    #         ids = data.get("ids", [])
+    #         Income.objects.filter(id__in=ids, user=request.user).delete()
+    #         return JsonResponse({"status": "deleted"})
+    #     except Exception as e:
+    #         return JsonResponse({"error": str(e)}, status=400)
+    
+def get_income(request, income_id):
+    """Get a single income record with details."""
+    if not request.user.is_authenticate:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != 'GET':
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        income = Income.objects.get(id=income_id, user=request.user)
+    except Income.DoesNotExist:
+        return JsonResponse({"erorr": "Income not found"}, status=404)
+    
+    # Get transactions within this income's period
+    transactions = Transaction.objects.filter(
+        user=request.user,
+        date__gte=income.period_start,
+        date__lte=income.period_end,
+    ).order_by('-date')
+
+    # Get subscriptions that apply to this period
+    subscriptions = Subscription.objects.filter(
+        user=request.user,
+        is_active=True,
+        start_date__lte=income.period_end
+    ).filter(
+        Q(end_date__isnull=True) | Q(end_date__gte=income.period_start)
+    )
+
+    transactions_data = [
+        {
+            "id": tx.id,
+            "amount": float(tx.amount),
+            "description": tx.description,
+            "category": tx.category,
+            "date": tx.date.isoformat(),
+            "type": "transaction",
+        }
+        for tx in transactions
+    ]
+
+    subscriptions_data = [
+        {
+            "id": sub.id,
+            "name": sub.name,
+            "amount": float(sub.amount),
+            "category": sub.category,
+            "billing_cycle": sub.billing_cycle,
+            "type": "subscription",
+        }
+        for sub in subscriptions
+    ]
+
+    income_data = get_income_with_details(income, request.user)
+    income_data["transactions"] = transactions_data,
+    income_data["subscriptions"] = subscriptions_data
+
+    return JsonResponse({
+        "income": income_data,
+        "user": {
+            "id": request.user.id,
+            "username": request.user.username,
+            "is_authenticated": request.user.is_authenticated
+        }
+        })
+
+def get_income_summary(request):
+    """Get income summary only (for dashboard)."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.method != 'GET':
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        summary = compute_income_summary(request.user)
+        by_source = compute_income_by_source(request.user)
+
+        current_year = date.today().year
+        monthly = compute_monthly_income(request.user, current_year)
+
+        return JsonResponse({
+            "summary": summary,
+            "by_source": by_source,
+            "monthly": monthly,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authentincated": request.user.is_authenticated
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
+@csrf_exempt
+def income_create(request):
+    """Create a new income record."""
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "error": "Unauthorized"
+        }, status=401)
+    
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    required_fields = ["amount", "source", "date_received", "period_start", "period_end"]
+    for field in required_fields:
+        if field not in data:
+            return JsonResponse({"error": f"Missing field: {field}"}, status=400)
         
+    if data["period_end"] < data["period_start"]:
+        return JsonResponse({"error": "Period end cannot be before period start"}, status=400)
+    
+    income = Income.objects.create(
+        user=request.user,
+        amount=data["amount"],
+        source=data["source"],
+        date_received=data["date_received"],
+        period_start=data["period_start"],
+        period_end=data["period_end"],
+    )
+
+    summary = compute_income_summary(request.user)
+
+    return JsonResponse({
+        "message": "Income created succesfully",
+        "income": {
+            "id": income.id,
+            "amount": float(income.amount),
+            "source": income.source,
+        },
+        "summary": summary,
+    }, status=201)
+
+@csrf_exempt
+def income_update(request, income_id):
+    """Update an income record."""
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    if request.metho != 'PATCH':
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        income = Income.objects.get(id=income_id, user=request.user)
+    except Income.DoesNotExist:
+        return JsonResponse({"error": "Income not found"}, status=404)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    allowed_fields = ["amount", "source", "date_received", "period_start", "period_end"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(income, field, data[field])
+        
+    if income.period_end < income.period_start:
+        return JsonResponse({"error": "Period end cannot be before period start"}, status=400)
+    
+    income.save()
+
+    summary = compute_income_summary(request.user)
+
+    return JsonResponse({
+        "message": "Income updated succesfully",
+        "income": get_income_with_details(income, request.user),
+        "summary": summary,
+        "user": {
+            "id": request.user.id,
+            "username": request.user.username,
+            "is_authenticated": request.user.is_authenticated,
+        }
+    })
+
+@csrf_exempt
+def income_delete(request):
+    """Delete one or more income records."""
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            "error": "Unauthorized"
+        }, status=401)
+    
+    if request.method != 'DELETE':
+        return JsonResponse({"error": "Method Not Allowed"}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    income_ids = data.get("income_ids", [])
+    if not income_ids:
+        return JsonResponse({"error": "No income Income IDs provided"})
+    
+    deleted_count = Income.objects.filter(
+        id__in=income_ids,
+        user=request.user
+    ).delete()[0]
+
+    summary = compute_income_summary(request.user)
+
+    return JsonResponse({
+        "message": f"Deleted {deleted_count} income record(s).",
+        "deleted_count": deleted_count,
+        "summary": summary,
+        "user": {
+            "id": request.user.id,
+            "username": request.user.username,
+            "is_authenticated": request.user.is_authenticated
+        }
+    })
 

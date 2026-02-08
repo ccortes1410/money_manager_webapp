@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Budget, Transaction, Subscription
+from .models import Budget, Transaction, Subscription, Income
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'amount', 'date', 'description')
@@ -10,8 +10,8 @@ class BudgetAdmin(admin.ModelAdmin):
     search_fields = ('category',)
 
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'category', 'amount', 'is_active')
-    search_fields = ('category',)
+    list_display = ('id', 'user', 'name', 'amount', 'category', 'billing_cycle', 'billing_day', 'start_date', 'end_date', 'status', 'description', 'created_at', 'updated_at')
+    search_fields = ('name', 'category')
 
 class IncomeAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'amount', 'source', 'date_received')
@@ -20,3 +20,4 @@ class IncomeAdmin(admin.ModelAdmin):
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Budget, BudgetAdmin)
 admin.site.register(Subscription, SubscriptionAdmin)
+admin.site.register(Income, IncomeAdmin)

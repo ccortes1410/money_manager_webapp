@@ -1,206 +1,942 @@
-.income-container {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    height: 100vh;
-    overflow-y: none;
-    min-width: 0;
-    width: 100%;
-    background-color: #a4c3cc;
-    box-sizing: border-box;
-    transition: 'margin-left 0.2s';
-    position: relative;
- 
-
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+/* Income Page */
+.income-page {
+    padding: 2rem;
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: #0f0f0f;
 }
 
+/* Header */
 .income-header {
-    font-size: 36px;
-    margin-bottom: 15px;
-    background-color: #0a364b;
-    min-height: 60px;
-    color: white;
     display: flex;
-    overflow-x: auto;
-    overflow-y: hidden;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 0px 16px;
-    position: relative;
+    margin-bottom: 2rem;
 }
 
 .income-header h1 {
-    margin: 0 auto;
-    flex: 0 1 auto;
-    font-size: 36px;
-    width: 100%;
-    text-align: center;
+    color: #fff;
+    font-size: 2rem;
+    margin: 0;
 }
 
-.income-layout {
+.income-add-btn {
+    background-color: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.income-add-btn:hover {
+    background-color: #16a34a;
+}
+
+/* Summary Cards */
+.income-summary {
     display: grid;
-    grid-template-columns: 300px 200px 1fr;
-    height: calc(100vh - 64px);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .income-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .income-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+.income-summary .inc-summary-card {
+    background-color: #1a1a1a;
+    border-radius: 12px;
     padding: 1rem;
-    overflow: hidden;
-}
-
-.income-table-col {
-    overflow: hidden;
-}
-
-.income-table-container {
-    height: 100%;
-    overflow-y: auto;
-}
-
-.income-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 18px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.income-table th, .income-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.income-table-inputs {
-    display: flex;
-    justify-content: baseline;
-    align-items: center;
-}
-
-.inc-text-input {
-    margin-left: 0.2rem;
-    margin-right: 0.2rem;
-    border-radius: 4px;
-    width: fit-content
-}
-
-.date-label {
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
+}
+
+.income-summary .inc-summary-card .label {
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.income-summary .inc-summary-card .value {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.income-summary .inc-summary-card .value.negative {
+    color: #ef4444;
+}
+
+.income-summary .inc-summary-card .percent {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.income-summary .inc-summary-card.total-income {
+    border-left: 4px solid #22c55e;
+}
+
+.income-summary .inc-summary-card.this-month {
+    border-left: 4px solid #3b82f6;
+}
+
+.income-summary .inc-summary-card.spent {
+    border-left: 4px solid #f59e0b;
+}
+
+.income-summary .inc-summary-card.remaining {
+    border-left: 4px solid #8b5cf6;
+}
+
+/* Breakdown in Summary Card */
+.income-summary .inc-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #333;
+}
+
+.income-summary .inc-breakdown-item {
+    display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 0.5rem;
+    color: #888;
+    font-size: 0.625rem;
 }
 
-.selected-row {
-    background-color: rgba(37, 99, 235, 0.15);
-    transition: background-color 0.2s ease;
-
+.income-summary .inc-breakdown-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
-tbody tr {
-    cursor: pointer;
+.income-summary .inc-breakdown-dot.transactions {
+    background-color: #3b82f6;
 }
 
-tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+.income-summary .inc-breakdown-dot.subscriptions {
+    background-color: #f59e0b;
 }
 
-.no-income-message{
-    margin-left: auto;
-    margin-right: auto;
-    font-family: 'Courier New', Courier, monospace;
+/* This Month Summary */
+.inc-this-month-summary {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
-.income-calendar-col {
-    overflow: hidden;
-    border-right: 1px solid #334155;
+.inc-this-month-summary h3 {
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
 }
 
-.income-calendar-container {
-    height: 100%;
-    overflow-y: scroll;
-    padding-right: 0.5rem;
+.inc-this-month-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
 
-    scrollbar-width: none;
+@media (max-width: 768px) {
+    .this-month-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.mini-card {
+    background-color: #252525;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mini-label {
+    color: #888;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+}
+
+.mini-value {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.mini-value.positive {
+    color: #22c55e;
+}
+
+.mini-value.negative {
+    color: #ef4444;
+}
+
+/* Main Content Layout */
+.income-content {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    max-height: calc(100vh - 400px);
+}
+
+@media (max-width: 1024px) {
+    .income-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Calendar Panel */
+.income-calendar-panel {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 500px); /* Fit within viewport */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.income-calendar-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.income-calendar-panel::-webkit-scrollbar-track {
+    background: #252525;
+    border-radius: 3px;
+}
+
+.income-calendar-panel::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.income-calendar-panel::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.income-calendar-panel h2 {
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.income-calendar-panel h3 {
+    color: #fff;
+    font-size: 0.875rem;
+    margin: 0 0 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.calendar-hint {
+    color: #888;
+    font-size: 0.75rem;
+    margin: 0 0 0.75rem 0;
+    min-height: 1rem;
+    flex-shrink: 0;
+}
+
+/* Calendar Container - Scrollable */
+.calendar-container {
+    max-height: 200px; /* Fixed max height */
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.calendar-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.calendar-container::-webkit-scrollbar-track {
+    background: #252525;
+    border-radius: 2px;
+}
+
+.calendar-container::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 2px;
 }
 
 .calendar-year {
-    margin-bottom: 1rem;
-    font-size: larger;
-    text-align: center;
+    margin-bottom: 0.75rem;
 }
 
-.year-header {
-    position: sticky;
-    top: 0;
-    background: #0f127a;
-    color: white;
+.year-label {
+    color: #fff;
+    font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.5rem;
-    z-index: 1;
+    margin-bottom: 0.25rem;
+    padding-left: 0.25rem;
 }
 
-.months-list {
+.months-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.2rem;
+}
+
+.month-cell {
+    background-color: #252525;
+    color: #888;
+    padding: 0.35rem;
+    text-align: center;
+    font-size: 0.6rem;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.month-cell.current {
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+}
+
+.month-cell.highlighted {
+    background-color: #22c55e;
+    color: #fff;
+}
+
+/* Funds Section - Compact */
+.funds-section {
+    border-top: 1px solid #333;
+    padding-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.funds-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.progress-bar-vertical {
+    width: 30px;
+    height: 80px; /* Reduced height */
+    background-color: #252525;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.progress-bar-vertical .progress-fill {
+    background-color: #22c55e;
+    transition: height 0.3s ease;
+    border-radius: 6px;
+}
+
+.progress-bar-vertical .progress-fill.negative {
+    background-color: #ef4444;
+}
+
+.funds-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.funds-percent {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.funds-label {
+    color: #888;
+    font-size: 0.625rem;
+}
+
+/* Spending Breakdown Section - Compact */
+.spending-breakdown-section {
+    border-top: 1px solid #333;
+    padding-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+.breakdown-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.breakdown-bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.breakdown-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.breakdown-bar-label {
+    color: #888;
+    font-size: 0.625rem;
+}
+
+.breakdown-bar-value {
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.breakdown-bar {
+    height: 6px;
+    background-color: #252525;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.breakdown-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.breakdown-bar-fill.transactions {
+    background-color: #3b82f6;
+}
+
+.breakdown-bar-fill.subscriptions {
+    background-color: #f59e0b;
+}
+
+/* Income by Source Section - Compact & Scrollable */
+.income-by-source {
+    border-top: 1px solid #333;
+    padding-top: 0.75rem;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.source-list {
     list-style: none;
-    list-style-type: none;
-    margin: 0;
     padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    overflow-y: auto;
+    max-height: 120px;
 }
 
-.month-item {
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
+.source-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.source-list::-webkit-scrollbar-track {
+    background: #252525;
+    border-radius: 2px;
+}
+
+.source-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 2px;
+}
+
+.source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #252525;
+    padding: 0.4rem 0.6rem;
     border-radius: 4px;
 }
 
-.highlighted-month {
-    background-color: #2563eb;
-    color: white;
-    font-weight: 600;
+.source-name {
+    color: #888;
+    font-size: 0.625rem;
 }
 
-.month-item:hover {
-    background-color: rgba(255,255,255,0.08);
+.source-amount {
+    color: #22c55e;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
 }
-.income-bar-col {
+
+
+/* Income Table Panel */
+.income-table-panel {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: calc(100vh - 420px);
+    overflow: hidden;
+}
+
+/* Table Container */
+.income-table-container {
+    flex: 1;
+    overflow-y: auto;
+    border-radius: 8px;
+    background-color: #252525;
+    min-height: 200px;
+}
+
+.income-table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.income-table-container::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.income-table-container::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.income-table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Controls */
+.income-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    flex: 1;
+    max-width: 300px;
+    gap: 0.5rem;
+}
+
+.search-box .search-icon {
+    color: #888;
+}
+
+.search-box input {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 0.875rem;
+    width: 100%;
+    outline: none;
+}
+
+.search-box input::placeholder {
+    color: #666;
+}
+
+.clear-search {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.clear-search:hover {
+    color: #fff;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.source-filter {
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: #fff;
+    font-size: 0.875rem;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.source-filter:focus {
+    outline: none;
+    border-color: #22c55e;
+}
+
+.delete-selected-btn {
+    background-color: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-selected-btn:hover {
+    background-color: #dc2626;
+}
+
+/* Table Container */
+.income-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    background-color: #252525;
+}
+
+.loading-state,
+.empty-state {
+    color: #888;
+    text-align: center;
+    padding: 3rem;
+}
+
+/* Income Table */
+.income-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.income-table thead {
+    background-color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.income-table th {
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.income-table td {
+    color: #fff;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #333;
+}
+
+.income-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.income-table tbody tr:hover {
+    background-color: #2a2a2a;
+}
+
+.income-table tbody tr.selected {
+    background-color: #1e3a5f;
+}
+
+.income-table tbody tr.highlighted {
+    background-color: #14532d;
+}
+
+/* Column Styles */
+.checkbox-col {
+    width: 40px;
+    text-align: center;
+}
+
+.checkbox-col input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #22c55e;
+}
+
+.source-col {
+    white-space: nowrap;
+}
+
+.source-badge {
+    background-color: #333;
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.amount-col {
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+    color: #22c55e;
+}
+
+.date-col {
+    color: #888;
+    white-space: nowrap;
+}
+
+.period-col {
+    white-space: nowrap;
+}
+
+.period-text {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.actions-col {
+    width: 80px;
+    text-align: center;
+}
+
+.calendar-btn,
+.edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    font-size: 0.875rem;
+    padding: 0.25rem;
+}
+
+.calendar-btn:hover,
+.edit-btn:hover {
+    opacity: 1;
+}
+
+/* Table Footer */
+.income-table tfoot {
+    background-color: #333;
+    position: sticky;
+    bottom: 0;
+}
+
+.income-table tfoot td {
+    padding: 0.75rem 1rem;
+    border-top: 2px solid #444;
+}
+
+.total-label {
+    text-align: right;
+    color: #888;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.total-amount {
+    font-weight: 600;
+    color: #22c55e;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+/* Modal Styles */
+.income-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-} 
+    z-index: 1000;
+}
 
-.income-bar-wrapper {
+.income-modal-content {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.income-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #333;
+}
+
+.income-modal-header h2 {
+    color: #fff;
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.income-modal-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.income-modal-close-btn:hover {
+    color: #fff;
+}
+
+.income-modal-form {
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    height: 100%;
+    gap: 1.25rem;
 }
 
-.income-progress-bar {
-    width: 70px;
-    height: 90%;
-    background: #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
+.income-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.income-progress-fill {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    background: linear-gradient(to top, #22c55e, #4ade80);
-    transition: height 0.3s ease;
+.income-form-group label {
+    color: #888;
+    font-size: 0.875rem;
 }
 
-@media (max-width: 900px) {
-    .income-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
-        height: auto;
+.income-form-group input,
+.income-form-group select {
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.income-form-group input:focus,
+.income-form-group select:focus {
+    outline: none;
+    border-color: #22c55e;
+}
+
+.income-form-group input.error {
+    border-color: #ef4444;
+}
+
+.income-error-message {
+    color: #ef4444;
+    font-size: 0.75rem;
+}
+
+.income-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Period Presets */
+.period-presets {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.preset-btn {
+    background-color: #252525;
+    border: 1px solid #333;
+    color: #888;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.preset-btn:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #22c55e;
+}
+
+.income-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.income-cancel-btn {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.income-cancel-btn:hover {
+    background-color: #444;
+}
+
+.income-save-btn {
+    background-color: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.income-save-btn:hover {
+    background-color: #16a34a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .income-controls {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .income-bar-col {
-        order: 2;
-        height: 200px;
+    .search-box {
+        max-width: none;
+    }
+
+    .filter-controls {
+        justify-content: space-between;
+    }
+
+    .income-form-row {
+        grid-template-columns: 1fr;
     }
 }
