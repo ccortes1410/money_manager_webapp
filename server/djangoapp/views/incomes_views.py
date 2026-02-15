@@ -70,7 +70,7 @@ def get_incomes(request):
             # Get summary calculations (includes transactions + subscriptions)
             summary = compute_income_summary(request.user)
             by_source = compute_income_by_source(request.user)
-            print("Income by source:", by_source)
+            # print("Income by source:", by_source)
             incomes_data = [
                 {
                     "id": inc.id,

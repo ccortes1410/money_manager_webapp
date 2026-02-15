@@ -50,7 +50,8 @@ const Friends = () => {
             setLoading(false);
         }
     };
-
+    console.log("Sent Requests:", sentRequests)
+    console.log("Received Requests:", receivedRequests)
     const handleAcceptRequest = async (friendshipId) => {
         try {
             const res = await fetch(baseUrl+`/friends/request/${friendshipId}/respond`, {
@@ -228,6 +229,7 @@ const Friends = () => {
             <div className="friends-tabs">
                 <button
                     className={`tab-btn ${activeTab === "friends" ? "active" : ""}`}
+                    onClick={() => setActiveTab("friends")}
                 >
                     Friends
                     <span className="tab-count">{friends.length}</span>
@@ -304,13 +306,13 @@ const Friends = () => {
                             </div>
                         ): (
                             <div className="friends-grid">
-                                {filteredFriends.map((friend) => {
+                                {filteredFriends.map((friend) => (
                                     <FriendCard
                                         key={friend.id}
                                         friend={friend}
                                         onRemove={() => handleRemoveFriend(friend.id, friend.username)}
                                     />
-                                })}
+                                ))}
                             </div>
                         )}
                     </>
@@ -329,7 +331,7 @@ const Friends = () => {
                             </div>
                         ) : (
                             <div className="requests-list">
-                                {receivedRequests.map((request) => {
+                                {receivedRequests.map((request) => (
                                     <FriendRequestCard
                                         key={request.id}
                                         request={request}
@@ -337,7 +339,7 @@ const Friends = () => {
                                         onAccept={() => handleAcceptRequest(request.id)}
                                         onDecline={() => handleDeclineRequest(request.id)}
                                     />
-                                })}
+                                ))}
                             </div>
                         )}
                     </>

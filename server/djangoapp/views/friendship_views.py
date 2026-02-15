@@ -77,7 +77,7 @@ def get_pending_requests(request):
     sent = Friendship.get_sent_requests(user)
     sent_data = [{
         'id': req.id,
-        'from_user': {
+        'to_user': {
             'id': req.receiver.id,
             'username': req.receiver.username,
             'email': req.receiver.email,

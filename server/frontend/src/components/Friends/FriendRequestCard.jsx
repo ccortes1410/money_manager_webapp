@@ -1,7 +1,7 @@
 import React from 'react';
 
 const FriendRequestCard = ({ request, type, onAccept, onDecline, onCancel }) => {
-    const user = type === "received" ? request.from_user : request.to_user;
+    const user = type === "received" ? request?.from_user : request?.to_user;
 
     const getInitials = (user) => {
         if (user.first_name && user.last_name) {

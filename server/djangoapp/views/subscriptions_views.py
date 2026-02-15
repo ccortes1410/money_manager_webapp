@@ -58,8 +58,8 @@ def subscriptions_list(request):
                 })
                 
                 summary = get_subscriptions_for_period(user=request.user, period=sub.billing_cycle)
-                print("Subscription summary", summary)
-                print("Subscriptions data, payments:", data[0]["payments"][0]["amount"])
+                # print("Subscription summary", summary)
+                # print("Subscriptions data, payments:", data[0]["payments"][0]["amount"])
             return JsonResponse({
                 "subscriptions": data,
                 "summary": summary,
