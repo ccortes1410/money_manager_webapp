@@ -1,9 +1,9 @@
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.utils import timezone
 from datetime import timedelta
 from .date_filter import filter_queryset_by_period, Period
-from ..models import Transaction
+from ..models.models import Transaction
 
 
 def get_transactions_chart_data(user, period: str):
@@ -135,5 +135,27 @@ def _group_by_year(transactions):
         for item in grouped
     ]
 
+def update_transaction(transaction_id, user, data):
+    """Update a transaction with provided data."""
+    try:
+        transaction = Transaction.objects.get(id=transaction_id, user=user)
+
+        # Update allowed fields
+        allowed_fields = [
+            "amount",
+            "categroy",
+            "description",
+            "date"
+        ]
+
+        for field in allowed_fields:
+            if field in data:
+                setattr(transaction, field, data[field])
+
+        transaction.save()
+        return {"success": True, "transaction": transaction}
+    except Transaction.DoesNotExist:
+        return {"success": False, "error": "Transaction not found."}
+    
 
 

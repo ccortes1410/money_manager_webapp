@@ -1,8 +1,5 @@
-from ..models import Budget, Transaction, Subscription
+from ..models.models import Budget, Transaction, Subscription
 from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
-from django.db.models import Sum
-from decimal import Decimal
 from .date_filter import filter_queryset_by_period
 from .spending_calculations import get_subscription_amount_for_period, compute_total_spent
 from income import compute_total_income

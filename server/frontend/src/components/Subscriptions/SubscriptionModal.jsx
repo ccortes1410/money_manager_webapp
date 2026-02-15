@@ -22,6 +22,7 @@ const SubscriptionModal = ({ subscription, onClose, onSave }) => {
                 billing_cycle: subscription.billing_cycle || "monthly",
                 billing_day: subscription.billing_day || 1,
                 start_date: subscription.start_date || "",
+                end_date: subscription.end_date || "",
                 description: subscription.description || "",
                 status: subscription.status || "active",
             });

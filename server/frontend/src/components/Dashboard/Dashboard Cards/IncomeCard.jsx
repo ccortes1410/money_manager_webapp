@@ -32,9 +32,9 @@ const IncomeCard = ({ income, period }) => {
     return (
         <div className="card-inner">
             <h3>Income ({period})</h3>
-            <div className="income-content">
+            <div className="dashboard-income-content">
                 {/* Top label - Remaining */}
-                <div className="income-label top">
+                <div className="dashboard-income-label top">
                     <span className={`amount ${isNegative ? 'negative' : 'positive'}`}>
                         {isNegative ? '-' : ''}${Math.abs(remaining).toFixed(0)}
                     </span>
@@ -42,29 +42,29 @@ const IncomeCard = ({ income, period }) => {
                 </div>
 
                 {/*  Vertical Bar */}
-                <div className="income-bar-container">
-                    <div className="income-bar">
+                <div className="dashboard-income-bar-container">
+                    <div className="dashboard-income-bar">
                         {/* Remaining funs (green) - fills from bottom */}
                         <div
-                            className={`income-bar-fill remaining ${isNegative ? 'negative' : ''}`}
+                            className={`dashboard-income-bar-fill remaining ${isNegative ? 'negative' : ''}`}
                             style={{ height: `${isNegative ? 0 : fillPercent}%`}}
                         />
                         {/* Spent funds (blue) - fills from bottom above remaining */}
                         <div 
-                            className="income-bar-fill spent"
+                            className="dashboard-income-bar-fill spent"
                             style={{ height: `${Math.min(spentPercent, 100)}%`}}
                         />
                         {/* Overage (red) - shows when over budget */}
                         {isNegative && (
                             <div
-                                className="income-bar-fill overage"
+                                className="dashboard-income-bar-fill overage"
                                 style={{ height: `${Math.min(Math.abs((remaining / total_income) * 100), 30)}%` }}
                             />
                         )}
                     </div>
 
                     {/* Scale markers */}
-                    <div className="income-bar-scale">
+                    <div className="dashboard-income-bar-scale">
                         <span>100%</span>
                         <span>50%</span>
                         <span>0%</span>
@@ -72,19 +72,19 @@ const IncomeCard = ({ income, period }) => {
                 </div>
 
                 {/* Bottom labels */}
-                <div className="income-stats">
-                    <div className="income-stat">
-                        <span className="stat-color income"></span>
-                        <div className="stat-text">
-                            <span className="stat-label">Income</span>
-                            <span className="stat-value">${total_income.toFixed(0)}</span>
+                <div className="dashboard-income-stats">
+                    <div className="dashboard-income-stat">
+                        <span className="dashboard-stat-color income"></span>
+                        <div className="dashboard-stat-text">
+                            <span className="dashboard-stat-label">Income</span>
+                            <span className="dashboard-stat-value">${total_income.toFixed(0)}</span>
                         </div>
                     </div>
-                    <div className="income-stat">
-                        <span className="stat-color spent"></span>
-                        <div className="stat-text">
-                            <span className="stat-label">Spent</span>
-                            <span className="stat-value">${total_spent.toFixed(0)}</span>
+                    <div className="dashboard-income-stat">
+                        <span className="dashboard-stat-color spent"></span>
+                        <div className="dashboard-stat-text">
+                            <span className="dashboard-stat-label">Spent</span>
+                            <span className="dashboard-stat-value">${total_spent.toFixed(0)}</span>
                         </div>
                     </div>
                 </div>

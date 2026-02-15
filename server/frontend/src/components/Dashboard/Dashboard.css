@@ -355,7 +355,7 @@
 }
 
 /* =================== INCOME CARD ==================== */
-.income-content {
+.dashboard-income-content {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -366,32 +366,32 @@
 }
 
 /* Top label */
-.income-label {
+.dashboard-income-label {
     text-align: center;
     flex-shrink: 0;
 }
 
-.income-label .amount {
+.dashboard-income-label .amount {
     display: block;
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.income-label .amount.positive {
+.dashboard-income-label .amount.positive {
     color: #22c55e;
 }
 
-.income-label .amount.negative {
+.dashboard-income-label .amount.negative {
     color: #ef4444;
 }
 
-.income-label .label {
+.dashboard-income-label .label {
     font-size: 0.75rem;
     color: #888;
 }
 
 /* Bar container */
-.income-bar-container {
+.dashboard-income-bar-container {
     flex: 1;
     display: flex;
     align-items: stretch;
@@ -402,7 +402,7 @@
 }
 
 /* The actual bar */
-.income-bar {
+.dashboard-income-bar {
     width: 48px;
     background: #2a2a2a;
     border-radius: 24px;
@@ -414,26 +414,26 @@
 }
 
 /* Bar fill segments */
-.income-bar-fill {
+.dashboard-income-bar-fill {
     width: 100%;
     transition: height 0.5s ease;
     flex-shrink: 0;
 }
 
-.income-bar-fill.remaining {
+.dashboard-income-bar-fill.remaining {
     background: linear-gradient(to top, #16a34a, #22c55e);
     border-radius: 0 0 20px 20px;
 }
 
-.income-bar-fill.remaining.negative {
+.dashboard-income-bar-fill.remaining.negative {
     display: none;
 }
 
-.income-bar-fill.spent {
+.dashboard-income-bar-fill.spent {
     background: linear-gradient(to top, #3b82f6, #60a5fa);
 }
 
-.income-bar-fill.overage {
+.dashboard-income-bar-fill.overage {
     background: linear-gradient(to top, #dc2626, #ef4444);
     position: absolute;
     bottom: 0;
@@ -443,7 +443,7 @@
 }
 
 /* Scale markers */
-.income-bar-scale {
+.dashboard-income-bar-scale {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -453,43 +453,43 @@
 }
 
 /* Bottom stats */
-.income-stats {
+.dashboard-income-stats {
     display: flex;
     gap: 16px;
     flex-shrink: 0;
 }
 
-.income-stat {
+.dashboard-income-stat {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.stat-color {
+.dashboard-stat-color {
     width: 10px;
     height: 10px;
     border-radius: 50%;
 }
 
-.stat-color.income {
+.dashboard-stat-color.income {
     background: #22c55e;
 }
 
-.stat-color.spent {
+.dashboard-stat-color.spent {
     background: #3b82f6;
 }
 
-.stat-text {
+.dashboard-stat-text {
     display: flex;
     flex-direction: column;
 }
 
-.stat-text .stat-label {
+.dashboard-stat-text .stat-label {
     font-size: 0.65rem;
     color: #888;
 }
 
-.stat-text .stat-value {
+.dashboard-stat-text .stat-value {
     font-size: 0.8rem;
     font-weight: 600;
     color: #fff;

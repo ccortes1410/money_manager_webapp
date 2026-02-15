@@ -47,7 +47,7 @@ const Transactions = () => {
 
     const handleCreate = async (transactionData) => {
         try {
-            const res = await fetch(transaction_url, {
+            const res = await fetch(transaction_url+`/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

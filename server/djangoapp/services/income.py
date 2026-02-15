@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
-from ..models import Income, Transaction
+from ..models.models import Income, Transaction
 from .spending_calculations import compute_total_spent
 
 def get_income_for_period(user, period_start=None, period_end=None):
@@ -27,7 +27,7 @@ def compute_total_income(user, period_start=None, period_end=None):
     result = queryset.aggregate(total=Sum("amount"))
     return float(result["total"] or 0)
 
-def compute_income_summary(user):
+def compute_income_summary(user, period=None):
     """Compute complete income summary for a user."""
     today = date.today()
 
@@ -46,7 +46,7 @@ def compute_income_summary(user):
     # This month totals
     this_month_income = compute_total_income(user, month_start, month_end)
     this_month_spent_breakdown = compute_total_spent(user, month_start, month_end)
-    this_month_spent = this_month_income - this_month_spent_breakdown["total"]
+    this_month_spent = this_month_spent_breakdown["total"]
 
     # Remaining calculations
     remaining = total_income - total_spent
@@ -122,7 +122,7 @@ def compute_monthly_income(user, year=None):
     monthly_totals = [0] * 12
     for item in monthly:
         if item['month']:
-            month_index = item['month'].month -1
+            month_index = item['month'].month - 1
             monthly_totals[month_index] = float(item['total'])
     
     return {

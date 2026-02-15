@@ -1,6 +1,6 @@
-from ..models import Transaction, Subscription, SubscriptionPayment
+from ..models.models import Transaction, Subscription, SubscriptionPayment
 from .date_filter import filter_queryset_by_period
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from collections import defaultdict
 
 def compute_spending_by_category(user, period: str):

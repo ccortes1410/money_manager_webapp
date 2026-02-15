@@ -173,7 +173,7 @@ const IncomeModal = ({ income, sources, onClose, onSave }) => {
                     </div>
 
                     {/* Source */}
-                    <div className="income=form-group">
+                    <div className="income-form-group">
                         <label htmlFor="source">Source *</label>
                         <input
                             type="text"

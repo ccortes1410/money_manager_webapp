@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djangoproj.settings")
 django.setup()
 
 from django.contrib.auth.models import User
-from djangoapp.models import Subscription, Transaction, Budget
+from money_manager_webapp.server.djangoapp.models.models import Subscription, Transaction, Budget
 
 def initiate():
     # Create users

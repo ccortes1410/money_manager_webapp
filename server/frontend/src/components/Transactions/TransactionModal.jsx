@@ -107,9 +107,23 @@ const TransactionModal = ({ transaction, cateogries, onClose, onSave }) => {
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
-                            className={errors.date ? 'error' : ''}
+                            className={errors.category ? 'error' : ''}
                         />
-                        {errors.date && <span className="error-message">{errors.date}</span>}
+                        {errors.category && <span className="error-message">{errors.category}</span>}
+                    </div>
+
+
+                    <div className="tx-form-group">
+                        <label htmlFor="date">Date</label>
+                            <input
+                                type="date"
+                                id="date"
+                                name="date"
+                                value={formData.date}
+                                onChange={handleChange}
+                                className={errors.date ? 'error' : ''}
+                            />
+                            {errors.date && <span className="error-message">{errors.date}</span>}
                     </div>
 
                     <div className="tx-modal-actions">

@@ -7,11 +7,27 @@
     height: 100%;
 }
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;   /* always hide horizontal */
-  overflow-y: hidden;
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;   /* always hide horizontal */
+    overflow-y: hidden;
+    font-family: '', serif ,monospace;
+}
+
+#root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .main-content {

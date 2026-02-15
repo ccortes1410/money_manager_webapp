@@ -18,7 +18,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf import settings
-from . import views
+from .views import (
+    views,
+    dashboard_views,
+    transactions_views,
+    budgets_views,
+    subscriptions_views,
+    incomes_views,
+    friendship_views,    
+)
 
 app_name = "djangoapp"
 urlpatterns = [
@@ -39,108 +47,168 @@ urlpatterns = [
     ),
     path(
         route='dashboard',
-        view=views.dashboard,
+        view=dashboard_views.dashboard,
         name='dashboard'
     ),
     path(
         route='transactions',
-        view=views.transaction_list,
+        view=transactions_views.get_transactions,
         name='transactions'
     ),
     path(
+        route='transactions/create',
+        view=transactions_views.transaction_create,
+        name='transaction_create'
+    ),
+    path(
+        route='transactions/<int:transaction_id>/update',
+        view=transactions_views.transaction_update,
+        name='transaction_update'
+    ),
+    path(
         route='transactions/delete',
-        view=views.transaction_list,
-        name='delete_transactions'
+        view=transactions_views.transaction_delete,
+        name='transaction_delete'
     ),
     path(
         route='budgets',
-        view=views.get_budgets,
+        view=budgets_views.get_budgets,
         name='budget_list'
     ),
     path(
         route='budget/<int:budget_id>',
-        view=views.get_budget,
+        view=budgets_views.get_budget,
         name='budget_detail'
     ),
     path(
         route='budgets/create',
-        view=views.budget_create,
+        view=budgets_views.budget_create,
         name='add_budget'
     ),
     path(
         route='budgets/<int:budget_id>/delete/',
-        view=views.budget_delete,
+        view=budgets_views.budget_delete,
         name='delete_budget'
     ),
     path(
         route='budgets/<int:budget_id>/update',
-        view=views.update_budget_view,
+        view=budgets_views.update_budget_view,
         name='update_budget'
     ),
     path(
         route='budgets/<int:budget_id>/toggle-recurring',
-        view=views.toggle_recurring,
+        view=budgets_views.toggle_recurring,
         name='toggle_budget_recurring'
     ),
     path(
         route='subscriptions',
-        view=views.subscriptions_list,
+        view=subscriptions_views.subscriptions_list,
         name='subscriptions'
     ),
     path(
         route='subscriptions/create',
-        view=views.subscriptions_create,
+        view=subscriptions_views.subscriptions_create,
         name='subscriptions_create'
     ),
     path(
         route='subscriptions/<int:subscription_id>',
-        view=views.subscriptions_detail,
+        view=subscriptions_views.subscriptions_detail,
         name='subscription_detail'
     ),
     path(
         route='subscriptions/<int:subscription_id>/delete',
-        view=views.subscription_delete,
+        view=subscriptions_views.subscription_delete,
         name='subscription_delete'
     ),
     path(
         route='subscriptions/<int:subscription_id>/update',
-        view=views.subscription_update,
-        name='subcsription_update'
+        view=subscriptions_views.subscription_update,
+        name='subscription_update'
     ),
     path(
         route='subscriptions/<int:subscription_id>/status',
-        view=views.subscription_update_status,
+        view=subscriptions_views.subscription_update_status,
         name='subscription_status'
     ),
     path(
         route='payments/<int:payment_id>/toggle',
-        view=views.payment_toggle_paid,
+        view=subscriptions_views.payment_toggle_paid,
         name='payment_toggle'
     ),
     path(
         route='incomes',
-        view=views.get_incomes,
+        view=incomes_views.get_incomes,
         name='get_incomes'
     ),
     path(
         route='incomes/<int:income_id>',
-        view=views.get_income,
+        view=incomes_views.get_income,
         name='get_income'
     ),
     path(
         route='incomes/create',
-        view=views.income_create,
+        view=incomes_views.income_create,
         name='income_create'
     ),
     path(
         route='incomes/delete',
-        view=views.income_delete,
+        view=incomes_views.income_delete,
         name='income_delete'
     ),
     path(
         route='incomes/<int:income_id>/update',
-        view=views.income_update,
+        view=incomes_views.income_update,
         name='income_update'
+    ),
+    path(
+        route='friends',
+        view=friendship_views.get_friends,
+        name='get_friends'
+    ),
+    path(
+        route='friends/requests',
+        view=friendship_views.get_pending_requests,
+        name='get_pending_requests'
+    ),
+    path(
+        route='friends/request',
+        view=friendship_views.send_friend_request,
+        name='send_friend_request'
+    ),
+    path(
+        route='friends/request/<int:friendship_id>/respond',
+        view=friendship_views.respond_to_request,
+        name='respond_to_request'
+    ),
+    path(
+        route='friends/request/<int:friendship_id>/cancel',
+        view=friendship_views.cancel_request,
+        name='cancel_request'
+    ),
+    path(
+        route='friends/<int:friend_id>/remove',
+        view=friendship_views.remove_friend,
+        name='remove_friend'
+    ),
+    path(
+        route='friends/search',
+        view=friendship_views.search_users,
+        name='search_users'
+    ),
+    path(
+        route='notifications', 
+        view=friendship_views.get_notifications,
+        name='get_notifications'
+    ),
+    path(
+        route='notifications/<int:notification_id>/read',
+        view=friendship_views.mark_notification_read,
+        name='mark_notification_read'
+    ),
+    path(
+        route='notifications/read-all',
+        view=friendship_views.mark_all_notifications_read,
+        name='mark_all_notifications_read'
     ),
     path(
         route='user',

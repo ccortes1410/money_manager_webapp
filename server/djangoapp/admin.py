@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Budget, Transaction, Subscription, Income
+from .models.models import Budget, Transaction, Subscription, Income
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('id', 'amount', 'date', 'description')

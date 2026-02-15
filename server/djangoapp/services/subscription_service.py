@@ -1,11 +1,10 @@
 from datetime import date, timedelta
 from calendar import monthrange
-from decimal import Decimal
 from django.db.models import Sum
 from django.utils import timezone
 from django.db import IntegrityError
 from .spending_calculations import compute_subscription_total
-from ..models import Subscription, SubscriptionPayment
+from ..models.models import Subscription, SubscriptionPayment
 
 
 def generate_subscription_payments(user, up_to_date=None):
@@ -130,7 +129,7 @@ def get_subscriptions_for_period(user, period: str):
 
     active_payments = payments.filter(subscription__status='active')
     inactive_payments = payments.filter(subscription__status__in=['paused', 'cancelled'])
-
+    print("Subs for period:", active_payments)
     return {
         "active": {
             "count": active_payments.values('subscription').distinct().count(),
@@ -138,7 +137,7 @@ def get_subscriptions_for_period(user, period: str):
             "payments": list(active_payments.values(
                 'id', 'amount', 'date',
                 'subscription__name', 'subscription__category'
-            )[:10])
+            ))
         },
         "inactive": {
             "count": inactive_payments.values('subscription').distinct().count(),
@@ -163,20 +162,21 @@ def compute_subscription_summary(user):
     inactive_subs = Subscription.objects.filter(user=user).exclude(status='active')
 
     # Calculate monthly cost of active subscriptions
-    monthly_cost = Decimal('0')
+    monthly_cost = 0
     for sub in active_subs:
+        payments = SubscriptionPayment.filter
         if sub.billing_cycle == 'daily':
-            monthly_cost += sub.amount * 30
+            monthly_cost += payments * 30
         elif sub.billing_cycle == 'weekly':
-            monthly_cost += sub.amount * Decimal('4')
+            monthly_cost += payments * 4
         elif sub.billing_cycle == 'monbthly':
-            monthly_cost += sub.amount
+            monthly_cost += payments
         elif sub.billing_cycle == 'yearly':
-            monthly_cost += sub.amount / 12
+            monthly_cost += payments / 12
 
     # This month's actual subscription spending
     this_month_total = compute_subscription_total(user, month_start, month_end)
-
+    print("This month total (Subscriptions):", this_month_total)
     return {
         "active": {
             "count": active_subs.count(),
@@ -188,6 +188,7 @@ def compute_subscription_summary(user):
                     "amount": float(sub.amount),
                     "billing_cycle": sub.billing_cycle,
                     "category": sub.category,
+                    "payments": sub.payments
                 }
                 for sub in active_subs
             ]
@@ -201,6 +202,7 @@ def compute_subscription_summary(user):
                     "amount": float(sub.amount),
                     "billing_cycle": sub.billing_cycle,
                     "category": sub.category,
+                    "payments": sub.payments
                 }
                 for sub in inactive_subs
             ]

@@ -215,7 +215,7 @@ const Income = () => {
         const minYear = Math.min(...years);
         const maxYear = Math.max(...years);
 
-        return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + 1);
+        return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
     }, [income]);
 
     const MONTHS = [
@@ -389,25 +389,6 @@ const Income = () => {
                         ))}
                     </div>
 
-                    {/* Funds Progress Bar */}
-                    <div className="funds-section">
-                        <h3>Funds Remaining</h3>
-                        <div className="funds-progress">
-                            <div className="inc-progress-bar-vertical">
-                                <div
-                                    className={`inc-progress-fill ${summary.is_negative ? 'negative' : ''}`}
-                                    style={{ height: `${Math.min(Math.max(summary.percent_remaining || 0, 0), 100)}%`}}
-                                />
-                            </div>
-                            <div className="funds-info">
-                                <span className="funds-percent">
-                                    {(summary.percent_remaining || 0).toFixed(1)}%
-                                </span>
-                                <span className="funds-label">remaining</span>
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Spending Breakdown */}
                     <div className="spending-breakdown-section">
                         <h3>Spending Breakdown</h3>
@@ -467,6 +448,20 @@ const Income = () => {
                             </ul>
                         </div>
                     )}
+                </div>
+
+                {/* Funds Progress Bar */}
+                <div className="income-progress-divider">
+                    <div className="inc-progress-bar-vertical">
+                        <div
+                            className={`inc-progress-fill ${summary.is_negative ? 'negative' : ''}`}
+                            style={{ height: `${Math.min(Math.max(summary.percent_remaining || 0, 0), 100)}%`}}
+                        />
+                    </div>
+                    <span className="inc-progress-label">
+                        {(summary.percent_remaining || 0).toFixed(1)}%
+                    </span>
+                    <span className="inc-progress-sublabel">remaining</span>
                 </div>
 
                 {/* Right: Income Table */}
@@ -565,7 +560,7 @@ const Income = () => {
                                             <td className="source-col">
                                                 <span className="source-badge">{inc.source}</span>
                                             </td>
-                                            <td clasName="amount=col">
+                                            <td clasName="amount-col">
                                                 ${formatCurrency(inc.amount)}
                                             </td>
                                             <td className="date-col">{inc.date_received}</td>

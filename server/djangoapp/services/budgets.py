@@ -1,8 +1,7 @@
-from ..models import Budget, Transaction, Subscription
+from ..models.models import Budget, Transaction, Subscription
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from django.db.models import Sum
-from decimal import Decimal
 from .date_filter import filter_queryset_by_period
 from .spending_calculations import get_subscription_amount_for_period
 
@@ -90,10 +89,10 @@ def get_subscriptions_for_budget(budget):
 def compute_budget_spent(budget):
     """Caclulate total spent for a budget."""
     transaction_result = get_transactions_for_budget(budget).aggregate(total=Sum("amount"))
-    transaction_total = transaction_result["total"] or Decimal('0')
-
+    transaction_total = transaction_result["total"] or 0
+    
     # Subscription total for the budget period
-    subscription_total = Decimal('0')
+    subscription_total = 0
     subscriptions = get_subscriptions_for_budget(budget)
     for subscription in subscriptions:
         subscription_total += get_subscription_amount_for_period(
@@ -102,8 +101,9 @@ def compute_budget_spent(budget):
             budget.period_end
         )
 
+    total = transaction_total + subscription_total
     return {
-        "total": float(transaction_total + subscription_total),
+        "total": float(total),
         "transactions": float(transaction_total),
         "subscriptions": float(subscription_total),
     }

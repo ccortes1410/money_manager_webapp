@@ -10,6 +10,7 @@ import Budgets from './components/Budgets/Budgets';
 import Subscriptions from './components/Subscriptions/Subscriptions';
 import Sidebar from './components/Sidebar/Sidebar';
 import Income from './components/Income/Income';
+import Friends from './components/Friends/Friends'
 import ProtectedRoute from './ProtectedRoute';
 import "./App.css";
 // import Savings from './components/Savings/Savings';
@@ -77,6 +78,7 @@ function App() {
                     <Route path="budget/:budget_id" element={<Budget />} />
                     <Route path="subscriptions" element={<Subscriptions />} />
                     <Route path="income" element={<Income />} />
+                    <Route path="friends" element={<Friends/>} />
                 </Route>
             </Route>
         </Routes>
