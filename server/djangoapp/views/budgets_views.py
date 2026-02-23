@@ -85,7 +85,7 @@ def get_budgets(request):
                     "subscription_spent" : spent_breakdown["subscriptions"],
                     "remaining": float(budget.amount) - float(spent),
                 })
-            print(budgets_data)
+            # print(budgets_data)
             return JsonResponse({
                 "budgets": budgets_data,
                 "user": {
@@ -162,7 +162,7 @@ def get_budget(request, budget_id):
         "subscriptions": subs_data
     }
 
-    logger.debug(f"Budget details: {budget_data}")
+    # logger.debug(f"Budget details: {budget_data}")
     return JsonResponse({
         "budget": budget_data,
         "user": {

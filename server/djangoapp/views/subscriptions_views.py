@@ -218,7 +218,7 @@ def subscription_update(request, subscription_id):
             subscription.start_date = data["start_date"]
         if "end_date" in data:
             subscription.end_date = data["end_date"] or None
-        print(data)
+        # print(data)
         subscription.save()
 
         return JsonResponse({

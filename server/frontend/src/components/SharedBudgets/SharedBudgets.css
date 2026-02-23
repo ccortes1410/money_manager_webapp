@@ -1,0 +1,1708 @@
+/* ============================================
+   SHARED BUDGETS PAGE
+   ============================================ */
+.shared-budgets-page {
+    padding: 1.5rem;
+    min-height: 100vh;
+    background-color: #0f0f0f;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.sb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.sb-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sb-header h1 {
+    color: #fff;
+    font-size: 1.75rem;
+    margin: 0;
+}
+
+.sb-invite-badge {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.sb-create-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* ============================================
+   STATS
+   ============================================ */
+.sb-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .sb-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .sb-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sb-stat-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sb-stat-icon {
+    font-size: 1.75rem;
+}
+
+.sb-stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sb-stat-value {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.sb-stat-label {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+/* ============================================
+   INVITES SECTION
+   ============================================ */
+.sb-invites-section {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.sb-invites-section h2 {
+    color: #fff;
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
+}
+
+.sb-invites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.sb-invite-card {
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.sb-invite-header {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sb-invite-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.sb-invite-info h3 {
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 0.25rem 0;
+}
+
+.sb-invite-info p {
+    color: #888;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.sb-invite-amount {
+    color: #22c55e !important;
+    font-weight: 600;
+}
+
+.sb-invite-role {
+    color: #888;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.sb-invite-message {
+    color: #aaa;
+    font-size: 0.85rem;
+    font-style: italic;
+    margin: 0.5rem 0;
+}
+
+.sb-invite-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.sb-accept-btn {
+    background-color: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.sb-accept-btn:hover {
+    background-color: #16a34a;
+}
+
+.sb-decline-btn {
+    background-color: transparent;
+    color: #888;
+    border: 1px solid #444;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.sb-decline-btn:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* ============================================
+   ROLE BADGE
+   ============================================ */
+.sb-role-badge {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.sb-role-badge.small {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.7rem;
+}
+
+/* ============================================
+   CATEGORY BADGE
+   ============================================ */
+.sb-category-badge {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    padding: 0.2rem 0.625rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* ============================================
+   TABS
+   ============================================ */
+.sb-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #2a2a2a;
+    padding-bottom: 0.5rem;
+}
+
+.sb-tab {
+    background: none;
+    border: none;
+    color: #888;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sb-tab:hover {
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+.sb-tab.active {
+    background-color: #1a1a1a;
+    color: #22c55e;
+}
+
+.sb-tab-count {
+    background-color: #333;
+    color: #fff;
+    padding: 0.125rem 0.5rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+}
+
+/* ============================================
+   CONTENT / EMPTY / LOADING
+   ============================================ */
+.sb-content {
+    min-height: 300px;
+}
+
+.sb-loading,
+.sb-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #888;
+}
+
+.sb-empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.sb-empty h3 {
+    color: #fff;
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.sb-empty p {
+    margin: 0 0 1.5rem 0;
+}
+
+/* ============================================
+   BUDGET GRID & CARDS
+   ============================================ */
+.sb-budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+}
+
+.sb-budget-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sb-budget-card:hover {
+    border-color: #444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sb-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.sb-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sb-card-title-row h3 {
+    color: #fff;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Progress */
+.sb-card-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.sb-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.sb-spent {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.sb-total {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.sb-progress-bar {
+    height: 8px;
+    background-color: #252525;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sb-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.sb-progress-footer {
+    display: flex;
+    justify-content: space-between;
+}
+
+.sb-remaining {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.sb-percentage {
+    color: #888;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Members */
+.sb-card-members {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sb-avatar-stack {
+    display: flex;
+}
+
+.sb-member-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: -8px;
+    border: 2px solid #1a1a1a;
+}
+
+.sb-member-avatar.more {
+    background-color: #333;
+    color: #888;
+    font-size: 0.65rem;
+}
+
+.sb-member-count {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+/* Balance */
+.sb-card-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.sb-balance-label {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.sb-balance-value {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.sb-balance-value.positive {
+    color: #22c55e;
+}
+
+.sb-balance-value.negative {
+    color: #ef4444;
+}
+
+.sb-balance-value.neutral {
+    color: #888;
+}
+
+/* Dates */
+.sb-card-dates {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+/* ============================================
+   DETAIL PAGE - HEADER
+   ============================================ */
+.sbd-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sbd-back-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #888;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.sbd-back-btn:hover {
+    background-color: #1a1a1a;
+    color: #fff;
+    border-color: #444;
+}
+
+.sbd-header-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.sbd-header-info h1 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.sbd-header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sbd-action-btn {
+    border: none;
+    padding: 0.625rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sbd-action-btn.primary {
+    background-color: #22c55e;
+    color: #fff;
+}
+
+.sbd-action-btn.primary:hover {
+    background-color: #16a34a;
+}
+
+.sbd-action-btn.primary.small {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+}
+
+.sbd-action-btn.secondary {
+    background-color: #252525;
+    color: #fff;
+    border: 1px solid #333;
+}
+
+.sbd-action-btn.secondary:hover {
+    background-color: #333;
+}
+
+.sbd-action-btn.settle {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.sbd-action-btn.settle:hover {
+    background-color: rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================
+   DETAIL PAGE - SUMMARY
+   ============================================ */
+.sbd-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+    .sbd-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.sbd-summary-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sbd-summary-label {
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.sbd-summary-value {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.sbd-summary-value.spent {
+    color: #f59e0b;
+}
+
+.sbd-summary-value.positive {
+    color: #22c55e;
+}
+
+.sbd-summary-value.negative {
+    color: #ef4444;
+}
+
+.sbd-summary-value.neutral {
+    color: #888;
+}
+
+/* ============================================
+   DETAIL PAGE - PROGRESS
+   ============================================ */
+.sbd-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sbd-progress .sbd-progress-bar {
+    flex: 1;
+    height: 10px;
+    background-color: #252525;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.sbd-progress .sbd-progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.sbd-progress-text {
+    color: #888;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* ============================================
+   DETAIL PAGE - CONTENT LAYOUT
+   ============================================ */
+.sbd-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .sbd-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   LEFT PANEL
+   ============================================ */
+.sbd-left-panel {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Section Tabs */
+.sbd-section-tabs {
+    display: flex;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.sbd-section-tab {
+    background: none;
+    border: none;
+    color: #888;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.sbd-section-tab:hover {
+    color: #fff;
+    background-color: #252525;
+}
+
+.sbd-section-tab.active {
+    color: #22c55e;
+    border-bottom-color: #22c55e;
+}
+
+/* Section Empty */
+.sbd-section-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #888;
+}
+
+.sbd-section-empty p {
+    margin: 0 0 1rem 0;
+}
+
+.sbd-settled-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================
+   EXPENSES LIST
+   ============================================ */
+.sbd-expenses-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.sbd-expenses-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sbd-expenses-list::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.sbd-expenses-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.sbd-expense-item {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #2a2a2a;
+    transition: background-color 0.2s;
+}
+
+.sbd-expense-item:hover {
+    background-color: #252525;
+}
+
+.sbd-expense-main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sbd-expense-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.sbd-expense-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sbd-expense-info h4 {
+    color: #fff;
+    font-size: 0.95rem;
+    margin: 0 0 0.125rem 0;
+}
+
+.sbd-expense-info p {
+    color: #888;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.sbd-expense-date {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.sbd-expense-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.sbd-expense-amount {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.sbd-delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+    padding: 0.25rem;
+}
+
+.sbd-expense-item:hover .sbd-delete-btn {
+    opacity: 0.6;
+}
+
+.sbd-delete-btn:hover {
+    opacity: 1 !important;
+}
+
+/* Splits */
+.sbd-expense-splits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-left: calc(36px + 0.75rem);
+}
+
+.sbd-split-item {
+    background-color: #252525;
+    color: #888;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+}
+
+/* ============================================
+   DEBTS LIST
+   ============================================ */
+.sbd-debts-list {
+    padding: 0.5rem 0;
+}
+
+.sbd-debt-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.sbd-debt-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.sbd-debt-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sbd-debt-from {
+    color: #ef4444;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sbd-debt-arrow {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.sbd-debt-to {
+    color: #22c55e;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sbd-debt-amount {
+    color: #fff;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+/* ============================================
+   SETTLEMENTS LIST
+   ============================================ */
+.sbd-settlements-list {
+    padding: 0.5rem 0;
+}
+
+.sbd-settlement-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.sbd-settlement-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sbd-settlement-payer {
+    color: #3b82f6;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sbd-settlement-arrow {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.sbd-settlement-receiver {
+    color: #22c55e;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sbd-settlement-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+}
+
+.sbd-settlement-amount {
+    color: #fff;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.sbd-settlement-date {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+/* ============================================
+   RIGHT PANEL
+   ============================================ */
+.sbd-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Members Section */
+.sbd-members-section {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.sbd-members-section h3 {
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+}
+
+.sbd-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sbd-member-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: #252525;
+    border-radius: 8px;
+}
+
+.sbd-member-avatar-lg {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.sbd-member-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.sbd-member-name {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sbd-member-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.125rem;
+    flex-shrink: 0;
+}
+
+.sbd-member-paid {
+    color: #888;
+    font-size: 0.75rem;
+}
+
+.sbd-member-balance {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.sbd-member-balance.positive {
+    color: #22c55e;
+}
+
+.sbd-member-balance.negative {
+    color: #ef4444;
+}
+
+/* Budget Info Section */
+.sbd-info-section {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.sbd-info-section h3 {
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+}
+
+.sbd-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sbd-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sbd-info-label {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.sbd-info-value {
+    color: #fff;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+}
+
+/* Panel Actions */
+.sbd-panel-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sbd-leave-btn {
+    background: none;
+    border: 1px solid #444;
+    color: #888;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.sbd-leave-btn:hover {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* ============================================
+   MODAL STYLES
+   ============================================ */
+.sb-modal {
+    max-width: 550px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.sb-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sb-modal::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.sb-modal::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.sb-modal-form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sb-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.sb-form-group label {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.sb-form-group input,
+.sb-form-group select,
+.sb-form-group textarea {
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.sb-form-group input:focus,
+.sb-form-group select:focus,
+.sb-form-group textarea:focus {
+    border-color: #22c55e;
+}
+
+.sb-form-group input.error,
+.sb-form-group select.error {
+    border-color: #ef4444;
+}
+
+.sb-form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.sb-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 500px) {
+    .sb-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sb-error {
+    color: #ef4444;
+    font-size: 0.75rem;
+}
+
+.sb-error-message {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.sb-success-message {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+/* Period Presets */
+.sb-period-presets {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sb-preset-btn {
+    background-color: #252525;
+    border: 1px solid #333;
+    color: #888;
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-preset-btn:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #22c55e;
+}
+
+.sb-preset-btn.small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Friends Selection List */
+.sb-friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.sb-friends-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sb-friends-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 2px;
+}
+
+.sb-loading-text,
+.sb-empty-text {
+    color: #888;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+.sb-friend-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-friend-option:hover {
+    background-color: #252525;
+}
+
+.sb-friend-option.selected {
+    background-color: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.sb-friend-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.sb-friend-name {
+    flex: 1;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.sb-friend-check {
+    color: #888;
+    font-size: 1rem;
+}
+
+.sb-friend-option.selected .sb-friend-check {
+    color: #22c55e;
+}
+
+/* Custom Splits */
+.sb-splits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sb-custom-splits {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.sb-split-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sb-split-name {
+    flex: 1;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.sb-split-row input {
+    width: 120px;
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.sb-split-row input:focus {
+    border-color: #22c55e;
+}
+
+/* Quick Amounts */
+.sb-quick-amounts {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Settle Empty */
+.sb-settle-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.sb-settle-empty h3 {
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.sb-settle-empty p {
+    color: #888;
+    margin: 0 0 1.5rem 0;
+}
+
+/* Settle Summary */
+.sb-settle-summary {
+    background-color: #252525;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Debt Options */
+.sb-debt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sb-debt-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-debt-option:hover {
+    border-color: #444;
+}
+
+.sb-debt-option.selected {
+    border-color: #22c55e;
+    background-color: rgba(34, 197, 94, 0.1);
+}
+
+.sb-debt-option-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.sb-debt-option-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.sb-debt-option-name {
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sb-debt-option-amount {
+    color: #ef4444;
+    font-size: 0.8rem;
+}
+
+.sb-debt-check {
+    color: #22c55e;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Modal Actions */
+.sb-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.sb-cancel-btn {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-cancel-btn:hover {
+    background-color: #444;
+}
+
+.sb-save-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sb-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* ============================================
+   INVITE MODAL SPECIFIC
+   ============================================ */
+.sb-invite-search {
+    display: flex;
+    align-items: center;
+    background-color: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+}
+
+.sb-search-icon {
+    color: #888;
+    font-size: 1rem;
+}
+
+.sb-invite-search input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.sb-invite-search input::placeholder {
+    color: #666;
+}
+
+.sb-clear-search {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.sb-clear-search:hover {
+    color: #fff;
+}
+
+.sb-invite-list {
+    max-height: 350px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sb-invite-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sb-invite-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 2px;
+}
+
+.sb-invite-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #888;
+}
+
+.sb-invite-empty h3 {
+    color: #fff;
+    margin: 0.5rem 0;
+}
+
+.sb-invite-empty p {
+    margin: 0;
+}
+
+.sb-invite-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: #252525;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.sb-invite-item:hover {
+    background-color: #2a2a2a;
+}
+
+.sb-invite-item .sb-invite-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.sb-invite-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sb-invite-name {
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sb-invite-username {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+.sb-invite-btn {
+    background-color: #22c55e;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.sb-invite-btn:hover:not(:disabled) {
+    background-color: #16a34a;
+}
+
+.sb-invite-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .sb-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .sb-create-btn {
+        width: 100%;
+    }
+
+    .sbd-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sbd-header-actions {
+        width: 100%;
+    }
+
+    .sbd-header-actions .sbd-action-btn {
+        flex: 1;
+    }
+
+    .sb-budget-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sbd-summary {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .sb-invites-grid {
+        grid-template-columns: 1fr;
+    }
+}

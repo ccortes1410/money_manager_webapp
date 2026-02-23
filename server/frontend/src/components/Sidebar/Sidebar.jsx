@@ -12,6 +12,7 @@ import subscriptionIcon from '../assets/subscription.png';
 import bankIcon from '../assets/bank.png';
 import friendIcon from '../assets/friend.png';
 import incomeIcon from '../assets/income.png';
+import sharedBudgetIcon from '../assets/sharedBudget.png';
 
 const Sidebar = ({ collapsed, onToggle }) => {
     const { user, setUser } = useContext(AuthContext);
@@ -25,6 +26,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { path: "/subscriptions", label: "Subscriptions", icon: subscriptionIcon },
         { path: "/income", label: "Income", icon: incomeIcon},
         { path: "/friends", label: "Friends", icon: friendIcon},
+        { path: "/shared-budgets", label: "Shared Budgets", icon: sharedBudgetIcon}
     ];
 
     const isActive = (path) => {
@@ -62,7 +64,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
         <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
             {/* Collapse Toggle Button */}
-            <div className="collapse-btn-container">
+            <div className="sidebar-top">
                 <button
                 className="collapse-btn"
                 onClick={onToggle}

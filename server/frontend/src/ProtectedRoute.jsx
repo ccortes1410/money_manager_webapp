@@ -1,19 +1,23 @@
-import { useContext } from 'react';
+import React, { useContext } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
-import { Navigate, Outlet } from 'react-router-dom';
+import LoadingScreen from './components/LoadingScreen';
 
-function ProtectedRoute() {
+
+const ProtectedRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
+    const location = useLocation();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <LoadingScreen />;
     }
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
+    if (!user || !user.is_authenticated) {
+        // Save where they were trying to go
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    return <Outlet />;
-}
+    return children;
+};
 
 export default ProtectedRoute;

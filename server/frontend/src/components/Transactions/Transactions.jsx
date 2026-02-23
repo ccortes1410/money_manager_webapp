@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from '../../AuthContext';
+import { useToast } from '../Toast/ToastContext';
+import { apiFetch } from '../../utils/csrf';
 import TransactionModal from './TransactionModal';
 import "./Transactions.css";
 
@@ -15,7 +17,8 @@ const Transactions = () => {
     const [ sortConfig, setSortConfig ] = useState({ key: 'date', direction: 'desc' });
 
     const { user } = useContext(AuthContext);
-    const navigate = useNavigate();  
+    const navigate = useNavigate();
+    const toast = useToast();
 
     const getToday = () => {
         const today = new Date();
@@ -28,7 +31,6 @@ const Transactions = () => {
         try {
             const res = await fetch(transaction_url, {
                 method: 'GET',
-                credentials: 'include'
             });
 
             const data = await res.json();
@@ -39,6 +41,7 @@ const Transactions = () => {
             }
         } catch (error) {
             console.error("Error fetching transactions:", error);
+            toast.error("Failed to load transactions")
             setTransactions([]);
         } finally {
             setLoading(false);
@@ -47,69 +50,67 @@ const Transactions = () => {
 
     const handleCreate = async (transactionData) => {
         try {
-            const res = await fetch(transaction_url+`/create`, {
+            const res = await apiFetch(transaction_url+`/create`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(transactionData),
-                credentials: 'include'
             });
 
             if (res.ok) {
                 fetchTransactions();
                 setShowModal(false);
+                toast.success("Transaction added succesfully");
             } else {
-                console.error("Failed to add transaction");
+                toast.error("Failed to add transaction");
             }
         } catch (error) {
             console.error("Error adding transaction:", error);
+            toast.error("Something went wrong")
         }
     };
 
     const handleUpdate = async (id, transactionData) => {
         try{
-            const res = await fetch(transaction_url+`/${id}/update`, {
+            const res = await apiFetch(transaction_url+`/${id}/update`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(transactionData),
-                credentials: 'include'
             });
 
             if (res.ok) {
                 fetchTransactions();
                 setShowModal(false);
                 setEditingTransaction(null);
-            } 
+                toast.success("Transaction updated");
+            } else {
+                toast.error("Failed to update transaction")
+            }
         } catch (error) {
             console.error("Error updating transaction:", error);
+            toast.error("Something went wrong");
         }
     };
 
+    const [ showDeleteConfirm, setShowDeleteConfirm ] = useState(false);
+
     const handleDelete = async () => {
         if (selectedTransactions.length === 0) return;
-        if (!window.confirm(`Delete ${selectedTransactions.length} transaction(s)?`)) return;
         
         try {
-            const res = await fetch(transaction_url+`/delete`, {
+            const res = await apiFetch(transaction_url+`/delete`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
                 body: JSON.stringify({ ids: selectedTransactions })
             });
 
             if (res.ok) {
                 fetchTransactions();
+                const count = selectedTransactions.length;
                 setSelectedTransactions([]);
+                toast.success(`${count} transaction(s) deleted`)
             } else {
-                alert("Failed to delete transactions");
+                toast.error("Failed to delete transactions");
             }
         } catch (error) {
             console.error("Error deleting transactions:", error);
+            toast.error("Something went wrong");
         }
     }
 

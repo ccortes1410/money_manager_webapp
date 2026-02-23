@@ -369,7 +369,7 @@ class SharedExpense(models.Model):
     def __str__(self):
         return f"{self.description} - ${self.amount} by {self.paid_by.username}"
     
-    def create_equal_split(self):
+    def create_equal_splits(self):
         """Create equal splits for all budget members."""
         members = self.shared_budget.members.all()
         member_count = members.count()

@@ -100,7 +100,7 @@ def compute_transaction_total(user, period_start=None, period_end=None, category
         queryset = queryset.filter(category__iexact=category)
     
     result = queryset.aggregate(total=Sum("amount"))
-    print("Transaction total:", result)
+    # print("Transaction total:", result)
     return float(result["total"]) or 0
 
 def compute_subscription_total(user, period_start=None, period_end=None, category=None):
@@ -108,7 +108,7 @@ def compute_subscription_total(user, period_start=None, period_end=None, categor
 
     active_payments = SubscriptionPayment.objects.filter(subscription__user=user, subscription__status='active')
 
-    print("Subscription payments:", active_payments)
+    # print("Subscription payments:", active_payments)
 
     # active_payments = payments.filter(subscription__status='active')
 

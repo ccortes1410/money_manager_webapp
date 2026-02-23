@@ -160,7 +160,7 @@ def transaction_delete(request):
     ).delete()[0]
 
     # summary = compute_income_summary(request.user)
-    print("Deleted transactions:", deleted_count)
+    # print("Deleted transactions:", deleted_count)
     return JsonResponse({
         "message": f"Deleted {deleted_count} transaction record(s).",
         "deleted_count": deleted_count,

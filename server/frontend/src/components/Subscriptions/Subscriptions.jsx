@@ -13,18 +13,6 @@ const Subscriptions = () => {
     const [ editingSubscription, setEditingSubscription ] = useState(null);
     const [ filter, setFilter ] = useState("all");
 
-    // const [ nameInput, setNameInput ] = useState("");
-    // const [ amountInput, setAmountInput ] = useState("");
-    // const [ dateInput, setDateInput ] = useState("");
-    // const [ descriptionInput, setDescriptionInput ] = useState("");
-    // const [ categoryInput, setCategoryInput ] = useState("");
-    // const [ billingCycleInput, setBillingCycleInput ] = useState("");
-    // const [ billingDayInput, setBillingDayInput ] = useState("");
-    // const [ startDateInput, setStartDateInput ] = useState("");
-    // const [ subscriptions, setSubscriptions ] = useState([]);
-    // const { user } = useContext(AuthContext);
-    // const [ selectedSubs, setSelectedSubs ] = useState([]);
-
     const BILLING_CYCLE_OPTIONS = [
         { value: "daily", label: "Daily" },
         { value: "weekly", label: "Weekly" },
@@ -188,7 +176,7 @@ const Subscriptions = () => {
             .filter((s) => s.status === "cancelled").length,
     };
     
-    console.log("Subscriptions fetched:", subscriptions)
+    // console.log("Subscriptions fetched:", subscriptions)
 
     return (
         <div className="subscriptions-page">

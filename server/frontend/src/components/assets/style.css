@@ -8,9 +8,9 @@ img {
     transition: margin-left 0.25s ease;;
 }
 
-.main-content.collapsed {
+/* .main-content.collapsed {
     margin-left: 60px;
-}
+} */
 
 .card {
     border: rgb(103,102,105) 3px solid;

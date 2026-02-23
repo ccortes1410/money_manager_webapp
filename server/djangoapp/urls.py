@@ -25,11 +25,13 @@ from .views import (
     budgets_views,
     subscriptions_views,
     incomes_views,
-    friendship_views,    
+    friendship_views,
+    shared_budget_views,   
 )
 
 app_name = "djangoapp"
 urlpatterns = [
+    # Authentication
     path(
         route='register',
         view=views.register_user,
@@ -45,11 +47,15 @@ urlpatterns = [
         view=views.logout_request,
         name='logout'
     ),
+
+    # Dashboard
     path(
         route='dashboard',
         view=dashboard_views.dashboard,
         name='dashboard'
     ),
+
+    # Transactions
     path(
         route='transactions',
         view=transactions_views.get_transactions,
@@ -70,6 +76,8 @@ urlpatterns = [
         view=transactions_views.transaction_delete,
         name='transaction_delete'
     ),
+
+    # Budgets
     path(
         route='budgets',
         view=budgets_views.get_budgets,
@@ -100,6 +108,8 @@ urlpatterns = [
         view=budgets_views.toggle_recurring,
         name='toggle_budget_recurring'
     ),
+
+    # Subscriptions
     path(
         route='subscriptions',
         view=subscriptions_views.subscriptions_list,
@@ -135,6 +145,8 @@ urlpatterns = [
         view=subscriptions_views.payment_toggle_paid,
         name='payment_toggle'
     ),
+
+    # Incomes
     path(
         route='incomes',
         view=incomes_views.get_incomes,
@@ -160,6 +172,8 @@ urlpatterns = [
         view=incomes_views.income_update,
         name='income_update'
     ),
+
+    # Friends
     path(
         route='friends',
         view=friendship_views.get_friends,
@@ -195,6 +209,105 @@ urlpatterns = [
         view=friendship_views.search_users,
         name='search_users'
     ),
+
+    # Shared Budgets
+    path(
+        route='shared-budgets',
+        view=shared_budget_views.get_shared_budgets,
+        name='get_shared_budgets'
+    ),
+    path(
+        route='shared-budgets/create',
+        view=shared_budget_views.create_shared_budget,
+        name='create_shared_budget'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>',
+        view=shared_budget_views.get_shared_budget_detail,
+        name='get_shared_budget_detail'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/update',
+        view=shared_budget_views.update_shared_budget,
+        name='update_shared_budget'
+    ),
+    path(
+        route='shared-bugdets/<int:budget_id>/delete',
+        view=shared_budget_views.delete_shared_budget,
+        name='delete_shared_budget'
+    ),
+
+    # Shared Budget Invites
+    path(
+        route='shared-budgets/<int:budget_id>/invite',
+        view=shared_budget_views.invite_to_budget,
+        name='invite_to_budget'
+    ),
+    path(
+        route='shared-budgets/invite/<int:invite_id>/respond',
+        view=shared_budget_views.respond_to_budget_invite,
+        name="respond_to_budget_invite"
+    ),
+
+    # Shared Budget Members
+    path(
+        route='shared-budgets/<int:budget_id>/members/<int:member_id>/role',
+        view=shared_budget_views.update_member_role,
+        name='update_member_role'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/members/<int:member_id>/remove',
+        view=shared_budget_views.remove_member,
+        name='remove_member'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/leave',
+        view=shared_budget_views.leave_budget,
+        name='leave_budget'
+    ),
+
+    # Shared Budget Expenses
+    path(
+        route='shared-budgets/<int:budget_id>/expenses',
+        view=shared_budget_views.get_budget_expenses,
+        name='get_budget_expenses'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/expenses/add',
+        view=shared_budget_views.add_expense,
+        name='add_expense'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/expenses/<int:expense_id>/update',
+        view=shared_budget_views.update_expense,
+        name='update_expense'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/expenses/<int:expense_id>/delete',
+        view=shared_budget_views.delete_expense,
+        name='delete_expense'
+    ),
+
+    # Settlements and Debts
+    path(
+        route='shared-budgets/<int:budget_id>/debts',
+        view=shared_budget_views.get_budget_debts,
+        name='get_budget_detbs'
+    ),
+    path(
+        route='shared-budgets/<int:budget_id>/settle',
+        view=shared_budget_views.create_settlement,
+        name='create_settlement'
+    ),
+
+    # Budget Notifications
+    path(
+        route='budget-notifications',
+        view=shared_budget_views.get_budget_notifications,
+        name='get_budget_notifications'
+    ),
+    
+    # Friend & Budget Notifications
     path(
         route='notifications', 
         view=friendship_views.get_notifications,
@@ -214,5 +327,15 @@ urlpatterns = [
         route='user',
         view=views.current_user,
         name='current_user'
+    ),
+    path(
+        route='session',
+        view=views.session_view,
+        name='session'   
+    ),
+    path(
+        route='logout',
+        view=views.logout_view,
+        name='logout'
     ),
 ]

@@ -135,56 +135,17 @@ def current_user(request):
             }
         })
 
-# ========================== DASHBOARD VIEW ======================= #
-def dashboard(request):
-    # print(request.user)
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Unauthorized"}, status=401
-        )
+def session_view(request):
+    if request.user.is_authenticated:
+        return JsonResponse({
+            "is_authenticated": True,
+            "username": request.user.username,
+            "id": request.user.id,
+        })
+    return JsonResponse({"is_authenticated": False})
 
-    period = request.GET.get("period", "monthly")
+def logout_view(request):
+    logout(request)
+    return JsonResponse({"success": True})
 
-    if request.method == "GET":
-        try:
-            # transactions = filter_queryset_by_period(
-            #         Transaction.objects.filter(user=request.user),
-            #         period=period,
-            #         date_field="date"
-            # )
 
-            transactions = get_transactions_chart_data(request.user, period)
-
-            categories = compute_spending_by_category(request.user, period)
-
-            from ..services.subscription_service import generate_subscription_payments
-            generate_subscription_payments(request.user)
-
-            subscriptions = get_subscriptions_for_period(request.user, period)
-
-            budgets = get_budgets_data(request.user, period)
-
-            income = get_income_data(request.user, period)
-
-            return JsonResponse({
-                "dashboard": {
-                    "transactions": transactions,
-                    "categories": categories,
-                    "subscriptions": subscriptions,
-                    "budgets": budgets,
-                    "income": income,
-                    "period": {
-                        "value": period,
-                        "label": get_period_label(period),
-                        **get_period_display_dates(period)
-                    },
-                },
-                "user": {
-                    "id": request.user.id,
-                    "username": request.user.username,
-                    "is_authenticated": request.user.is_authenticated
-                }
-            })
-        except Exception as e: 
-            logger.error(f"Error fetching dashboard: {e}")
-            return JsonResponse({"error": "Failed to fetch dashboard"}, status=500)

@@ -77,6 +77,47 @@ html, body {
     color: #61dafb;
 }
 
+/* Skip to content */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: #3b82f6;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    z-index: 10000;
+    font-weight: 600;
+    transition: top 0.2s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Focus styles */
+*:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Selection */
+::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: #fff;
+}
+
 @keyframes App-logo-spin {
     from {
         transform: rotate(0deg);
