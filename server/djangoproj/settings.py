@@ -15,6 +15,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+import certifi
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -195,7 +196,7 @@ elif ENV == 'tidb':
             "PORT": os.environ.get('DB_PORT'),
             "OPTIONS": {
                 "ssl_mode": "VERIFY_IDENTITY",
-                "ssl": {'ca': os.environ.get('TIDB_SSL_CA') },
+                "ssl": { 'ca': certifi.where() },
                 "charset": "utf8mb4",
             },
         }
