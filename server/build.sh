@@ -5,7 +5,7 @@ set -o errexit
 
 echo "=== Installing Python dependencies ==="
 pip install --upgrade pip
-pip install -r requirements.txt
+-m pip install -r requirements.txt 
 
 echo "=== Installing system dependencies for mysqlclient ==="
 # Render uses Ubuntu, install MySQL dev libraries
