@@ -1,5 +1,8 @@
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../../AuthContext';
+import ExportButton from '../ExportButton/ExportButton';
+import { EXPORT_CONFIGS } from '../../utils/export';
+import { useToast } from '../Toast/ToastContext';
 import SubscriptionCard from './SubscriptionCard';
 import SubscriptionModal from './SubscriptionModal';
 import './Subscriptions.css';
@@ -13,6 +16,8 @@ const Subscriptions = () => {
     const [ editingSubscription, setEditingSubscription ] = useState(null);
     const [ filter, setFilter ] = useState("all");
 
+    const toast = useToast();
+    
     const BILLING_CYCLE_OPTIONS = [
         { value: "daily", label: "Daily" },
         { value: "weekly", label: "Weekly" },
@@ -182,15 +187,45 @@ const Subscriptions = () => {
         <div className="subscriptions-page">
             <div className="subscriptions-header">
                 <h1>Subscriptions</h1>
-                <button
-                    className="subscriptions-add-btn"
-                    onClick={() => {
-                        setEditingSubscription(null);
-                        setShowModal(true);
-                    }}
-                >
-                    + Add Subscription
-                </button>
+                <div className="subscriptions-header-actions">
+                    <ExportButton
+                        data={filteredSubscriptions}
+                        columns={EXPORT_CONFIGS.subscriptions.columns}
+                        title={EXPORT_CONFIGS.subscriptions.getTitle()}
+                        subtitle={`${filteredSubscriptions.length} subscriptions - ${filter}`}
+                        filename={EXPORT_CONFIGS.subscriptions.getFilename()}
+                        summary={[
+                            {
+                                label: "Active Monthly",
+                                value: `$${totals.active.toFixed(2)}`,
+                                color: [34, 197, 94],
+                            },
+                            {
+                                label: "Paused Monthly",
+                                value: `$${totals.paused.toFixed(2)}`,
+                                color: [245, 158, 11],
+                            },
+                            {
+                                label: "Cancelled",
+                                value: String(totals.cancelled),
+                                color: [239, 68, 68],
+                            },
+                        ]}
+                        onExport={(status, message) => {
+                            if (status === "success") toast.success(message);
+                            else toast.error(message);
+                        }}
+                    />
+                    <button
+                        className="subscriptions-add-btn"
+                        onClick={() => {
+                            setEditingSubscription(null);
+                            setShowModal(true);
+                        }}
+                    >
+                        + Add Subscription
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}

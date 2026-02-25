@@ -14,6 +14,12 @@
     margin-bottom: 1rem;
 }
 
+.income-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .income-header h1 {
     color: #fff;
     font-size: 2rem;
@@ -965,5 +971,13 @@
 
     .income-form-row {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .income-header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
     }
 }

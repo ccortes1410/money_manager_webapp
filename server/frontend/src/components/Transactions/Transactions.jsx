@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from '../../AuthContext';
 import { useToast } from '../Toast/ToastContext';
 import { apiFetch } from '../../utils/csrf';
+import ExportButton from '../../components/ExportButton/ExportButton';
+import { EXPORT_CONFIGS } from '../../utils/export';
 import TransactionModal from './TransactionModal';
 import "./Transactions.css";
 
@@ -234,16 +236,51 @@ const Transactions = () => {
         <div className="transactions-page">
             {/* Header */}
             <div className="transactions-header">
-            <h1>Transactions</h1>
-            <button
-                className="transactions-add-btn"
-                onClick={() => {
-                    setEditingTransaction(null);
-                    setShowModal(true);
-                }}
-            >
-                + Add Transaction
-            </button>
+                <h1>Transactions</h1>
+                <div className="transactions-header-actions">
+                    <ExportButton
+                        data={filteredAndSortedTransactions}
+                        columns={EXPORT_CONFIGS.transactions.columns}
+                        title={EXPORT_CONFIGS.transactions.getTitle()}
+                        subtitle={
+                            filter !== "all"
+                                ? `Category: ${filter}`
+                                : `All Transactions (${filteredAndSortedTransactions.length})`
+                        }
+                        filename={EXPORT_CONFIGS.transactions.getFilename()}
+                        summary={[
+                            {
+                                label: "Total Spent",
+                                value: `$${totals.total.toFixed(2)}`,
+                                color: [239, 68, 68],
+                            },
+                            {
+                                label: "This Month",
+                                value: `$${totals.thisMonth.toFixed(2)}`,
+                                color: [245, 158, 11],
+                            },
+                            {
+                                label: "Showing",
+                                value: `${totals.filteredCount} records`,
+                                color: [34, 197, 94],
+                            },
+                        ]}
+                        orientation="landscape"
+                        onExport={(status, message) => {
+                            if (status === "success") toast.success(message);
+                            else toast.error(message);
+                        }}
+                    />
+                    <button
+                        className="transactions-add-btn"
+                        onClick={() => {
+                            setEditingTransaction(null);
+                            setShowModal(true);
+                        }}
+                    >
+                        + Add Transaction
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}

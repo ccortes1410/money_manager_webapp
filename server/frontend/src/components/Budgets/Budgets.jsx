@@ -1,6 +1,9 @@
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
+import { useToast } from '../Toast/ToastContext';
+import ExportButton from '../ExportButton/ExportButton';
+import { EXPORT_CONFIGS } from '../../utils/export';
 import './Budgets.css';
 import '../Dashboard/Dashboard.css';
 import Budget from './Budget';
@@ -25,6 +28,7 @@ const Budgets = () => {
 
     const budgets_url = '/djangoapp/budgets';
     const navigate = useNavigate();
+    const toast = useToast();
 
     const get_budgets = async () => {
         try {
@@ -222,15 +226,6 @@ const Budgets = () => {
         }
     }, [user]);
 
-    // Calculate spent amount for each budget
-    // const budgetsWithSpent = budgets.map((b) => {
-    //     const relatedTx = transactions.filter((t) => t.category === b.category);
-    //     const totalSpent = relatedTx.reduce((sum, t) => sum + Number(t.amount), 0);
-    //     const percentUsed = b.amount > 0 ? (totalSpent / b.amount) *100 : 0;
-    //     const isOver = totalSpent > b.amount;
-    //     return { ...b, spent: totalSpent, percentUsed, isOver };
-    // });
-
     // Filter budgets
     const filteredBudgets = filter === "all"
         ? budgets
@@ -249,20 +244,55 @@ const Budgets = () => {
     };
 
     console.log("Budget detail:", budgetDetail);
-    console.log("Filtered Budgets:", filteredBudgets)
+    // console.log("Filtered Budgets:", filteredBudgets)
     return (
             <div className="budgets-page">
                 <div className="budgets-header">
                     <h1>Budgets</h1>
-                    <button
-                        className='budgets-add-btn'
-                        onClick={() => {
-                            setEditingBudget(null);
-                            setShowModal(true);
-                        }}
-                    >
-                        + Add Budget
-                    </button>
+                    <div className="budgets-header-actions">
+                        <ExportButton
+                            data={filteredBudgets}
+                            columns={EXPORT_CONFIGS.budgets.columns}
+                            title={EXPORT_CONFIGS.budgets.getTile()}
+                            subtitle={`${filteredBudgets.length} budgets - ${filter} filter`}
+                            filename={EXPORT_CONFIGS.budgets.getFilename()}
+                            summary={[
+                                {
+                                    label: "Total Budgeted",
+                                    value: `$${totals.totalBudgeted.toFixed(2)}`,
+                                    color: [59, 130, 246],
+                                },
+                                {
+                                    label: "Total Spent",
+                                    value: `$${totals.totalSpent.toFixed(2)}`,
+                                    color: [239, 68, 68],
+                                },
+                                {
+                                    label: "On Track",
+                                    value: String(totals.onTrack),
+                                    color: [34, 197, 94],
+                                },
+                                {
+                                    label: "Over Budget",
+                                    value: String(totals.overBudget),
+                                    color: [245, 258, 11],
+                                },
+                            ]}
+                            onExport={(status, message) => {
+                                if (status === "success") toast.success(message);
+                                else toast.error(message);
+                            }}
+                        />
+                        <button
+                            className='budgets-add-btn'
+                            onClick={() => {
+                                setEditingBudget(null);
+                                setShowModal(true);
+                            }}
+                        >
+                            + Add Budget
+                        </button>
+                    </div>
                 </div>
                 
                 {/* Summary Cards */}

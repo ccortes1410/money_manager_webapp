@@ -1,6 +1,9 @@
 import React, { useRef, useState, useEffect, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../AuthContext";
+import { useToast } from '../Toast/ToastContext';
+import ExportButton from "../ExportButton/ExportButton";
+import { EXPORT_CONFIGS } from "../../utils/export";
 import IncomeModal from './IncomeModal';
 import "./Income.css";
 
@@ -36,6 +39,7 @@ const Income = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const monthsRefs = useRef({}); 
+    const toast = useToast();
     
     const income_url = "/djangoapp/incomes";
 
@@ -273,15 +277,45 @@ const Income = () => {
             {/* Header */}
             <div className="income-header">
                 <h1>Income</h1>
-                <button
-                    className="income-add-btn"
-                    onClick={() => {
-                        setEditingIncome(null);
-                        setShowModal(true);
-                    }}
-                >
-                    + Add Income
-                </button>
+                <div className="income-header-actions">
+                    <ExportButton
+                        data={filteredIncome}
+                        columns={EXPORT_CONFIGS.income.columns}
+                        title={EXPORT_CONFIGS.income.getTitle()}
+                        subtitle={`${filteredIncome.length} income records`}
+                        filename={EXPORT_CONFIGS.income.getFilename()}
+                        summary={[
+                            {
+                                label: "Total Income",
+                                value: `$${formatCurrency(summary.total_income)}`,
+                                color: [34, 197, 94],
+                            },
+                            {
+                                label: "Total Spent",
+                                value: `$${formatCurrency(summary.total_spent)}`,
+                                color: [239, 68, 68],
+                            },
+                            {
+                                label: "Remaining",
+                                value: `$${formatCurrency(summary.remaining)}`,
+                                color: [59, 130, 246]
+                            },
+                        ]}
+                        onExport={(status, message) => {
+                            if (status === "success") toast.success(message);
+                            else toast.error(message);
+                        }}
+                    />
+                    <button
+                        className="income-add-btn"
+                        onClick={() => {
+                            setEditingIncome(null);
+                            setShowModal(true);
+                        }}
+                    >
+                        + Add Income
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}

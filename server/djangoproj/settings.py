@@ -15,6 +15,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 
 
@@ -23,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 ENV = os.environ.get('DJANGO_ENV', 'local')
 
-if ENV == 'aws':
-    load_dotenv(BASE_DIR / '.env.aws', override=True)
-    print("Loaded AWS environment variables")
+if ENV == 'tidb':
+    load_dotenv(BASE_DIR / '.env.tidb', override=True)
+    print("Loaded TiDB environment variables")
 elif ENV == 'local':
     load_dotenv(BASE_DIR / '.env.local', override=True)
     print("Loaded local environment variables")
@@ -39,26 +40,53 @@ if not SECRET_KEY:
     raise Exception('DJANGO_SECRET_KEY environment variable not set!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud']
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.onrender.com',
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    'https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud',
 ]
+
+RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL')
+if RENDER_EXTERNAL_URL:
+    CORS_ALLOWED_ORIGINS.append(RENDER_EXTERNAL_URL)
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_URL.replace('https://', ''))
+
+CORS_ALLOWED_CREDENTIALS = True
 CORS_TRUSTED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    'https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud',
 ]
 
-CORS_ALLOWED_CREDENTIALS = True
+# CSRF
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://money-manager.24nm1bkwpan2.br-sao.codeengine.appdomain.cloud",
+    'http://localhost:8000',    
+    'http://127.0.0.1:8000',
 ]
+
+if RENDER_EXTERNAL_URL:
+    CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_URL)
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HHTP_X_FORWARDED_PROTO', 'https')
+
+    if RENDER_EXTERNAL_URL:
+        SECURE_SSL_REDIRECT = True
+    else:
+        SECURE_SSL_REDIRECT = False
+
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -86,8 +114,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -99,13 +129,13 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            os.path.join(BASE_DIR, 'frontend/static'),
             os.path.join(BASE_DIR, 'frontend/build'),
             os.path.join(BASE_DIR, 'frontend/build/static')
         ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -114,21 +144,43 @@ TEMPLATES = [
     },
 ]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 WSGI_APPLICATION = "djangoproj.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get('DB_NAME'),
-        "USER": os.environ.get('DB_USER'),
-        "PASSWORD": os.environ.get('DB_PASSWORD'),
-        "HOST": os.environ.get('DB_HOST'),
-        "PORT": os.environ.get('DB_PORT'),
+if os.environ.get('DATABASE_URL'):
+    # Production - use the cloud MySQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
+    # TiDB Cloud Requires SSL
+    if 'tidbcloud' in os.environ.get('DATABASE_URL',''):
+        DATABASES['default']['OPTIONS'] = {
+            'ssl': {'ca': os.environ.get('TIDB_SSL_CA', '')},
+            'charset': 'utf8mb4',
+        }
+else:
+    # Local development - use local MySQL
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.environ.get('DB_NAME'),
+            "USER": os.environ.get('DB_USER'),
+            "PASSWORD": os.environ.get('DB_PASSWORD'),
+            "HOST": os.environ.get('DB_HOST'),
+            "PORT": os.environ.get('DB_PORT'),
+            "OPTIONS": {
+                "charset": "utf8mb4",
+            },
+        }
 }
 
 
@@ -173,13 +225,11 @@ MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend/static'),
     os.path.join(BASE_DIR, 'frontend/build/static'),
-    os.path.join(BASE_DIR, 'frontend/build')
 ]
 
 LOGIN_URL = '/djangoapp/login'
