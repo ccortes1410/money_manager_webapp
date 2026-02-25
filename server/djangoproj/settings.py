@@ -170,7 +170,7 @@ WSGI_APPLICATION = "djangoproj.wsgi.application"
 # else:
     # Local development - use local MySQL
 if ENV == 'local':
-    DATABASES_LOCAL = {
+    DATABASES = {
         "default": {
             "ENGINE": os.environ.get('DB_ENGINE'),
             "NAME": os.environ.get('DB_NAME'),
@@ -183,9 +183,9 @@ if ENV == 'local':
             },
         }
     }
-    
+
 elif ENV == 'tidb':
-    DATABASES_TIDB = {
+    DATABASES = {
         "default": {
             "ENGINE": os.environ.get('DB_ENGINE'),
             "NAME": os.environ.get('DB_NAME'),
@@ -195,7 +195,7 @@ elif ENV == 'tidb':
             "PORT": os.environ.get('DB_PORT'),
             "OPTIONS": {
                 "ssl_mode": "VERIFY_IDENTITY",
-                "ssl": {'ca': "C:\Users\Usuario\Desktop\Ordered Backup\2022\Carlos\Projects\Django\TiDB\isrgrootx1.pem" },
+                "ssl": {'ca': os.environ.get('TIDB_SSL_CA') },
                 "charset": "utf8mb4",
             },
         }
