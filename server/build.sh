@@ -16,7 +16,7 @@ apt-get update && apt-get install -y default-libmysqlclient-dev build-essential 
 echo "=== Installing Node and building React ==="
 cd frontend
 npm install
-npm run build
+npx react-scripts build 
 cd ..
 
 echo "=== Collecting static files ==="
