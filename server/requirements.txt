@@ -7,3 +7,4 @@ django-cors-headers
 mysqlclient>=2.2.7
 whitenoise
 dj-database-url
+dateutil
