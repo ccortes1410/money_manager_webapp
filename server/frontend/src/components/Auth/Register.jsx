@@ -168,7 +168,7 @@ const Register = () => {
                         {/* Username */}
                         <div className="auth-form-group">
                             <label htmlFor="username">Username</label>
-                            <div className={`auh-input-wrapper ${fieldErrors.username ? 'error' : ''}`}>
+                            <div className={`auth-input-wrapper ${fieldErrors.username ? 'error' : ''}`}>
                                 <span className="auth-input-icon">✏️</span>
                                 <input
                                     type="text"
