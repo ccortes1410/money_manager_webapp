@@ -292,6 +292,12 @@
     text-align: center;
 }
 
+.dashboard-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #888;
+}
+
 /* ======================== CARD INNER ========================= */
 .card-inner {
     display: flex;
