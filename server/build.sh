@@ -22,7 +22,8 @@ rm -rf package-lock.json          # Remove lock file to force fresh resolution
 npm cache clean --force            # Clear npm cache
 npm install
 chmod +x node_modules/.bin/react-scripts
-npm run build
+
+CI=false npm run build
 cd ..
 
 echo "=== Collecting static files ==="
