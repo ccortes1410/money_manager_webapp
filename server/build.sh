@@ -15,6 +15,11 @@ apt-get update && apt-get install -y default-libmysqlclient-dev build-essential 
 
 echo "=== Installing Node and building React ==="
 cd frontend
+
+# Clean install — remove old node_modules completely
+rm -rf node_modules
+rm -rf package-lock.json          # Remove lock file to force fresh resolution
+npm cache clean --force            # Clear npm cache
 npm install
 chmod +x node_modules/.bin/react-scripts
 npm run build
