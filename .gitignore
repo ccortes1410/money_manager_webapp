@@ -104,6 +104,7 @@ celerybeat.pid
 # Environments
 .env.aws
 .env.local
+.env.tidb
 .env
 .venv
 env/
@@ -129,3 +130,19 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# React
+frontend/node_modules/
+frontend/build
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Static
+staticfiles/
+EOF
