@@ -169,19 +169,37 @@ WSGI_APPLICATION = "djangoproj.wsgi.application"
 #         }
 # else:
     # Local development - use local MySQL
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get('DB_ENGINE'),
-        "NAME": os.environ.get('DB_NAME'),
-        "USER": os.environ.get('DB_USER'),
-        "PASSWORD": os.environ.get('DB_PASSWORD'),
-        "HOST": os.environ.get('DB_HOST'),
-        "PORT": os.environ.get('DB_PORT'),
-        "OPTIONS": {
-            "charset": "utf8mb4",
-        },
+if ENV == 'local':
+    DATABASES_LOCAL = {
+        "default": {
+            "ENGINE": os.environ.get('DB_ENGINE'),
+            "NAME": os.environ.get('DB_NAME'),
+            "USER": os.environ.get('DB_USER'),
+            "PASSWORD": os.environ.get('DB_PASSWORD'),
+            "HOST": os.environ.get('DB_HOST'),
+            "PORT": os.environ.get('DB_PORT'),
+            "OPTIONS": {
+                "charset": "utf8mb4",
+            },
+        }
     }
-}
+    
+elif ENV == 'tidb':
+    DATABASES_TIDB = {
+        "default": {
+            "ENGINE": os.environ.get('DB_ENGINE'),
+            "NAME": os.environ.get('DB_NAME'),
+            "USER": os.environ.get('DB_USER'),
+            "PASSWORD": os.environ.get('DB_PASSWORD'),
+            "HOST": os.environ.get('DB_HOST'),
+            "PORT": os.environ.get('DB_PORT'),
+            "OPTIONS": {
+                "ssl_mode": "VERIFY_IDENTITY",
+                "ssl": {'ca': "C:\Users\Usuario\Desktop\Ordered Backup\2022\Carlos\Projects\Django\TiDB\isrgrootx1.pem" },
+                "charset": "utf8mb4",
+            },
+        }
+    }
 
 
 # Password validation
