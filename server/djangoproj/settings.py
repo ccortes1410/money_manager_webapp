@@ -152,35 +152,35 @@ WSGI_APPLICATION = "djangoproj.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if os.environ.get('DATABASE_URL'):
-    # Production - use the cloud MySQL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-    # TiDB Cloud Requires SSL
-    if 'tidbcloud' in os.environ.get('DATABASE_URL',''):
-        DATABASES['default']['OPTIONS'] = {
-            'ssl': {'ca': os.environ.get('TIDB_SSL_CA', '')},
-            'charset': 'utf8mb4',
-        }
-else:
+# if os.environ.get('DATABASE_URL'):
+#     # Production - use the cloud MySQL
+#     DATABASES = {
+#         'default': dj_database_url.config(
+#             default=os.environ.get('DATABASE_URL'),
+#             conn_max_age=600,
+#             conn_health_checks=True,
+#         )
+#     }
+#     # TiDB Cloud Requires SSL
+#     if 'tidbcloud' in os.environ.get('DATABASE_URL',''):
+#         DATABASES['default']['OPTIONS'] = {
+#             'ssl': {'ca': os.environ.get('TIDB_SSL_CA', '')},
+#             'charset': 'utf8mb4',
+#         }
+# else:
     # Local development - use local MySQL
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.environ.get('DB_NAME'),
-            "USER": os.environ.get('DB_USER'),
-            "PASSWORD": os.environ.get('DB_PASSWORD'),
-            "HOST": os.environ.get('DB_HOST'),
-            "PORT": os.environ.get('DB_PORT'),
-            "OPTIONS": {
-                "charset": "utf8mb4",
-            },
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get('DB_ENGINE'),
+        "NAME": os.environ.get('DB_NAME'),
+        "USER": os.environ.get('DB_USER'),
+        "PASSWORD": os.environ.get('DB_PASSWORD'),
+        "HOST": os.environ.get('DB_HOST'),
+        "PORT": os.environ.get('DB_PORT'),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+        },
+    }
 }
 
 
