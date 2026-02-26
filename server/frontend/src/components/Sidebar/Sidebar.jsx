@@ -3,13 +3,13 @@ import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import "../Sidebar/Sidebar.css";
 
-import travelIcon from '../assets/travel.png';
+// import travelIcon from '../assets/travel.png';
 import budgetIcon from '../assets/budget.png';
 import detailIcon from '../assets/detail.png';
 import logoutIcon from '../assets/salida.png';
 import homeIcon from '../assets/home.png';
 import subscriptionIcon from '../assets/subscription.png';
-import bankIcon from '../assets/bank.png';
+// import bankIcon from '../assets/bank.png';
 import friendIcon from '../assets/friend.png';
 import incomeIcon from '../assets/income.png';
 import sharedBudgetIcon from '../assets/sharedBudget.png';

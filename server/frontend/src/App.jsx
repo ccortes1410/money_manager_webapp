@@ -1,14 +1,14 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { AuthContext } from './AuthContext';
+import { useState, useEffect, lazy, Suspense } from 'react';
+// import { AuthContext } from './AuthContext';
 import AuthProvider from './AuthProvider';
 import { ToastProvider } from './components/Toast/ToastContext';
 // import Login from './components/Auth/Login';
-import { Router, Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
 // import LandingPage from './components/LandingPage/LandingPage';
 // import Register from './components/Auth/Register';
 // import Dashboard from './components/Dashboard/Dashboard';
 // import Transactions from './components/Transactions/Transactions';
-import Budget from './components/Budgets/Budget';
+// import Budget from './components/Budgets/Budget';
 // import Budgets from './components/Budgets/Budgets';
 // import Subscriptions from './components/Subscriptions/Subscriptions';
 import Sidebar from './components/Sidebar/Sidebar';
@@ -18,7 +18,7 @@ import ProtectedRoute from './ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
 import ErrorBoundary from './components/ErrorBoundary';
 // import SharedBudgets from './components/SharedBudgets/SharedBudgets';
-import SharedBudgetDetail from './components/SharedBudgets/SharedBudgetDetail';
+// import SharedBudgetDetail from './components/SharedBudgets/SharedBudgetDetail';
 import "./App.css";
 
 

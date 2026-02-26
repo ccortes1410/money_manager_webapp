@@ -54,7 +54,7 @@ const Register = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(register_url, {
+            const res = await apiFetch(register_url, {
                 method: 'POST',
                 body: JSON.stringify({
                     username: sanitizeInput(userName),

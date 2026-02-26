@@ -97,7 +97,7 @@ export function exportToPDF({
     doc.rect(0, 0, pageWidth, 2, "F");
 
     // Logo / App name
-    doc.setTextColor(...textMuted);
+    doc.setTextColor(...greenColor);
     doc.setFontSize(16);
     doc.text("Money Manager", 14, 12);
 

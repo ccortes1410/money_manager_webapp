@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const TransactionModal = ({ transaction, cateogries, onClose, onSave }) => {
+const TransactionModal = ({ transaction, category, onClose, onSave }) => {
     const getToday = () => new Date().toISOString().split('T')[0];
 
     const [ formData, setFormData ] = useState({

@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import { useToast } from '../Toast/ToastContext';
+import { apiFetch } from '../../utils/csrf';
 import ExportButton from '../ExportButton/ExportButton';
 import { EXPORT_CONFIGS } from '../../utils/export';
 import './Budgets.css';
@@ -10,13 +11,12 @@ import Budget from './Budget';
 import { Chart, ArcElement, Tooltip, Legend, Title } from 'chart.js';
 import BudgetModal from './BudgetModal';
 import BudgetCard from './BudgetCard';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
 
 Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budgets = () => {
     const [budgets, setBudgets] = useState([]);
-    // const [sharedBudgets, setSharedBudgets] = useState([]);
-    const [transactions, setTransactions] = useState([]);
     const [selectedBudgetId, setSelectedBudgetId] = useState(null);
     const [budgetDetail, setBudgetDetail] = useState(null);
     const [budgetCache, setBudgetCache] = useState({});
@@ -25,6 +25,7 @@ const Budgets = () => {
     const [ editingBudget, setEditingBudget ] = useState(null);
     const [ filter, setFilter ] = useState("all");
     const { user } = useContext(AuthContext);
+    const [ deleteConfirm, setDeleteConfirm ] = useState(null);
 
     const budgets_url = '/djangoapp/budgets';
     const navigate = useNavigate();
@@ -32,9 +33,8 @@ const Budgets = () => {
 
     const get_budgets = async () => {
         try {
-            const response = await fetch(budgets_url, {
+            const response = await apiFetch(budgets_url, {
                 method: 'GET',
-                credentials: 'include'
             });
 
             const data = await response.json();
@@ -43,7 +43,7 @@ const Budgets = () => {
                 setBudgets(data.budgets);
             }
         } catch (error) {
-            alert('Error fetching budgets');
+            toast.error("Failed to load budgets");
             setBudgets([]);
             console.error(error);
         } finally {
@@ -59,20 +59,16 @@ const Budgets = () => {
 
         const budget_url = `/djangoapp/budget/${budgetId}`;
         try {
-            const response = await fetch(budget_url, {
+            const response = await apiFetch(budget_url, {
                 method: 'GET',
-                credentials:'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
             
-            const data = await response.json()
-
             if (!response.ok) {
                 throw new Error("Error fetching budget")
             }
             
+            const data = await response.json();
+
             setBudgetDetail(data.budget);
             if (data.budget) {
                 setBudgetCache(prev => ({
@@ -84,58 +80,38 @@ const Budgets = () => {
             
         } catch (error) {
             console.log("Couldn't fetch budget:", error)
+            toast.error("Failed to load budget details");
             setBudgetDetail(null);
         }
     }
-
-    // const get_transactions = async () => {
-    //     const transactions_url = `/djangoapp/transactions`;
-    //     try {
-    //         const response = await fetch(transactions_url, {
-    //             method: 'GET',
-    //             credentials: 'include'
-    //         });
-    //         const data = await response.json();
-    //         setTransactions(data.transactions || []);
-    //     } catch (error) {
-    //         console.error('Error fetching transactions', error);
-    //         setTransactions([]);
-    //     }
-    // };
 
     const handleCreate = async (budgetData) => {
         const add_url = `/djangoapp/budgets/create`;
 
         try {
-            const response = await fetch(add_url, {
+            const response = await apiFetch(add_url, {
                 method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(budgetData),
             });
 
             if (response.ok) {
                 get_budgets();
                 setShowModal(false);
+                toast.success("Budget created succesfully");
             } else {
-                console.error("Failed to add budget");
+                toast.error("Failed to add budget");
             }
         } catch (error) {
             console.error("Error adding budget: ", error);
+            toast.error("Something went wrong");
         }
     };
 
     const handleUpdate = async (budgetId, budgetData) => {
         const update_url = `/djangoapp/budgets/${budgetId}/update`;
         try {
-            const response = await fetch(update_url, {
+            const response = await apiFetch(update_url, {
                 method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify(budgetData)
             });
 
@@ -143,9 +119,23 @@ const Budgets = () => {
                 get_budgets();
                 setShowModal(false);
                 setEditingBudget(null);
+                // Clear cache so detail refreshes
+                setBudgetCache((prev) => {
+                    const copy = { ...prev };
+                    delete copy[budgetId];
+                    return copy;
+                });
+                // Refresh deatil if it's selected
+                if (selectedBudgetId === budgetId) {
+                    get_budget(budgetId);
+                }
+                toast.success("Budget updated");
+            } else {
+                toast.error("Failed to update budget");
             }
         } catch (error) {
             console.error("Error updating budget:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -154,12 +144,8 @@ const Budgets = () => {
 
         const delete_url = `/djangoapp/budgets/${budgetId}/delete`;
         try {
-            const response = await fetch(delete_url, {
+            const response = await apiFetch(delete_url, {
                 method: 'DELETE',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
 
             if (response.ok) {
@@ -168,9 +154,21 @@ const Budgets = () => {
                     setSelectedBudgetId(null);
                     setBudgetDetail(null);
                 }
+                // Clear from cache
+                setBudgetCache((prev) => {
+                    const copy = { ...prev };
+                    delete copy[budgetId];
+                    return copy;
+                });
+                toast.success("Budget deleted");
+            } else {
+                toast.error("Failed to delete budget");
             }
         } catch (error) {
             console.error("Error deleting budget:", error);
+            toast.error("Something went wrong");
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 
@@ -184,16 +182,13 @@ const Budgets = () => {
     };
 
     const handleToggleRecurring = async (budgetId, isRecurring, recurrence = "monthly") => {
+        const toggle_url = `/djangoapp/budgets/${budgetId}/toggle-recurring`;
         try {
-            const response = await fetch(`/djangoapp/budgets/${budgetId}/toggle-recurring`, {
+            const response = await fetch(toggle_url, {
                 method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({ 
                     is_recurring: isRecurring,
-                    recurrence 
+                    recurrence,
                 })
             });
             
@@ -205,9 +200,17 @@ const Budgets = () => {
                             : b
                     )
                 );
+                toast.info(
+                    isRecurring
+                        ? `Budget set to recurring (${recurrence})`
+                        : "Budget set to one-time"
+                );
+            } else {
+                toast.error("Failed to update recurring status");
             }
         } catch (error) {
             console.error("Error toggling recurring status:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -224,7 +227,7 @@ const Budgets = () => {
         if (user !== null && !user.is_authenticated) {
             navigate('/');
         }
-    }, [user]);
+    }, [user, navigate]);
 
     // Filter budgets
     const filteredBudgets = filter === "all"
@@ -236,15 +239,15 @@ const Budgets = () => {
                 : budgets.filter((b) => b.percentUsed < 50);
     
     // Calculate totals
-    const totals = {
+    const totals = useMemo(() => ({
         totalBudgeted: budgets.reduce((sum, b) => sum + Number(b.amount), 0),
         totalSpent: budgets.reduce((sum, b) => sum + b.spent, 0),
         overBudget: budgets.filter((b) => b.isOver).length,
         onTrack: budgets.filter((b) => !b.isOver).length,
-    };
+    }), [budgets]);
 
     console.log("Budget detail:", budgetDetail);
-    // console.log("Filtered Budgets:", filteredBudgets)
+
     return (
             <div className="budgets-page">
                 <div className="budgets-header">
@@ -358,7 +361,7 @@ const Budgets = () => {
                                     isSelected={selectedBudgetId === budget.id}
                                     onSelect={() => handleSelectBudget(budget.id)}
                                     onEdit={() => handleEdit(budget)}
-                                    onDelete={() => handleDelete(budget.id)}
+                                    onDelete={() => setDeleteConfirm(budget.id)}
                                     onToggleRecurring={(isRecurring) => 
                                         handleToggleRecurring(budget.id, isRecurring, budget.recurrence || "monthly")
                                     }
@@ -399,6 +402,18 @@ const Budgets = () => {
                                 handleCreate(data);
                             }
                         }}
+                    />
+                )}
+
+                {/* Delete Confirmaton */}
+                {deleteConfirm && (
+                    <ConfirmDialog
+                        title="Delete Budget"
+                        message="Are you sure you want to delete this budget? This action cannot be undone."
+                        confirmText="Delete"
+                        onConfirm={() => handleDelete(deleteConfirm)}
+                        onCancel={() => setDeleteConfirm(null)}
+                        danger
                     />
                 )}
          </div>

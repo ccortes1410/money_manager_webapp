@@ -22,16 +22,11 @@ const Transactions = () => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const getToday = () => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    }
-
     const transaction_url = "/djangoapp/transactions";
 
     const fetchTransactions = async () => {
         try {
-            const res = await fetch(transaction_url, {
+            const res = await apiFetch(transaction_url, {
                 method: 'GET',
             });
 
