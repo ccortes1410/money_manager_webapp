@@ -34,7 +34,7 @@ urlpatterns = [
     # Authentication
     path(
         route='register',
-        view=views.register_user,
+        view=views.register_view,
         name='register'
     ),
     path(

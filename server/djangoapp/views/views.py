@@ -33,13 +33,15 @@ from ..services.subscription_service import (
     compute_subscription_summary,
     compute_subscription_total
     )
+from django_ratelimit.decorators import ratelimit
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 # ======================= AUTH VIEWS ======================= #
-def register_user(request):
+@ratelimit(key='ip', rate='3/m', method='POST', block=True)
+def register_view(request):
     context = {}
     if request.method == "GET":
         return render(request, "money_manager/user_registration_bootstrap.html", context)
@@ -83,6 +85,7 @@ def register_user(request):
     return render(request, "register.html")
 
 @csrf_exempt
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def login_request(request):
     
     if request.method != "POST":
