@@ -28,4 +28,4 @@ jobs:
 
       - name: Run ESLint
         working-directory: ./frontend
-        run: npx eslint src/ --ext .js,.jsx --max-warnings 0
+        run: npx eslint src/ --max-warnings 0
