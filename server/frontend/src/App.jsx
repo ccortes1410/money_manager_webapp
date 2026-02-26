@@ -159,35 +159,6 @@ function App() {
                 </ToastProvider>
             </AuthProvider>
         </ErrorBoundary>
-        // </Router>
-
-        // <AuthContext.Provider value={{ user, setUser, loading }}>
-        // <Routes>
-            // Public Routes
-        //     <Route path="/" element={<LandingPage /> } />
-        //     <Route path="/login" element={<Login />} />
-        //     <Route path="/register" element={<Register />} />
-
-        //     Protected Routes
-        //     <Route element={<ProtectedRoute />}>
-        //         <Route element={<AppLayout collapsed={collapsed} toggleSidebar={toggleSidebar} />}>
-        //             <Route path="/" element={<Dashboard />} />
-        //             <Route path="dashboard" element={<Dashboard />} />
-        //             <Route path="transactions" element={<Transactions />} />
-        //             <Route path="budgets" element={<Budgets />} />
-        //             <Route path="budget/:budget_id" element={<Budget />} />
-        //             <Route path="subscriptions" element={<Subscriptions />} />
-        //             <Route path="income" element={<Income />} />
-        //             <Route path="friends" element={<Friends/>} />
-        //             <Route path="shared-budgets" element={<SharedBudgets />} />
-        //             <Route path="shared-budgets/:id" element={<SharedBudgetDetail />} />
-        //         </Route>
-        //     </Route>
-
-        //     Catch-all
-        //     <Route path="*" element={<LandingPage />} />
-        // </Routes>
-        // </AuthContext.Provider>
     );
 }
 

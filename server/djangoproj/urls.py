@@ -22,9 +22,9 @@ from django.conf import settings
 urlpatterns = [
     path('admin/',admin.site.urls),
     path('djangoapp/', include('djangoapp.urls')),
-    path('', TemplateView.as_view(template_name='Home.html')),
-    path('about/', TemplateView.as_view(template_name='About.html')),
-    path('contact/', TemplateView.as_view(template_name='Contact.html')),
+    path('', TemplateView.as_view(template_name='index.html')),
+    path('about/', TemplateView.as_view(template_name='index.html')),
+    path('contact/', TemplateView.as_view(template_name='index.html')),
     path('login/', TemplateView.as_view(template_name='index.html')),
     path('register/', TemplateView.as_view(template_name='index.html')),
     path('dashboard/', TemplateView.as_view(template_name='index.html')),
@@ -34,5 +34,12 @@ urlpatterns = [
     path('income/', TemplateView.as_view(template_name='index.html')),
     path('user/', TemplateView.as_view(template_name='index.html')),
     # path('budget/<int:budget_id>/', TemplateView.as_view(template_name='index.html')),
+    # re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
+] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+urlpatterns += [
     re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]
