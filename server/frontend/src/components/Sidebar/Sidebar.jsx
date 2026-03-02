@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
+import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
 import "../Sidebar/Sidebar.css";
 
 // import travelIcon from '../assets/travel.png';
@@ -13,20 +14,22 @@ import subscriptionIcon from '../assets/subscription.png';
 import friendIcon from '../assets/friend.png';
 import incomeIcon from '../assets/income.png';
 import sharedBudgetIcon from '../assets/sharedBudget.png';
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ collapsed, onToggle }) => {
     const { user, setUser } = useContext(AuthContext);
     const location = useLocation();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const navItems = [
-        { path: "/dashboard", label: "Dashboard", icon: homeIcon },
-        { path: "/transactions", label: "Transactions", icon: detailIcon },
-        { path: "/budgets", label: "Budgets", icon: budgetIcon },
-        { path: "/subscriptions", label: "Subscriptions", icon: subscriptionIcon },
-        { path: "/income", label: "Income", icon: incomeIcon},
-        { path: "/friends", label: "Friends", icon: friendIcon},
-        { path: "/shared-budgets", label: "Shared Budgets", icon: sharedBudgetIcon}
+        { path: "/dashboard", label: t('nav.dashboard'), icon: homeIcon },
+        { path: "/transactions", label: t('nav.transactions'), icon: detailIcon },
+        { path: "/budgets", label: t('nav.budgets'), icon: budgetIcon },
+        { path: "/subscriptions", label: t('nav.subscriptions'), icon: subscriptionIcon },
+        { path: "/income", label: t('nav.income'), icon: incomeIcon},
+        { path: "/friends", label: t('nav.friends'), icon: friendIcon},
+        { path: "/shared-budgets", label: t('nav.shared_budgets'), icon: sharedBudgetIcon}
     ];
 
     const isActive = (path) => {
@@ -116,20 +119,26 @@ const Sidebar = ({ collapsed, onToggle }) => {
             )}
 
             {/* Logout */}
-            <ul className="nav-links logout">
-                <li className="nav-item" data-tooltip="Logout">
-                    <NavLink
-                        to="/"
-                        className="nav-link"
-                        onClick={logout}
-                    >
-                        <span className="nav-icon">
-                            <img src={logoutIcon} alt="Logout" className="img_icon" />
-                        </span>
-                        <span className="nav-text">Logout</span>
-                    </NavLink>
-                </li>
-            </ul>
+            <div className="sidebar-bottom">
+
+                <LanguageSwitcher collapsed={collapsed} />
+            
+                <ul className="nav-links logout">
+                    <li className="nav-item" data-tooltip="Logout">
+                        <NavLink
+                            to="/"
+                            className="nav-link"
+                            onClick={logout}
+                        >
+                            <span className="nav-icon">
+                                <img src={logoutIcon} alt="Logout" className="img_icon" />
+                            </span>
+                            <span className="nav-text">Logout</span>
+                        </NavLink>
+                        
+                    </li>
+                </ul>
+            </div>
         </aside>
     );
 };

@@ -1,4 +1,5 @@
 from ..models.models import Transaction
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import json
@@ -43,10 +44,10 @@ def get_transactions(request):
                 date=date,
                 category=category
             )
-            return JsonResponse({"status": "Transaction added successfully"}, status=201)
+            return JsonResponse({"status": _("Transaction added successfully")}, status=201)
         except Exception as e:
-            logger.error(f"Error adding transaction: {e}")
-            return JsonResponse({"error": "Failed to add transaction"}, status=500)
+            logger.error(_(f"Error adding transaction: {e}"))
+            return JsonResponse({"error": _("Failed to add transaction")}, status=500)
     
     elif request.method == "DELETE":
         try:

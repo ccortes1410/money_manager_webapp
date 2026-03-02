@@ -261,3 +261,19 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_URL = '/djangoapp/login'
+
+
+USE_I18N = True
+USE_L10N = True
+
+LANGUAGE_CODE = 'en'
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('es', 'Español'),
+]
+
+LOCALE_PATHS =[
+    os.path.join(BASE_DIR, 'locale'),
+]
+

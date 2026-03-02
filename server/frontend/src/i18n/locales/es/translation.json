@@ -1,0 +1,112 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "noData": "No hay datos disponibles",
+    "confirm": "¿Estás seguro?",
+    "search": "Buscar",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "transactions": "Transacciones",
+    "budgets": "Presupuestos",
+    "subscriptions": "Suscripciones",
+    "income": "Ingresos",
+    "friends": "Amigos",
+    "shared_budgets": "Presupuestos Compartidos",
+    "settings": "Configuración"
+  },
+  "landing": {
+    "title": "Money Manager",
+    "subtitle": "Controla gastos, gestiona presupuestos, divide costos con amigos.",
+    "getStarted": "Comenzar",
+    "features": {
+      "tracking": "Control de Gastos",
+      "trackingDesc": "Registra cada peso que gastas con facilidad.",
+      "budgets": "Presupuestos Inteligentes",
+      "budgetsDesc": "Establece presupuestos y recibe alertas antes de gastar de más.",
+      "shared": "Divide Costos",
+      "sharedDesc": "Comparte presupuestos y divide gastos con amigos."
+    }
+  },
+  "auth": {
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes cuenta?",
+    "hasAccount": "¿Ya tienes cuenta?",
+    "loginTitle": "Bienvenido de nuevo",
+    "registerTitle": "Crear cuenta"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "totalSpent": "Total gastado",
+    "totalIncome": "Ingreso total",
+    "remaining": "Restante",
+    "monthlySpending": "Gastos mensuales",
+    "categoryBreakdown": "Desglose por categoría",
+    "recentTransactions": "Transacciones recientes",
+    "categories": "Categorías",
+    "periods" : {
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "total": "Total"
+    }
+  },
+  "transactions": {
+    "title": "Transacciones",
+    "addNew": "Agregar transacción",
+    "amount": "Monto",
+    "date": "Fecha",
+    "category": "Categoría",
+    "description": "Descripción",
+    "deleteConfirm": "¿Eliminar esta transacción?",
+    "categories": {
+      "food": "Comida y restaurantes",
+      "transport": "Transporte",
+      "housing": "Vivienda",
+      "utilities": "Servicios",
+      "entertainment": "Entretenimiento",
+      "shopping": "Compras",
+      "health": "Salud",
+      "other": "Otro"
+    }
+  },
+  "budgets": {
+    "title": "Presupuestos",
+    "addNew": "Agregar presupuesto",
+    "spent": "Gastado",
+    "remaining": "Restante",
+    "limit": "Límite",
+    "period": "Período",
+    "overspent": "¡Excedido!",
+    "no_data": "No existen presupuestos para este periodo"
+  },
+  "subscriptions": {
+    "title": "Suscripciones",
+    "addNew": "Agregar suscripción",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "billingCycle": "Ciclo de facturación",
+    "nextPayment": "Próximo pago",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "weekly": "Semanal"
+  },
+  "income": {
+    "title": "Ingresos",
+    "addNew": "Agregar ingreso",
+    "source": "Fuente",
+    "amount": "Monto",
+    "date": "Fecha"
+  }
+}

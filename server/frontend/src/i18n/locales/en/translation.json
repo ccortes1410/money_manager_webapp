@@ -1,0 +1,111 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "confirm": "Are you sure?",
+    "search": "Search",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "budgets": "Budgets",
+    "subscriptions": "Subscriptions",
+    "income": "Income",
+    "friends": "Friends",
+    "shared_budgets": "Shared Budgets",
+    "settings": "Settings"
+  },
+  "landing": {
+    "title": "Money Manager",
+    "subtitle": "Track expenses, manage budgets, split costs with friends.",
+    "getStarted": "Get Started",
+    "features": {
+      "tracking": "Expense Tracking",
+      "trackingDesc": "Track every dollar you spend with ease.",
+      "budgets": "Smart Budgets",
+      "budgetsDesc": "Set budgets and get alerts before overspending.",
+      "shared": "Split Costs",
+      "sharedDesc": "Share budgets and split expenses with friends."
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginTitle": "Welcome Back",
+    "registerTitle": "Create Account"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalSpent": "Total Spent",
+    "totalIncome": "Total Income",
+    "remaining": "Remaining",
+    "monthlySpending": "Monthly Spending",
+    "categoryBreakdown": "Category Breakdown",
+    "recentTransactions": "Recent Transactions",
+    "categories": "Categories",
+    "periods": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "total": "Total"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "addNew": "Add Transaction",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "description": "Description",
+    "deleteConfirm": "Delete this transaction?",
+    "categories": {
+      "food": "Food & Dining",
+      "transport": "Transportation",
+      "housing": "Housing",
+      "utilities": "Utilities",
+      "entertainment": "Entertainment",
+      "shopping": "Shopping",
+      "health": "Health",
+      "other": "Other"
+    }
+  },
+  "budgets": {
+    "title": "Budgets",
+    "addNew": "Add Budget",
+    "spent": "Spent",
+    "remaining": "Remaining",
+    "limit": "Limit",
+    "period": "Period",
+    "overspent": "Overspent!"
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "addNew": "Add Subscription",
+    "active": "Active",
+    "inactive": "Inactive",
+    "billingCycle": "Billing Cycle",
+    "nextPayment": "Next Payment",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "weekly": "Weekly"
+  },
+  "income": {
+    "title": "Income",
+    "addNew": "Add Income",
+    "source": "Source",
+    "amount": "Amount",
+    "date": "Date"
+  }
+}

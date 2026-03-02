@@ -1,5 +1,6 @@
 import { Doughnut } from "react-chartjs-2";
 import { useMemo } from 'react';
+import { useTranslation } from "react-i18next";
 
 const COLORS = [
         'rgba(75,192,192,1)',
@@ -19,9 +20,11 @@ const CategorySpendingCard = ({ categories = {}, period }) => {
     const transactionTotal = categories?.transaction_total || 0;
     const subscriptionTotal = categories?.subscription_total || 0;
     
+    const { t } = useTranslation();
+
     // Move the early return BEFORE useMemo hooks that depend on categoryList
     const hasValidData = Array.isArray(categoryList) && categoryList.length > 0;
-    console.log("valid?", hasValidData)
+    // console.log("valid?", hasValidData)
     const chartData = useMemo(() => {
         
         if (!hasValidData) {
@@ -49,7 +52,7 @@ const CategorySpendingCard = ({ categories = {}, period }) => {
         };
     }, [categoryList, hasValidData]);
 
-    console.log("Categories recevied:", categories)
+    // console.log("Categories recevied:", categories)
 
     const chartOptions = useMemo(() => ({
         responsive: true,
@@ -100,7 +103,7 @@ const CategorySpendingCard = ({ categories = {}, period }) => {
     if (!categoryList.length) {
         return (
             <div className="card-inner">
-                <h3>Categories ({period})</h3>
+                <h3>{t('dashboard.categories')} ({period})</h3>
                 <div className="no-data-container">
                     <p>No spending data for this period</p>
                 </div>

@@ -10,9 +10,9 @@ import CategorySpendingCard from './Dashboard Cards/CategorySpendingCard';
 import SubscriptionsCard from './Dashboard Cards/SubscriptionsCard';
 import BudgetsCard from './Dashboard Cards/BudgetsCard';
 import IncomeCard from './Dashboard Cards/IncomeCard';
-Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
+import { useTranslation } from 'react-i18next';
 
-const PERIODS = ["daily", "weekly", "monthly", "yearly", "total"];
+Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const Dashboard = () => {
     // const [collapsed, setCollapsed] = useState(true);
@@ -40,19 +40,21 @@ const Dashboard = () => {
     const [budgets, setBudgets] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [income, setIncome] = useState([]);
-    const [allData, setAllData] = useState([]);
-    const [data, setData] = useState([]);
+    // const [allData, setAllData] = useState([]);
+    // const [data, setData] = useState([]);
     
     const [error, setError] = useState(null);
     const [ loading, setLoading ] = useState(true);
     const [ selectedPeriod, setSelectedPeriod ] = useState("monthly");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [amountInput, setAmountInput] = useState('');
-    const [dateInput, setDateInput] = useState('');
-    const [categoryInput, setCategoryInput] = useState('');
-    const [descriptionInput, setDescriptionInput] = useState('');
-    const [selectedTransactions, setSelectedTransactions] = useState([]);
+    // const [searchQuery, setSearchQuery] = useState("");
+    // const [amountInput, setAmountInput] = useState('');
+    // const [dateInput, setDateInput] = useState('');
+    // const [categoryInput, setCategoryInput] = useState('');
+    // const [descriptionInput, setDescriptionInput] = useState('');
+    // const [selectedTransactions, setSelectedTransactions] = useState([]);
+    const { t } = useTranslation();
 
+    const PERIODS = [t("dashboard.periods.daily"), t("dashboard.periods.weekly"), t("dashboard.periods.monthly"), t("dashboard.periods.yearly"), t("dashboard.periods.total")];
     // Set an array for years to display on bar graph
     const years = Array.from(
         new Set(transactions.map((t) => new Date(t.date).getFullYear()))
@@ -115,10 +117,10 @@ const Dashboard = () => {
                 let transactions = Array.from(retobj.transactions)
                 .filter(tx => tx.user_id === user.id);
                 setTransactions(transactions);
-                setData(transactions);
+                // setData(transactions);
             } else {
                 setTransactions([]);
-                setData([]);
+                // setData([]);
             }
         } catch (error) {
             console.error("Error fetching transactions:", error);
@@ -338,7 +340,7 @@ const Dashboard = () => {
 
             ctx.font = "12px sans-serif";
             ctx.fillStyle = "#ccc";
-            ctx.fillText("Total Spent", centerX, centerY + 15);
+            ctx.fillText(t("dashboard.totalSpent"), centerX, centerY + 15);
             ctx.restore();
         },
     };
@@ -495,9 +497,9 @@ const Dashboard = () => {
 
     const totalSpent = transactions.reduce((a,b) => a + Number(b.amount), 0);
 
-    console.log("Dashboard fetched:", dashboard)
-    console.log("Categories:", dashboard.categories)
-    console.log("Transactions:", dashboard.transactions)
+    // console.log("Dashboard fetched:", dashboard)
+    // console.log("Categories:", dashboard.categories)
+    // console.log("Transactions:", dashboard.transactions)
 
 
     if (error) {
@@ -515,7 +517,7 @@ const Dashboard = () => {
         return (
             <div className="dashboard-page">
                 <div className="dashboard-header">
-                    <h1>Dashboard</h1>
+                    <h1>{t('dashboard.title')}</h1>
                 </div>
                 <div className="period-selector-wrapper">
                     <PeriodSelector
@@ -525,7 +527,7 @@ const Dashboard = () => {
                     />
                 </div>
                 <div className="dashboard-loading">
-                    <p>Loading dashboard...</p>
+                    <p>{t('common.loading')}</p>
                 </div>
             </div>
         );
@@ -534,10 +536,7 @@ const Dashboard = () => {
         <div className="dashboard-page">
             {/* Fixed header */}
             <div className="dashboard-header">
-                <h1>Dashboard</h1>
-                {/* <div className="active-user">
-                    <p>{user ? user.username : "Not Logged In"}</p>
-                </div> */}
+                <h1>{t('dashboard.title')}</h1>
             </div>
 
             {/* Fixed period selector */}
@@ -554,7 +553,7 @@ const Dashboard = () => {
                 {/* Main cards grid */}
                 <div className="dashboard-main">
                     <div className="dashboard-card transactions">
-                        {console.log("TransactionsCard data:", dashboard?.transactions, "isArray:", Array.isArray(dashboard?.transactions))}
+                        {/* {console.log("TransactionsCard data:", dashboard?.transactions, "isArray:", Array.isArray(dashboard?.transactions))} */}
                         <TransactionsCard
                             transactions={dashboard?.transactions || []}
                             period={selectedPeriod}
@@ -562,7 +561,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="dashboard-card categories">
-                        {console.log("CategorySpendingCard data:", dashboard?.categories)}
+                        {/* {console.log("CategorySpendingCard data:", dashboard?.categories)} */}
                         <CategorySpendingCard
                             key={dashboard?.categories?.total}
                             categories={dashboard?.categories || {}}
@@ -571,7 +570,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="dashboard-card subscriptions">
-                        {console.log("SubscriptionsCard data:", dashboard?.subscriptions, "isArray:", Array.isArray(dashboard?.subscriptions))}
+                        {/* {console.log("SubscriptionsCard data:", dashboard?.subscriptions, "isArray:", Array.isArray(dashboard?.subscriptions))} */}
                         <SubscriptionsCard
                             subscriptions={dashboard?.subscriptions}
                             period={selectedPeriod}
@@ -579,7 +578,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="dashboard-card budgets">
-                        {console.log("BudgetsCard data:", dashboard?.budgets, "isArray:", Array.isArray(dashboard?.budgets))}
+                        {/* {console.log("BudgetsCard data:", dashboard?.budgets, "isArray:", Array.isArray(dashboard?.budgets))} */}
                         <BudgetsCard
                             budgets={dashboard?.budgets}
                             period={selectedPeriod}
@@ -590,7 +589,7 @@ const Dashboard = () => {
                 {/* Income sidebar */}
                 <div className="dashboard-sidebar">
                     <div className="dashboard-card income">
-                        {console.log("IncomeCard data:", dashboard?.income)}
+                        {/* {console.log("IncomeCard data:", dashboard?.income)} */}
                         <IncomeCard
                             income={dashboard?.income}
                             period={selectedPeriod}

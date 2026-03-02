@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Doughnut } from "react-chartjs-2";
+import { useTranslation } from 'react-i18next';
 
 const BudgetsCard = ({ budgets, period }) => {
     const {
@@ -13,6 +14,8 @@ const BudgetsCard = ({ budgets, period }) => {
     const displayRemaining = Math.max(remaining, 0);
     const displayOverage = Math.abs(Math.min(remaining, 0));
 
+    const { t } = useTranslation();
+
     const COLORS = {
         spent: isOverBudget ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 1)',
         remaining: 'rgba(34, 197, 94, 1)',
@@ -22,7 +25,7 @@ const BudgetsCard = ({ budgets, period }) => {
     const chartData = useMemo(() => {
         if (isOverBudget) {
             return {
-                labels: ['Spent', 'Remaining'],
+                labels: [t('budgets.spent'), t('bugets.remaining')],
                 datasets: [{
                     data: [total_budgeted, displayRemaining],
                     backgroundColor: [COLORS.spent, COLORS.overage],
@@ -31,7 +34,7 @@ const BudgetsCard = ({ budgets, period }) => {
             };
         }
         return {
-            labels: ['Spent', 'Remaining'],
+            labels: [t('budgets.spent'), t('budgets.remaining')],
             datasets: [{
                 data: [total_spent, displayRemaining],
                 backgroundColor: [COLORS.spent, COLORS.remaining],
@@ -90,9 +93,9 @@ const BudgetsCard = ({ budgets, period }) => {
     if (total_budgeted === 0) {
         return (
             <div className="card-inner>">
-                <h3>Budgets ({period})</h3>
+                <h3>{t('budgets.title')} ({period})</h3>
                 <div className="no-data-container">
-                    <p className="no-data">No budgets for this period.</p>
+                    <p className="no-data">{t('budgets.no_data')}</p>
                 </div>
             </div>
         );
@@ -100,7 +103,7 @@ const BudgetsCard = ({ budgets, period }) => {
 
     return (
         <div className="card-inner">
-            <h3>Budgets ({period})</h3>
+            <h3>{t('budgets.title')} ({period})</h3>
             <div className="chart-with-legend">
                 <div className="chart-container">
                     <Doughnut
@@ -125,7 +128,7 @@ const BudgetsCard = ({ budgets, period }) => {
                     </div>
                     <div className="legend-item total">
                         <div className="legend-text">
-                            <span className="legend-label">Budget</span>
+                            <span className="legend-label">{t('budgets.title')}</span>
                             <span className="legend-value">${total_budgeted.toFixed(0)}</span>
                         </div>
                     </div>
