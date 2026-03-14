@@ -8,4 +8,4 @@ mysqlclient>=2.2.7
 whitenoise
 dj-database-url
 python-dateutil
-python-ratelimit
+django-ratelimit
