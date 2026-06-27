@@ -101,7 +101,6 @@ class SubscriptionPayment(models.Model):
         related_name='payments'
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
 
     is_paid = models.BooleanField(default=True)
     paid_date = models.DateField(null=True, blank=True)
@@ -109,9 +108,9 @@ class SubscriptionPayment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-date']
+        ordering = ['-paid_date']
 
-        unique_together = ['subscription', 'date']
+        unique_together = ['subscription', 'paid_date']
 
     def __str__(self):
         return f"{self.subscription.name} - ${self.amount} on {self.date}"
@@ -154,8 +153,8 @@ class SharedBudget(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    period_start = models.DateField()
+    period_end = models.DateField()
     is_active = models.BooleanField(default=True)
     default_split_type = models.CharField(
         max_length=20,
@@ -381,7 +380,7 @@ class SharedExpense(models.Model):
 
         for member in members:
             ExpenseSplit.objects.create(
-                expense=self,
+                shared_expense=self,
                 user=member.user,
                 amount_owed=split_amount
             )
@@ -393,7 +392,7 @@ class SharedExpense(models.Model):
         for member in members:
             split_amount = (self.amount * member.contribution_percentage) / 100
             ExpenseSplit.objects.create(
-                expense=self,
+                shared_expense=self,
                 user=member.user,
                 amount_owed=split_amount
             )
@@ -416,7 +415,7 @@ class SharedExpense(models.Model):
 class ExpenseSplit(models.Model):
     """How an expense is split between members."""
 
-    expense = models.ForeignKey(
+    shared_expense = models.ForeignKey(
         SharedExpense,
         on_delete=models.CASCADE,
         related_name='splits'
@@ -431,7 +430,7 @@ class ExpenseSplit(models.Model):
     settled_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        unique_together = ['expense', 'user']
+        unique_together = ['shared_expense', 'user']
     
     def __str__(self):
         status = "Settled" if self.is_settled else "Pending"

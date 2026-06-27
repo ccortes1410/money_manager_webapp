@@ -14,7 +14,7 @@ services:
       MYSQL_DATABASE: money_manager_db
     volumes:
       - mysql_data:/var/lib/mysql
-      - C:\Users\Usuario\Desktop\Data Analysis Coursera\MySQL Uploads:/export
+      - C:\Users\corte\Desktop\Money Manager\MySQL Uploads:/export
   api:
     image: nodeapp
     ports:
