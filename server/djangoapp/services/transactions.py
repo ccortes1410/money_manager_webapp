@@ -143,7 +143,7 @@ def update_transaction(transaction_id, user, data):
         # Update allowed fields
         allowed_fields = [
             "amount",
-            "categroy",
+            "category",
             "description",
             "date"
         ]

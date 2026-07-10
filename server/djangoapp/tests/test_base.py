@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.contib.auth.models import User
+from django.contrib.auth.models import User
 from django.utils import timezone
 from decimal import Decimal
 from djangoapp.models.models import (
@@ -34,7 +34,7 @@ class BaseTestCase(TestCase):
         )
     
     def create_budget(self):
-        """Helper to create a Budget with defult values."""
+        """Helper to create a Budget with default values."""
 
         default_values = {
             'user': self.user1,
@@ -93,13 +93,13 @@ class BaseTestCase(TestCase):
         """Helper to create an Income with default values."""
         
         first_of_month = self.today.replace(day=1)
-        last_of_month = self.today.replace(day=28) + timezone.timedelta(days=4)
+        last_of_month = self.today.replace(day=28) + timezone.timedelta(days=3)
 
         default_values = {
             'user': self.user1,
             'amount': Decimal('5000'),
             'source': 'Salary',
-            'date': self.today,
+            'date_received': self.today,
             'period_start': first_of_month,
             'period_end': last_of_month,
         }
@@ -222,7 +222,6 @@ class BaseTestCase(TestCase):
             'receiver': self.user2,
             'amount': expense_split.amount_owed,
             'date': self.today,
-            'settled_at': timezone.now(),
         }
 
         return Settlement.objects.create(

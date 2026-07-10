@@ -113,7 +113,7 @@ class SubscriptionPayment(models.Model):
         unique_together = ['subscription', 'paid_date']
 
     def __str__(self):
-        return f"{self.subscription.name} - ${self.amount} on {self.date}"
+        return f"{self.subscription.name} - ${self.amount} on {self.paid_date}"
     
 
 class Income(models.Model):
@@ -144,7 +144,7 @@ class SharedBudget(models.Model):
 
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=12)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, blank=True, null=True)
     created_by = models.ForeignKey(
         User,
@@ -406,7 +406,7 @@ class SharedExpense(models.Model):
         for split in splits_data:
             user = User.objects.get(id=split['user_id'])
             ExpenseSplit.objects.create(
-                expense=self,
+                shared_expense=self,
                 user=user,
                 amount_owed=float(str(split['amount']))
             )

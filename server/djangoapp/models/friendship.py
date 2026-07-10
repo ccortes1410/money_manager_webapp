@@ -53,7 +53,7 @@ class Friendship(models.Model):
 
     def block(self):
         self.status = 'blocked'
-        self.svae()
+        self.save()
 
     @classmethod
     def are_friends(cls, user1, user2):
