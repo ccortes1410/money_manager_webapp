@@ -23,7 +23,7 @@ class BaseTestCase(TestCase):
         
         default_values = {
             'user': self.user1,
-            'amount': Decimal('100'),
+            'amount': Decimal('1000'),
             'description': 'Test Transaction',
             'category': 'General',
             'date': self.today,

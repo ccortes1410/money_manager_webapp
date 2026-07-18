@@ -27,7 +27,7 @@ class TransactionModelTests(BaseTestCase):
         self.assertEqual(str(tx), expected_str)
 
     def test_category_can_be_null(self):
-        tx = self.create_transaction(
+        tx = Transaction.objects.create(
             user=self.user1, amount=Decimal('100'),
             description='No category', category=None, date=self.today
         )
@@ -163,9 +163,9 @@ class TransactionAPITests(BaseTestCase):
     def test_transaction_delete_endopoint(self):
         tx = self.create_transaction()
         response = self.client.delete(
-            reverse('djangoapp:transaction_delete', 
+            reverse('djangoapp:transaction_delete'), 
             data=json.dumps({'ids': [tx.id]}),
-            content_type='application/json')
+            content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Transaction.objects.filter(id=tx.id).exists())

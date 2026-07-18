@@ -91,17 +91,17 @@ urlpatterns = [
     path(
         route='budgets/create',
         view=budgets_views.budget_create,
-        name='add_budget'
+        name='budget_create'
     ),
     path(
         route='budgets/<int:budget_id>/delete/',
         view=budgets_views.budget_delete,
-        name='delete_budget'
+        name='budget_delete'
     ),
     path(
         route='budgets/<int:budget_id>/update',
         view=budgets_views.update_budget_view,
-        name='update_budget'
+        name='budget_update'
     ),
     path(
         route='budgets/<int:budget_id>/toggle-recurring',

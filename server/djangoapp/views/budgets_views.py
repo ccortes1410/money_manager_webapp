@@ -230,7 +230,7 @@ def update_budget_view(request, budget_id):
 
     if result["success"]:
         budget = result["budget"]
-        spent = compute_budget_spent(budget)
+        spent = compute_budget_spent(budget)['total']
         return JsonResponse({
             "message": "Budget updated successfully",
             "budget": {

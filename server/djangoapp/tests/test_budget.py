@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.urls import reverse
 from django.utils import timezone
 
-from django.models.models import Budget
+from djangoapp.models.models import Budget
 
 from .test_base import BaseTestCase
 
@@ -126,7 +126,7 @@ class BudgetAPITests(BaseTestCase):
     def test_update_budget_endpoint_not_found_raises_bug(self):
         with self.assertRaises(NameError):
             self.client.patch(
-                reverse('djangoapp:budget_update', kwargs={'budget_id: 9999'}),
+                reverse('djangoapp:budget_update', kwargs={'budget_id': 9999}),
                 data=json.dumps({'amount': 1500}), content_type='application/json'
             )
     
@@ -148,5 +148,5 @@ class BudgetAPITests(BaseTestCase):
         self.assertFalse(Budget.objects.filter(id=budget.id).exists())
 
     def test_budget_delete_endpoint_not_found(self):
-        response = self.client.delete(reverse('djangoapp:delete_budget', kwargs={'budget_id': 9999}))
+        response = self.client.delete(reverse('djangoapp:budget_delete', kwargs={'budget_id': 9999}))
         self.assertEqual(response.status_code, 404)

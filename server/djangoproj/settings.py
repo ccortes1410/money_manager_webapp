@@ -189,6 +189,9 @@ if ENV == 'local':
             "OPTIONS": {
                 "charset": "utf8mb4",
             },
+            "TEST": {
+                "NAME": "test_money_manager_db",
+            }
         }
     }
 
