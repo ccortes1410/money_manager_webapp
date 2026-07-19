@@ -124,7 +124,7 @@ def get_subscriptions_for_period(user, period: str):
     payments = filter_queryset_by_period(
         SubscriptionPayment.objects.filter(subscription__user=user),
         period=period,
-        date_field="date"
+        date_field="paid_date"
     )
 
     active_payments = payments.filter(subscription__status='active')
@@ -135,7 +135,7 @@ def get_subscriptions_for_period(user, period: str):
             "count": active_payments.values('subscription').distinct().count(),
             "total": float(active_payments.aggregate(total=Sum('amount'))['total'] or 0),
             "payments": list(active_payments.values(
-                'id', 'amount', 'date',
+                'id', 'amount', 'paid_date',
                 'subscription__name', 'subscription__category'
             ))
         },

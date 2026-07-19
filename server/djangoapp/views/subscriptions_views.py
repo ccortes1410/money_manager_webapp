@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def subscriptions_list(request):
-    """GET: List allsubscriptions for user"""
+    """GET: List all subscriptions for user"""
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
@@ -28,7 +28,7 @@ def subscriptions_list(request):
     try:
         if request.method == "GET":
             for sub in subscriptions:
-                recent_payments = sub.payments.order_by('-date')[:5]
+                recent_payments = sub.payments.order_by('-paid_date')
 
                 data.append({
                     "id": sub.id,
@@ -46,7 +46,7 @@ def subscriptions_list(request):
                         {
                             "id": p.id,
                             "amount": float(p.amount),
-                            "date": p.date.isoformat(),
+                            "paid_date": p.paid_date.isoformat() if p.paid_date else None,
                             "is_paid": p.is_paid,
                         }
                         for p in recent_payments
@@ -105,7 +105,7 @@ def subscriptions_detail(request, subscription_id):
     except Subscription.DoesNotExist:
         return JsonResponse({"error": "Subscription not found"}, status=404)
     
-    payments = subscription.payments.order_by('-date')
+    payments = subscription.payments.order_by('-paid_date')
 
     return JsonResponse({
         "subscription": {

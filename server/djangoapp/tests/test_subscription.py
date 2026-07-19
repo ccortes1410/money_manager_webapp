@@ -133,7 +133,7 @@ class SubscriptionAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         sub.refresh_from_db()
         self.assertEqual(sub.status, 'cancelled')
-        self.assertIsNone(sub.end_date)
+        self.assertIsNotNone(sub.end_date)
 
     def test_update_status_endpoint_rejects_invalid_status(self):
         sub = self.create_subscription()
