@@ -260,7 +260,7 @@ class SharedBudgetMember(models.Model):
     def get_total_owed(self):
         """Get total amount this member owes (from splits)."""
         result = ExpenseSplit.objects.filter(
-            expense__shared_budget=self.shared_budget,
+            shared_expense__shared_budget=self.shared_budget,
             user=self.user,
             is_settled=False
         ).aggregate(total=Sum('amount_owed'))

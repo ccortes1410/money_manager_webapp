@@ -122,8 +122,8 @@ def serialize_budget(budget, user=None):
             'id': budget.created_by.id,
             'username': budget.created_by.username,
         },
-        'start_date': budget.start_date.isoformat(),
-        'end_date': budget.end_date.isoformat(),
+        'period_start': budget.period_start.isoformat(),
+        'period_end': budget.period_end.isoformat(),
         'is_active': budget.is_active,
         'default_split_type': budget.default_split_type,
         'member_count': members.count(),
@@ -171,7 +171,7 @@ def calculate_debts(budget):
 
         # Total owed by this member (from splits)
         total_owed = ExpenseSplit.objects.filter(
-            expense__shared_budget=budget,
+            shared_expense__shared_budget=budget,
             user=member.user,
             is_settled=False
         ).aggregate(total=Sum('amount'))['total'] or 0
@@ -305,7 +305,7 @@ def get_shared_budget_detail(request, budget_id):
     user = request.user
 
     try:
-        budget = SharedBudget.objects.filter(id=budget_id)
+        budget = SharedBudget.objects.get(id=budget_id)
     except SharedBudget.DoesNotExist:
         return JsonResponse({'error': 'Shared budget not found'}, status=404)
     
@@ -456,14 +456,14 @@ def update_shared_budget(request, budget_id):
         return JsonResponse({'error': 'Method Not Allowed'}, status=405)
     
     try:
-        data = json.load(request.body)
+        data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     
     user = request.user
 
     try:
-        budget = SharedBudget.objects.filter(id=budget_id)
+        budget = SharedBudget.objects.get(id=budget_id)
     except SharedBudget.DoesNotExist:
         return JsonResponse({'error': 'Shared budget not found'}, status=404)
     
@@ -515,7 +515,7 @@ def delete_shared_budget(request, budget_id):
     user = request.user
 
     try:
-        budget = SharedBudget.objects.filter(id=budget_id)
+        budget = SharedBudget.objects.get(id=budget_id)
     except SharedBudget.DoesNotExist:
         return JsonResponse({'error': 'Shared budget not found'}, status=404)
     

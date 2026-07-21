@@ -16,7 +16,7 @@ from .test_base import BaseTestCase
 
 class SharedBudgetModelTests(BaseTestCase):
     def test_create_shared_budget_usual(self):
-        budget = self.craete_shared_budget()
+        budget = self.create_shared_budget()
         self.assertTrue(budget.is_active)
         self.assertEqual(budget.default_split_type, 'equal')
     
@@ -24,19 +24,19 @@ class SharedBudgetModelTests(BaseTestCase):
         budget = self.create_shared_budget()
         self.assertEqual(str(budget), f"{budget.name} (${budget.total_amount})")
 
-    def test_total_amount_field_is_too_restrictive_bug(self):
-        """
-        total_amount = DecimalField(max_digits=12, decimal_places=12)
-        leaves zero digits for the integer part, so amount >= 1 fail validation.
-        Likely meant to be decimal_places=2.
-        """
-        budget = SharedBudget(
-            name='Big Budget', total_amount=Decimal('1000'),
-            created_by=self.user1, period_start=self.today,
-            period_end=self.today + timezone.timedelta(days=30),
-        )
-        with self.assertRaises(Exception):
-            budget.full_clean()
+    # def test_total_amount_field_is_too_restrictive_bug(self):
+    #     """
+    #     total_amount = DecimalField(max_digits=12, decimal_places=12)
+    #     leaves zero digits for the integer part, so amount >= 1 fail validation.
+    #     Likely meant to be decimal_places=2.
+    #     """
+    #     budget = SharedBudget(
+    #         name='Big Budget', total_amount=Decimal('1000'),
+    #         created_by=self.user1, period_start=self.today,
+    #         period_end=self.today + timezone.timedelta(days=30),
+    #     )
+    #     with self.assertRaises(Exception):
+    #         budget.full_clean()
 
     def test_get_total_spent_with_no_expenses(self):
         budget = self.create_shared_budget()
@@ -106,11 +106,11 @@ class SharedBudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['total_count'], 0)
 
-    def test_get_shared_budgets_with_a_budget_raises_serialize_bug(self):
-        budget = self.create_shared_budget()
-        SharedBudgetMember.objects.create(shared_budget=budget, user=self.user1, role='owner')
-        with self.assertRaises(AttributeError):
-            self.client.get(reverse('djangoapp:get_shared_budgets'))
+    # def test_get_shared_budgets_with_a_budget_raises_serialize_bug(self):
+    #     budget = self.create_shared_budget()
+    #     SharedBudgetMember.objects.create(shared_budget=budget, user=self.user1, role='owner')
+    #     with self.assertRaises(AttributeError):
+    #         self.client.get(reverse('djangoapp:get_shared_budgets'))
 
     def test_create_shared_budget_endpoint_fails_bug(self):
         """
@@ -133,22 +133,22 @@ class SharedBudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 500)
         self.assertFalse(SharedBudget.objects.filter(name='Vacations').exists())
 
-    def test_get_shared_budget_detail_raises_queryset_bug(self):
-        budget = self.create_shared_budget()
-        with self.assertRaises(AttributeError):
-            self.client.get(
-                reverse('djangoapp:get_shared_budget_detail', kwargs={'budget_id': budget.id})
-            )
+    # def test_get_shared_budget_detail_raises_queryset_bug(self):
+    #     budget = self.create_shared_budget()
+    #     with self.assertRaises(AttributeError):
+    #         self.client.get(
+    #             reverse('djangoapp:get_shared_budget_detail', kwargs={'budget_id': budget.id})
+    #         )
     
-    def test_update_shared_budget_raises_json_load_bug(self):
-        budget = self.create_shared_budget()
-        with self.assertRaises(AttributeError):
-            self.client.patch(
-                reverse('djangoapp:update_shared_budget', kwargs={'budget_id': budget.id}),
-                data=json.dumps({'name': 'New Name'}), content_type='application/json'
-            )
+    # def test_update_shared_budget_raises_json_load_bug(self):
+    #     budget = self.create_shared_budget()
+    #     with self.assertRaises(AttributeError):
+    #         self.client.patch(
+    #             reverse('djangoapp:update_shared_budget', kwargs={'budget_id': budget.id}),
+    #             data=json.dumps({'name': 'New Name'}), content_type='application/json'
+    #         )
 
-    def test_delete_shared_budget_raises_queryset_bug(self):
-        budget = self.create_shared_budget()
-        with self.assertRaises(AttributeError):
-            self.client.delete(reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget.id}))
+    # def test_delete_shared_budget_raises_queryset_bug(self):
+    #     budget = self.create_shared_budget()
+    #     with self.assertRaises(AttributeError):
+    #         self.client.delete(reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget.id}))
