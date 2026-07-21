@@ -101,7 +101,7 @@ def compute_transaction_total(user, period_start=None, period_end=None, category
     
     result = queryset.aggregate(total=Sum("amount"))
     # print("Transaction total:", result)
-    return float(result["total"]) or 0
+    return float(result["total"] or 0)
 
 def compute_subscription_total(user, period_start=None, period_end=None, category=None):
     """Calculate total from active subscriptions for a period."""
@@ -144,8 +144,8 @@ def compute_total_spent(user, period_start=None, period_end=None, category=None)
     total = transaction_total + subscription_total
 
     return {
-        "total": float(total),
-        "transactions": float(transaction_total),
-        "subscriptions": float(subscription_total),
+        "total": float(total) if total else 0,
+        "transactions": float(transaction_total) if transaction_total else 0,
+        "subscriptions": float(subscription_total) if subscription_total else 0,
     }
 

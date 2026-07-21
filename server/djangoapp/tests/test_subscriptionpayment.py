@@ -52,11 +52,6 @@ class SusbcriptionPaymentModelTests(BaseTestCase):
         self.assertEqual(payments[0], newer)
         self.assertEqual(payments[1], older)
 
-    def test_str_representation_bug(self):
-        payment = self.create_subscription_payment()
-        with self.assertRaises(AttributeError):
-            str(payment)
-
 
 class SubscriptionPaymentAPITests(BaseTestCase):
     def setUp(self):

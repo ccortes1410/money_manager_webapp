@@ -74,7 +74,7 @@ def get_incomes(request):
             incomes_data = [
                 {
                     "id": inc.id,
-                    "amount": float(inc.amount),
+                    "amount": inc.amount,
                     "source": inc.source,
                     "date_received": inc.date_received.isoformat(),
                     "period_start": inc.period_start.isoformat(),
@@ -132,7 +132,7 @@ def get_income(request, income_id):
     transactions_data = [
         {
             "id": tx.id,
-            "amount": float(tx.amount),
+            "amount": float(tx.amount) if tx.amount else 0,
             "description": tx.description,
             "category": tx.category,
             "date": tx.date.isoformat(),
@@ -145,7 +145,7 @@ def get_income(request, income_id):
         {
             "id": sub.id,
             "name": sub.name,
-            "amount": float(sub.amount),
+            "amount": float(sub.amount) if sub.amount else 0,
             "category": sub.category,
             "billing_cycle": sub.billing_cycle,
             "type": "subscription",

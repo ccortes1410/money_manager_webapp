@@ -98,7 +98,7 @@ def compute_income_by_source(user, period_start=None, period_end=None):
     return [
         {
             "source": item["source"],
-            "total": float(item["total"])
+            "total": item["total"]
         }
         for item in by_source
     ]
@@ -123,7 +123,7 @@ def compute_monthly_income(user, year=None):
     for item in monthly:
         if item['month']:
             month_index = item['month'].month - 1
-            monthly_totals[month_index] = float(item['total'])
+            monthly_totals[month_index] = float(item['total'] or 0)
     
     return {
         "year": year,
@@ -141,7 +141,7 @@ def get_income_with_details(income, user):
 
     return {
         "id": income.id,
-        "amount": float(income.amount),
+        "amount": float(income.amount or 0),
         "source": income.source,
         "date_received": income.date_received.isoformat(),
         "period_start": income.period_start.isoformat(),

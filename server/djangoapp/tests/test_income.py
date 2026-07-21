@@ -110,9 +110,9 @@ class IncomeAPITests(BaseTestCase):
 
     def test_income_update_endpoint_always_raises_bug(self):
         income = self.create_income()
-        with self.asseretRaises(AttributeError):
+        with self.assertRaises(AttributeError):
             self.client.patch(
-                reverse('djangoapp:income_udpdate', kwargs={'income_id': income.id}),
+                reverse('djangoapp:income_update', kwargs={'income_id': income.id}),
                 data=json.dumps({'amount': 3000}), content_type='application/json'
             )
     
