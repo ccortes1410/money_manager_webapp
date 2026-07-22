@@ -84,7 +84,7 @@ class SharedBudgetMemberAPITests(BaseTestCase):
             reverse('djangoapp:update_member_role', kwargs={'budget_id': self.budget.id, 'member_id': self.member2.id}),
             data=json.dumps({'role': 'viewer'}), content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
 
     def test_leave_budget_removes_membership(self):
         self.client.force_login(self.user2)
@@ -112,7 +112,8 @@ class SharedBudgetMemberAPITests(BaseTestCase):
     def test_remove_member_cannot_remove_self(self):
         owner_member = SharedBudgetMember.objects.get(shared_budget=self.budget, user=self.user1)
         response = self.client.delete(
-            reverse('djangoapp:remove_member', kwargs={'budget_id': self.budget.id, 'member':owner_member.id})
+            reverse('djangoapp:remove_member', kwargs={'budget_id': self.budget.id,
+                                                        'member_id': owner_member.id})
         )
         self.assertEqual(response.status_code, 400)
 

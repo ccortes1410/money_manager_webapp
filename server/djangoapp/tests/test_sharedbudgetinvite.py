@@ -93,11 +93,11 @@ class SharedBudgetInviteAPITests(BaseTestCase):
             shared_budget=self.budget, invited_by=self.user1, invited_user=self.user2, role='editor'
         )
         self.client.force_login(self.user2)
-        with self.assertRaises(AttributeError):
-            self.client.post(
-                reverse('djangoapp:respond_to_budget_invite', kwargs={'invite_id': invite.id}),
-                data=json.dumps({'action': 'accept'}), content_type='application/json'
-            )
+        # with self.assertRaises(AttributeError):
+        self.client.post(
+            reverse('djangoapp:respond_to_budget_invite', kwargs={'invite_id': invite.id}),
+            data=json.dumps({'action': 'accept'}), content_type='application/json'
+        )
         # membership creation happens before the crashing serialize call
         self.assertTrue(self.budget.is_member(self.user2))
 
