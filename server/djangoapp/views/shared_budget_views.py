@@ -62,7 +62,7 @@ def serialize_expense(expense):
     return {
         'id': expense.id,
         'desription': expense.description,
-        'amount': float(expense.amount),
+        'amount': expense.amount,
         'paid_by': {
             'id': expense.paid_by.id,
             'username': expense.paid_by.username,
