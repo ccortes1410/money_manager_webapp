@@ -35,7 +35,7 @@ class SharedExpenseModelTests(BaseTestCase):
         splits = expense.splits.all()
         self.assertEqual(splits.count(), 2)
         for split in splits:
-            self.assertEqua;(split.amount_owed, Decimal('50'))
+            self.assertEqual(split.amount_owed, Decimal('50'))
 
     def test_create_equal_splits_with_no_members_does_nothing(self):
         budget = self.create_shared_budget()
@@ -66,15 +66,45 @@ class SharedExpenseModelTests(BaseTestCase):
         self.assertEqual(split1.amount_owed, Decimal('70'))
         self.assertEqual(split2.amount_owed, Decimal('30'))
 
-    def test_create_custom_splits_bug(self):
-        """
-        create_custom_splits() calls ExpenseSplit.objects.create(expense=self, ...)
-        but the FK field is named 'shared_expense', not 'expense'.
-        """
-        expense = self.create_shared_expense()
-        with self.assertRaises(TypeError):
-            expense.create_custom_splits([{'user_id': self.user1.id, 'amount': 25.0}])
+    # def test_create_custom_splits_bug(self):
+    #     """
+    #     create_custom_splits() calls ExpenseSplit.objects.create(expense=self, ...)
+    #     but the FK field is named 'shared_expense', not 'expense'.
+    #     """
+    #     expense = self.create_shared_expense()
+    #     with self.assertRaises(TypeError):
+    #         expense.create_custom_splits([{'user_id': self.user1.id, 'amount': 25.0}])
 
+    def test_create_custom_splits_creates_one_split_per_entry(self):
+        expense = self.create_shared_expense()
+        splits = expense.create_custom_splits([
+            {'user_id': self.user1.id, 'amount': 60.0},
+            {'user_id': self.user2.id, 'amount': 40.0},
+        ])
+
+        self.assertEqual(len(splits), 2)
+        self.assertEqual(expense.splits.count(), 2)
+
+        split1 = expense.splits.get(user=self.user1)
+        split2 = expense.splits.get(user=self.user2)
+        self.assertEqual(split1.amount_owed, Decimal('60.0'))
+        self.assertEqual(split2.amount_owed, Decimal('40.0'))
+
+    def test_create_custom_splits_total_matches_expense_amount(self):
+        expense = self.create_shared_expense()
+        splits = expense.create_custom_splits([
+            {'user_id': self.user1.id, 'amount': 60.0},
+            {'user_id': self.user2.id, 'amount': 40.0},
+        ])
+        total_owed = sum(s.amount_owed for s in splits)
+        self.assertEqual(total_owed, expense.amount)
+
+    def test_create_custom_splits_returns_created_splits(self):
+        expense = self.create_shared_expense()
+        splits = expense.create_custom_splits([{'user_id': self.user1.id, 'amount': 25.0}])
+        self.assertEqual(len(splits), 1)
+        self.assertEqual(splits[0].user, self.user1)
+        self.assertEqual(splits[0].shared_expense, expense)
 
 class SharedExpenseAPITests(BaseTestCase):
     def setUp(self):
@@ -116,20 +146,20 @@ class SharedExpenseAPITests(BaseTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_add_expense_custom_split_type_user_percentage_bug(self):
+    def test_add_expense_custom_split_type_uses_custom_amounts(self):
         payload = {
             'description': 'Custom Split',
-            'amount': 0.10,
+            'amount': 100,
             'date': self.today.isoformat(),
             'split_type': 'custom',
             'splits': [
                 {
                     'user_id': self.user1.id,
-                    'amount': 0.08
+                    'amount': 80
                 },
                 {
                     'user_id': self.user2.id,
-                    'amount': 0.02
+                    'amount': 20
                 }
             ]
         }
@@ -139,11 +169,8 @@ class SharedExpenseAPITests(BaseTestCase):
         )
         self.assertEqual(response.status_code, 201)
         expense = SharedExpense.objects.get(shared_budget=self.budget, description='Custom Split')
-        # Contribution percentages default to 0 for both members, so a
-        # "percentage" split of an amount by 0% yields $0 owed for each --
-        # NOT the custom 0.08 / 0.02 split the request asked for.
-        for split in expense.splits.all():
-            self.assertEqual(split.amount_owed, Decimal('0'))
+        self.assertEqual(expense.splits.get(user=self.user1).amount_owed, Decimal('80'))
+        self.assertEqual(expense.splits.get(user=self.user2).amount_owed, Decimal('20'))
 
     def test_update_expense_changes_amount_and_recalculates_splits(self):
         expense = SharedExpense.objects.create(

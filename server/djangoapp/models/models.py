@@ -402,14 +402,16 @@ class SharedExpense(models.Model):
         Create custom splits from provided data.
         splits_data = [{'user_id': 1, 'amount': 50.00}, ...]
         """
-
+        created_splits = []
         for split in splits_data:
             user = User.objects.get(id=split['user_id'])
-            ExpenseSplit.objects.create(
+            expense_split = ExpenseSplit.objects.create(
                 shared_expense=self,
                 user=user,
                 amount_owed=float(str(split['amount']))
             )
+            created_splits.append(expense_split)
+        return created_splits
 
 
 class ExpenseSplit(models.Model):

@@ -179,7 +179,7 @@ class BaseTestCase(TestCase):
         default_values = {
             'shared_budget': shared_budget,
             'description': 'Test Shared Expense',
-            'amount': Decimal('10000'),
+            'amount': Decimal('100'),
             'paid_by': self.user1,
             'date': self.today,
             'category': 'General',

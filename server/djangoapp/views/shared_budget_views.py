@@ -73,7 +73,7 @@ def serialize_expense(expense):
             'id': expense.created_by.id,
             'username': expense.created_by.username,
         },
-        'date': expense.date.isoformat(),
+        'date': expense.date,
         'category': expense.category,
         'notes': expense.notes,
         'created_at': expense.created_at.isoformat(),
@@ -877,10 +877,11 @@ def add_expense(request, budget_id):
 
     # Create splits based on type
     split_type = data.get('split_type', budget.default_split_type)
+    splits_data = data.get('splits')
 
-    if split_type == 'custom' and data.get('splits'):
+    if split_type == 'custom' and splits_data:
         # Custom splits provided
-        expense.create_percentage_splits()
+        expense.create_custom_splits(splits_data)
     else:
         # Default: equal split
         expense.create_equal_splits()
