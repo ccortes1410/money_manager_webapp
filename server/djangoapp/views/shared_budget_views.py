@@ -174,7 +174,7 @@ def calculate_debts(budget):
             shared_expense__shared_budget=budget,
             user=member.user,
             is_settled=False
-        ).aggregate(total=Sum('amount'))['total'] or 0
+        ).aggregate(total=Sum('amount_owed'))['total'] or 0
 
         # Total settlementsmade by this member
         settlements_paid = Settlement.objects.filter(
@@ -1113,7 +1113,7 @@ def create_settlement(request, budget_id):
                 'username': receiver.username,
             },
             'amount': float(amount),
-            'date': settlement.date.isoformat(),
+            'date': settlement.date,
         }
     }, status=201)
 

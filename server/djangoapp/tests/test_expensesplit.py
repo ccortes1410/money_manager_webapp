@@ -39,7 +39,7 @@ class ExpenseSplitModelTests(BaseTestCase):
     def test_same_user_different_expense_allowed(self):
         expense1 = self.create_shared_expense()
         expense2 = self.create_shared_expense(shared_budget=expense1.shared_budget)
-        ExpenseSplit.objects.create(shared_expense=expense1, user=self.user2, amount_oweed=Decimal('10'))
+        ExpenseSplit.objects.create(shared_expense=expense1, user=self.user2, amount_owed=Decimal('10'))
         split2 = ExpenseSplit.objects.create(shared_expense=expense2, user=self.user2, amount_owed=Decimal('15'))
         self.assertIsNotNone(split2.id)
 

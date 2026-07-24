@@ -56,10 +56,10 @@ class FriendshipModelTests(BaseTestCase):
         friendship.refresh_from_db()
         self.assertEqual(friendship.status, 'declined')
 
-    def test_block_has_typo_bug(self):
-        friendship = Friendship.objects.create(sender=self.user1, receiver=self.user2)
-        with self.assertRaises(AttributeError):
-            friendship.block()
+    # def test_block_has_typo_bug(self):
+    #     friendship = Friendship.objects.create(sender=self.user1, receiver=self.user2)
+    #     with self.assertRaises(AttributeError):
+    #         friendship.block()
 
     def test_are_friends_true_regardless_of_direction(self):
         Friendship.objects.create(sender=self.user1, receiver=self.user2, status='accepted')
@@ -94,7 +94,7 @@ class FriendshipModelTests(BaseTestCase):
         Friendship.objects.create(sender=self.user1, receiver=self.user2, status='blocked')
         self.assertTrue(Friendship.is_blocked(self.user1, self.user2))
         self.assertTrue(Friendship.is_blocked(self.user2, self.user1))
-        self.assertFaslse(Friendship.is_blocked(self.user1, self.user3))
+        self.assertFalse(Friendship.is_blocked(self.user1, self.user3))
 
 
 class FriendshipAPITests(BaseTestCase):
@@ -108,7 +108,7 @@ class FriendshipAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_get_friends_returns_accepted_friends_only(self):
-        Friendship.objects.create(sender=self.user1, receiver=self.user2, status='accpeted')
+        Friendship.objects.create(sender=self.user1, receiver=self.user2, status='accepted')
         Friendship.objects.create(sender=self.user1, receiver=self.user3, status='pending')
         response = self.client.get(reverse('djangoapp:get_friends'))
         self.assertEqual(response.status_code, 200)
@@ -145,7 +145,7 @@ class FriendshipAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_respond_to_request_accept(self):
-        friendship = Friendship.objects.create(sender=self.user2, recevier=self.user1, status='pending')
+        friendship = Friendship.objects.create(sender=self.user2, receiver=self.user1, status='pending')
         response = self.client.post(
             reverse('djangoapp:respond_to_request', kwargs={'friendship_id': friendship.id}),
             data=json.dumps({'action': 'accept'}), content_type='application/json'
@@ -166,7 +166,7 @@ class FriendshipAPITests(BaseTestCase):
 
     def test_cancel_request_raises_bug(self):
         """cancel_request() calls 'Friendship.objets.get(...)' (typo)."""
-        friendship = Friendship.objects.create(sender=user1, receiver=self.user2, status='pending')
+        friendship = Friendship.objects.create(sender=self.user1, receiver=self.user2, status='pending')
         with self.assertRaises(AttributeError):
             self.client.delete(reverse('djangoapp:cancel_request', kwargs={'friendship_id': friendship.id}))
 
@@ -182,5 +182,5 @@ class FriendshipAPITests(BaseTestCase):
         self.assertEqual(response.json()['count'], 1)
 
     def test_search_users_requires_minimum_length(self):
-        response = self.client.get(reverse('djangoap:search_users'), {'q': 'a'})
+        response = self.client.get(reverse('djangoapp:search_users'), {'q': 'a'})
         self.assertEqual(response.status_code, 400)

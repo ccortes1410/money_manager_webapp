@@ -292,7 +292,7 @@ urlpatterns = [
     path(
         route='shared-budgets/<int:budget_id>/debts',
         view=shared_budget_views.get_budget_debts,
-        name='get_budget_detbs'
+        name='get_budget_debts'
     ),
     path(
         route='shared-budgets/<int:budget_id>/settle',

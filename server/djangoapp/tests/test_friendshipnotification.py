@@ -98,7 +98,7 @@ class FriendshipNotificationAPITests(BaseTestCase):
         )
         self.assertEqual(response.status_code, 200)
         notification.refresh_from_db()
-        self.assertTrues(notification.is_read)
+        self.assertTrue(notification.is_read)
 
     def test_mark_notification_read_not_found(self):
         response = self.client.post(
