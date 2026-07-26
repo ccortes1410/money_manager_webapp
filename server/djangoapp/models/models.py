@@ -102,18 +102,19 @@ class SubscriptionPayment(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
-    is_paid = models.BooleanField(default=True)
-    paid_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(help_text="The billing-cycle date this payment covers.")
+    is_paid = models.BooleanField(default=False)
+    paid_date = models.DateField(null=True, blank=True, help_text="Date the user marked this as paid.")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-paid_date']
-
-        unique_together = ['subscription', 'paid_date']
+        ordering = ['-due_date']
+        unique_together = ['subscription', 'due_date']
 
     def __str__(self):
-        return f"{self.subscription.name} - ${self.amount} on {self.paid_date}"
+        status = 'paid' if self.is_paid else 'unpaid'
+        return f"{self.subscription.name} - ${self.amount} due {self.due_date} ({status})"
     
 
 class Income(models.Model):

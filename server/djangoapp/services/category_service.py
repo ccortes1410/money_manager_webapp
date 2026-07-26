@@ -23,7 +23,7 @@ def compute_spending_by_category(user, period: str):
     payments = filter_queryset_by_period(
         SubscriptionPayment.objects.filter(subscription__user=user),
         period=period,
-        date_field="date"
+        date_field="due_date"
     )
 
     payment_by_category = payments.values(

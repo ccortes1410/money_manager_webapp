@@ -53,21 +53,20 @@ def generate_payments_for_subscription(subscription, up_to_date):
         try:
             payment, created = SubscriptionPayment.objects.get_or_create(
                 subscription=subscription,
-                date=billing_date,
+                due_date=billing_date,
                 defaults={
                     'amount': subscription.amount,
-                    'is_paid': True,
-                    'paid_date': billing_date,
+                    'is_paid': False,
                 }
             )
-
-            if created:
-                created_payments.append(payment)
         except IntegrityError:
             # Payment already exists
             pass
 
-        return created_payments
+        if created:
+            created_payments.append(payment)
+
+    return created_payments
     
 def get_billing_dates(start_date, end_date, billing_cycle, billing_day=1):
     """
@@ -124,7 +123,7 @@ def get_subscriptions_for_period(user, period: str):
     payments = filter_queryset_by_period(
         SubscriptionPayment.objects.filter(subscription__user=user),
         period=period,
-        date_field="paid_date"
+        date_field="due_date"
     )
 
     active_payments = payments.filter(subscription__status='active')
@@ -135,7 +134,7 @@ def get_subscriptions_for_period(user, period: str):
             "count": active_payments.values('subscription').distinct().count(),
             "total": float(active_payments.aggregate(total=Sum('amount'))['total'] or 0),
             "payments": list(active_payments.values(
-                'id', 'amount', 'paid_date',
+                'id', 'amount', 'due_date', 'paid_date',
                 'subscription__name', 'subscription__category'
             ))
         },

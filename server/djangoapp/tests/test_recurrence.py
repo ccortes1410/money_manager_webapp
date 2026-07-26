@@ -50,8 +50,8 @@ class CalculateNextPeriodTests(BaseTestCase):
     """calculate_next_period() is a pure function -- no DB writes."""
 
     def test_daily_recurrence(self):
-        next_start, next_end = ca;calculate_next_period(self.today, 'daily')
-        self.assertEqua;(next_start, self.today + timedelta(days=1))
+        next_start, next_end = calculate_next_period(self.today, 'daily')
+        self.assertEqual(next_start, self.today + timedelta(days=1))
         self.assertEqual(next_end, next_start)
 
     def test_weekly_recurrence_spans_seven_days(self):
@@ -139,7 +139,7 @@ class GetNextBillingDateTests(BaseTestCase):
         self.assertEqual(result, date(2026, 2, 28))
 
     def test_yearly(self):
-        self.assertEqual(get_next_billing_date(date(2026, 6, 1), 'yearly'), date(2026, 6, 1))
+        self.assertEqual(get_next_billing_date(date(2025, 6, 1), 'yearly'), date(2026, 6, 1))
 
     def test_unknown_cycle_falls_back_to_31_days(self):
         self.assertEqual(get_next_billing_date(self.today, 'quarterly'), self.today + timedelta(days=31))
