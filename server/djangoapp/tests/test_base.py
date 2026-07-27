@@ -81,6 +81,7 @@ class BaseTestCase(TestCase):
         default_values = {
             'subscription': subscription,
             'amount': subscription.amount,
+            'due_date': self.today,
             'is_paid': False,
             'paid_date': None,
         }

@@ -34,7 +34,7 @@ from decimal import Decimal
 from django.core.exceptions import FieldError
 from django.db import IntegrityError, transaction
 
-from djangoapp.models.models import Budget, Subscription
+from djangoapp.models.models import Budget, Subscription, SubscriptionPayment
 from djangoapp.services.budgets import calculate_next_period, reset_expired_budgets
 from djangoapp.services.subscription_service import (
     generate_payments_for_subscription,
@@ -174,22 +174,83 @@ class GetBillingDatesTests(BaseTestCase):
 
 class SubscriptionPaymentGenerationBugTests(BaseTestCase):
     """
-    Both generate_payments_for_subscription() and its caller
-    generate_subscription_payments() are currently unusable -- see bug #2
-    in the module docstring. Once the 'date' -> 'paid_date' field name is
-    fixed, re-run these; they should then instead start exposing the
-    second bug (the misplaced 'return' inside the loop), at which point
-    these tests should be replaced with ones asserting that ALL expected
-    billing dates in the range produced a SubscriptionPayment, not just
-    the first one.
+    Covers the actual recurring-payment behavior: one payment per billing
+    cycle, generation is idempotent (safe to re-run, e.g. every dashboard
+    load), already-paid payments are never reset or duplicated, and
+    end_date is respected.
     """
 
-    def test_generate_payments_for_subscription_raises_field_error_bug(self):
-        sub = self.create_subscription()
-        with self.assertRaises(FieldError):
-            generate_payments_for_subscription(sub, self.today)
+    def test_creates_one_payment_per_billing_cycle_in_range(self):
+        start = self.today - timedelta(days=95)
+        sub = Subscription.objects.create(
+            user=self.user1, name='Streaming', amount=Decimal('1500'),
+            category='Entertainment', billing_cycle='monthly',
+            billing_day=start.day, start_date=start, status='active'
+        )
+        expected_dates = get_billing_dates(start, self.today, 'monthly', billing_day=start.day)
 
-    def test_generate_subscription_payment_raises_field_error_bug(self):
+        created = generate_payments_for_subscription(sub, self.today)
+
+        self.assertEqual(len(created), len(expected_dates))
+        actual_due_dates = set(
+            SubscriptionPayment.objects.filter(subscription=sub).values_list('due_date', flat=True)
+        )
+        self.assertEqual(actual_due_dates, set(expected_dates))
+        for payment in SubscriptionPayment.objects.filter(subscription=sub):
+            self.assertFalse(payment.is_paid)
+            self.assertIsNone(payment.paid_date)
+
+    def test_generation_is_idempotent(self):
+        sub = self.create_subscription()
+        first_run = generate_payments_for_subscription(sub, self.today)
+        second_run = generate_payments_for_subscription(sub, self.today)
+
+        self.assertEqual(len(first_run), 1) # only "today"'s cycle exists in range
+        self.assertEqual(len(second_run), 0) # nothing new -- a;ready generated
+        self.assertEqual(SubscriptionPayment.objects.filter(subscription=sub).count(), 1)
+
+    def test_does_not_reset_or_duplicate_an_already_paid_cycle(self):
+        sub = self.create_subscription()
+        generate_payments_for_subscription(sub, self.today)
+
+        payment = SubscriptionPayment.objects.get(subscription=sub, due_date=self.today)
+        payment.is_paid = True
+        payment.paid_date = self.today
+        payment.save()
+
+        # Re-running generation for the same (already-paid) cycle...
+        generate_payments_for_subscription(sub, self.today)
+
+        payment.refresh_from_db()
+        self.assertTrue(payment.is_paid)
+        self.assertEqual(payment.paid_date, self.today)
+        self.assertEqual(SubscriptionPayment.objects.filter(subscription=sub).count(), 1)
+
+    def test_respects_subscription_end_date(self):
+        start = self.today - timedelta(days=95)
+        end = self.today - timedelta(days=10)
+        sub = Subscription.objects.create(
+            user = self.user1, name='Cancelled Thing', amount=Decimal('1000'),
+            category='A', billing_cycle='monthly', billing_day=start.day,
+            start_date=start, end_date=end, status='cancelled'
+        )
+        created = generate_payments_for_subscription(sub, self.today)
+        self.assertTrue(created)
+        for payment in created:
+            self.assertLessEqual(payment.due_date, end)
+
+    def test_generate_subscription_payments_covers_all_active_subscriptions_for_user(self):
         self.create_subscription()
-        with self.assertRaises(FieldError):
-            generate_subscription_payments(self.user1, up_to_date=self.today)
+        Subscription.objects.create(
+            user=self.user1, name='Second Active', amount=Decimal('500'), category='A',
+            billing_cycle='monthly', billing_day=self.today.day, start_date=self.today, status='active'
+        )
+        paused_sub = Subscription.objects.create(
+            user=self.user1, name='Payload', amount=Decimal('500'), category='A',
+            billing_cycle='monthly', billing_day=self.today.day, start_date=self.today, status='paused'
+        )
+
+        created_count = generate_subscription_payments(self.user1, up_to_date=self.today)
+
+        self.assertEqual(created_count, 2)
+        self.assertFalse(SubscriptionPayment.objects.filter(subscription=paused_sub).exists())
