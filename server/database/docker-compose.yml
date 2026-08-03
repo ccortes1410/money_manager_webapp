@@ -15,14 +15,28 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - C:\Users\corte\Desktop\Money Manager\MySQL Uploads:/export
+    healthcheck:
+      test: ["CMD","mysqladmin", "ping", "-h", "localhost" , "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
-    image: nodeapp
+    build: .
+    container_name: money_manager_api
     ports:
       - 3030:3030
     depends_on:
-      - mysql_db
+      mysql_db:
+        condition: service_healthy
     environment:
-      - DB_SECRET_PASSWORD=${DB_SECRET_PASSWORD}
+      DB_NAME: ${DB_NAME:-money_manager_db}
+      DB_USER: root
+      DB_SECRET_PASSWORD: ${DB_SECRET_PASSWORD}
+      DB_HOST: mysql_db
+      DB_PORT: 3306
+      PORT: 3030
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
 
 volumes:
   mysql_data: {}

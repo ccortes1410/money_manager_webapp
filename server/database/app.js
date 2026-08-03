@@ -1,134 +1,59 @@
+require('dotenv').config();
 const express = require('express');
-const { Sequelize, DataTypes } = require('sequelize');
-const fs = require('fs');
 const cors = require('cors');
-const { connect } = require('http2');
-const { BADFAMILY } = require('dns');
+
+const db = require('./models');
+const apiRoutes = require('./routes');
+const requireInternalApiKey = require('./middleware/auth');
 
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 3030;
 
-app.use(cors());
-app.use(require('body-parser').urlencoded({ extended: false }));
+app.unsubscribe(cors());
+app.use(express.json());
 
-// console.log('DB_SECRET_PASSWORD:', process.env.DB_SECRET_PASSWORD);
+app.get('/', (req, res) => {
+    res.send('Money Manager database API is running');
+});
 
-const sequelize = new Sequelize(
-    'money_manager_db',
-    'root',
-    process.env.DB_SECRET_PASSWORD,
-    {
-        host: 'mysql_db',
-        port: 3306,
-        dialect: 'mysql'
+app.get('/health', async(req, res) => {
+    try {
+        awaitdb.sequelize.authenticate();
+        res.json({ status: 'ok', database: 'connected'});
+    } catch(err) {
+        res.status(503).json({ status: 'error', database: 'unreachable', detail: err.message });
     }
-);
+});
 
-const Transactions = require('./transactions')(sequelize, DataTypes);
-const Budget = require('./budget')(sequelize, DataTypes);
-const Subscription = require('./subscriptions')(sequelize, DataTypes);
-const Income = require('./income')(sequelize, DataTypes);
+// Everything under /api/* requires the shared secret header.
+app.use('/api', requireInternalApiKey, apiRoutes);
 
-// const transaction_data = JSON.parse(fs.readFileSync('transactions.js', 'utf8'));
-async function connectWithRetry() {
-    let retries = 5;
-    while (retries) {
+// NOTE: we deliberately never all db.sequelize.sync() here. Django's
+// migrations are the single source of truth for the scema -- this
+// service only reads/writes rows, it never creates or alters tables.
+async function start() {
+    const maxRetries = 10;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
         try {
-            await sequelize.authenticate();
-            console.log('Database connection established successfully.');
-            // await sequelize.sync();
-            console.log('Starting app.js...');
-            console.log('Connected to database:', sequelize.config.database);
-            console.log(Object.keys(Transactions.rawAttributes)); // Should include 'user_id'
-
-            app.get('/', async (req, res) => {
-                res.send("Welcome to the Money Manager API");
-            });
-
-            app.get('/fetchTransactions', async (req, res) => {
-                try {
-                    const documents = await Transactions.findAll();
-                    console.log("Fetched transactions:", JSON.stringify(documents, null, 4));
-                    res.json(documents);
-                } catch (error) {
-                    console.log("Error fetching transactions:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            });
-
-            app.get('/fetchBudgets', async (req, res) => {
-                try {
-                    const documents = await Budget.findAll();
-                    console.log("Fetched budget:", JSON.stringify(documents, null, 4));
-                    res.json(documents);
-                } catch (error) {
-                    console.log("Error fetching budget:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            })
-
-            app.get('/fetchBudget/:id', async (req, res) => {
-                try {
-                    const documents = await Budget.findAll({
-                        where: {
-                            id: req.params.id
-                        }
-                    });
-                    res.json(documents);
-                } catch (error) {
-                    console.log("Error fetching budget:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            })
-
-            app.post('/addBudget', async (req, res) => {
-                const { name, amount, period } = req.body;
-                try {
-                    const newBudget = await Budget.create({ name, amount, period });
-                    res.status(201).json(newBudget);
-                } catch (error) {
-                    console.log("Error adding budget:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            });
-
-            app.get('/fetchSubscriptions', async (req, res) => {
-                try {
-                    const documents = await Subscription.findAll();
-                    console.log("Fetched subscriptions:", JSON.stringify(documents, null, 4));
-                    res.json(documents);
-                } catch (error) {
-                    console.log("Error fetching subscriptions:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            });
-
-            app.get('/fetchIncome', async (req, res) => {
-                try {
-                    const documents = await Income.findAll();
-                    console.log("Fetched income:", JSON.stringify(documents, null, 4));
-                    res.json(documents);
-                } catch (error) {
-                    console.log("Error fetching income:", error);
-                    res.status(500).json({ error: "Internal Server Error" });
-                }
-            });
-            
-            app.listen(port, () => {
-                console.log(`Server is running on http://localhost:${port}`);
-            });
+            await db.sequelize.authenticate();
+            console.log('Database connection established succesfully.');
             break;
-        } catch (error) {
-            console.error('Database connection failed:', error);
-            retries -= 1;
-            console.log(`Retries left: ${retries}`);
-            await new Promise(res => setTimeout(res, 5000));
+        } catch (err) {
+            attempt += 1;
+            console.error(`DB connection failed (attempt ${attempt}/${maxRetries}):`, err.message);
+            if (attempt >= maxRetries) {
+                console.error('Could not connect to the database after multiple attempts. Exiting.');
+                process.exit(1);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 5000));
         }
     }
-    if (!retries) {
-        console.error('Could not connect to the database after multiple attempts.');
-        process.exit(1);
-    }
+
+    app.listen(port, () => {
+        console.log(`Money Manager database API listenting on port ${port}`);
+    });
 }
 
-connectWithRetry();
+start();
