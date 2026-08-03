@@ -6,7 +6,7 @@ const Income = sequelize.define('Income', {
     user_id: { type: DataTypes.INTEGER, allowNull: false },
     amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     source: { type: DataTypes.STRING(255), allowNull: false },
-    date_received: { type: DataTypes.DATEONLE, allowNull: false },
+    date_received: { type: DataTypes.DATEONLY, allowNull: false },
     period_start: { type: DataTypes.DATEONLY, allowNull: false },
     period_end: { type: DataTypes.DATEONLY, allowNull: false },
 }, {
