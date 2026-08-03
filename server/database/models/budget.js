@@ -5,7 +5,7 @@ const Budget = sequelize.define('Budget', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     user_id: { type: DataTypes.INTEGER, allowNull: false },
     category: { type: DataTypes.STRING(100), allowNull: false },
-    amount: { type: DataTypes.Decimal(10, 2), allowNull: false },
+    amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     period_start: { type: DataTypes.DATEONLY, allowNull: false },
     period_end: { type: DataTypes.DATEONLY, allowNull: false },
     recurrence: { type: DataTypes.STRING(10), allowNull: true },
