@@ -50,11 +50,11 @@ def initiate():
         month_end = date(today.year, today.month + 1, 1) - timedelta(days=1)
 
     # ---- Users ----
-    krlp = get_or_create_user("Alex", "password123", email="alex@example.com")
+    alex = get_or_create_user("Alex", "password123", email="alex@example.com")
     alice = get_or_create_user("Alice", "password123", email="alice@example.com")
     bob = get_or_create_user("Bob", "password123", email="bob@example.com")
 
-    # ---- Budgets (Krlp) ----
+    # ---- Budgets (Alex) ----
     budgets_data = [
         {"category": "Food", "amount": Decimal("100000")},
         {"category": "Housing", "amount": Decimal("450000")},
@@ -62,7 +62,7 @@ def initiate():
     ]
     for b in budgets_data:
         Budget.objects.update_or_create(
-            user=krlp,
+            user=alex,
             category=b["category"],
             defaults={
                 "amount": b["amount"],
@@ -75,7 +75,7 @@ def initiate():
             },
         )
 
-    # ---- Transactions (Krlp) ----
+    # ---- Transactions (Alex) ----
     transactions_data = [
         {"amount": Decimal("12000"), "description": "Grocery Shopping", "category": "Food", "date": today - timedelta(days=2)},
         {"amount": Decimal("450000"), "description": "Rent", "category": "Housing", "date": month_start},
@@ -84,17 +84,17 @@ def initiate():
     ]
     for t in transactions_data:
         Transaction.objects.get_or_create(
-            user=krlp, description=t["description"], date=t["date"], defaults=t
+            user=alex, description=t["description"], date=t["date"], defaults=t
         )
 
-    # ---- Subscription + a couple of payments each (Krlp) ----
+    # ---- Subscription + a couple of payments each (Alex) ----
     subscriptions_data = [
         {"name": "Netflix", "amount": Decimal("10900"), "category": "Entertainment", "billing_day": 15},
         {"name": "Gym", "amount": Decimal("29900"), "category": "Health", "billing_day": 1},
     ]
     for s in subscriptions_data:
         sub, _ = Subscription.objects.update_or_create(
-            user=krlp,
+            user=alex,
             name=s["name"],
             defaults={
                 "amount": s["amount"],
@@ -117,22 +117,22 @@ def initiate():
             defaults={"amount": sub.amount, "is_paid": False},
         )
 
-    # ---- Income (Krlp) ----
+    # ---- Income (Alex) ----
     Income.objects.get_or_create(
-        user=krlp,
+        user=alex,
         source="Salary",
         date_received=month_start,
         defaults={"amount": Decimal("1500000"), "period_start": month_start, "period_end": month_end},
     )
 
     # ---- Friendships ----
-    Friendship.objects.get_or_create(sender=krlp, receiver=alice, defaults={"status": "accepted"})
-    Friendship.objects.get_or_create(sender=bob, receiver=krlp, defaults={"status": "pending"})
+    Friendship.objects.get_or_create(sender=alex, receiver=alice, defaults={"status": "accepted"})
+    Friendship.objects.get_or_create(sender=bob, receiver=alex, defaults={"status": "pending"})
 
     # ---- A shared budget with an equally-split expense ----
     shared_budget, _ = SharedBudget.objects.get_or_create(
         name="Roommate Rent",
-        created_by=krlp,
+        created_by=alex,
         defaults={
             "description": "Shared apartment costs",
             "total_amount": Decimal("600000"),
@@ -144,7 +144,7 @@ def initiate():
         },
     )
     SharedBudgetMember.objects.get_or_create(
-        shared_budget=shared_budget, user=krlp,
+        shared_budget=shared_budget, user=alex,
         defaults={"role": "owner", "contribution_percentage": Decimal("50")},
     )
     SharedBudgetMember.objects.get_or_create(
@@ -157,10 +157,10 @@ def initiate():
         description="August Rent",
         defaults={
             "amount": Decimal("300000"),
-            "paid_by": krlp,
+            "paid_by": alex,
             "date": month_start,
             "category": "Housing",
-            "created_by": krlp,
+            "created_by": alex,
         },
     )
     if created:
