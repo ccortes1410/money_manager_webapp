@@ -50,7 +50,7 @@ def initiate():
         month_end = date(today.year, today.month + 1, 1) - timedelta(days=1)
 
     # ---- Users ----
-    krlp = get_or_create_user("Krlp", "Ralco2011", email="krlp@example.com")
+    krlp = get_or_create_user("Alex", "password123", email="alex@example.com")
     alice = get_or_create_user("Alice", "password123", email="alice@example.com")
     bob = get_or_create_user("Bob", "password123", email="bob@example.com")
 
