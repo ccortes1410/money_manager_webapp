@@ -35,7 +35,7 @@ from django.core.exceptions import FieldError
 from django.db import IntegrityError, transaction
 
 from djangoapp.models.models import Budget, Subscription, SubscriptionPayment
-from djangoapp.services.budgets import calculate_next_period, reset_expired_budgets
+from money_manager_webapp.server.djangoapp.services.budgets_service import calculate_next_period, reset_expired_budgets
 from djangoapp.services.subscription_service import (
     generate_payments_for_subscription,
     generate_subscription_payments,
