@@ -87,6 +87,14 @@ def initiate():
             user=alex, description=t["description"], date=t["date"], defaults=t
         )
 
+    transactions_data_2 = [
+        {"amount": Decimal("50000"), "description": "Shoes", "category": "Clothes", "date": today - timedelta(days=7)},
+        {"amount": Decimal("70000"), "description": "Pants", "category": "Clothes", "date": today - timedelta(days=9)}
+    ]
+    for t in transactions_data_2:
+        Transaction.objects.get_or_create(
+            user=alice, description=t["description"], date=t["date"], defaults=t
+        )
     # ---- Subscription + a couple of payments each (Alex) ----
     subscriptions_data = [
         {"name": "Netflix", "amount": Decimal("10900"), "category": "Entertainment", "billing_day": 15},
