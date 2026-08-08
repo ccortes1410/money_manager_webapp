@@ -1,5 +1,6 @@
 import json
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.utils import timezone
@@ -7,7 +8,7 @@ from django.utils import timezone
 from djangoapp.models.models import Budget
 
 from .test_base import BaseTestCase
-
+from .test_api_backend import TestApiBackend
 
 class BudgetModelTests(BaseTestCase):
     def test_create_budget_usual(self):
@@ -67,9 +68,44 @@ class BudgetModelTests(BaseTestCase):
 
 
 class BudgetAPITests(BaseTestCase):
+    """
+    These test the budgets_views.py endpoints, which now call the Node API
+    over HTTP instead of the ORM. We intercept the underlying
+    requests.get/post/patch/delete cals with an in-memory fake, so these
+    stay unit tests -- no real Node service or MySQL connection needed.
+    
+    Because the views no longer touch Django's ORM at request time,
+    assertions here check the fake API's in-memory store
+    (self.test_api.resources[...]) rather than Budget.objects.
+    """
+
     def setUp(self):
         super().setUp()
         self.client.force_login(self.user1)
+
+        self.test_api = TestApiBackend()
+        for verb in ("get", "post", "patch", "delete"):
+            patcher = patch(
+                f"djangoapp.restapi.requests.{verb}",
+                side_effect=getattr(self.test_api, verb),
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _seed_budget(self, **overrides):
+        row = {
+            "user_id": self.user1.id,
+            "category": "Entertainment",
+            "amount": "1000.00",
+            "period_start": self.today.isoformat(),
+            "period_end": (self.today + timezone.timedelta(days=30)).isoformat(),
+            "recurrence": "monthly",
+            "is_active": True,
+            "is_recurring": True,
+            "is_shared": False,
+        }
+        row.update(overrides)
+        return self.test_api.seed("budgets", row)
 
     def test_get_budgets_requires_auth(self):
         self.client.logout()
@@ -77,20 +113,34 @@ class BudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_create_budget_returns_active_budgets(self):
-        self.create_budget()
+        self._seed_budget()
         response = self.client.get(reverse('djangoapp:budget_list'))
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data['budgets']), 1)
 
     def test_get_budget_detail_success(self):
-        budget = self.create_budget()
-        response = self.client.get(reverse('djangoapp:budget_detail', kwargs={'budget_id': budget.id}))
+        budget = self._seed_budget()
+        response = self.client.get(
+            reverse('djangoapp:budget_detail', kwargs={'budget_id': budget['id']})
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['budget']['category'], 'Entertainment')
 
     def test_get_budget_detail_not_found(self):
         response = self.client.get(reverse('djangoapp:budget_detail', kwargs={'budget_id': 9999}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_budget_detail_now_owned_by_user(self):
+        """
+        New coverage for the gateway architecture: the generic Node API has
+        no concept of "this user's budgets" -- ownership is now enforced
+        explicitly in the view. This is the regression test for that check.
+        """
+        budget = self._seed_budget(user_id=self.user2.id)
+        response = self.client.get(
+            reverse('djangoapp:budget_detail', kwargs={'budget_id': budget['id']})
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_budget_create_endpoint(self):
@@ -104,7 +154,10 @@ class BudgetAPITests(BaseTestCase):
             reverse('djangoapp:budget_create'), data=json.dumps(payload), content_type='application/json'
         )
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(Budget.objects.filter(user=self.user1, category='Food').exists())
+        created = self.test_api.resources['budgets']
+        self.assertTrue(
+            any(b['category'] == 'Food' and b['user_id'] == self.user1.id for b in created)
+        )
 
     def test_budget_create_endpoint_missing_field(self):
         payload = {'category': 'Food'}
@@ -114,38 +167,38 @@ class BudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_update_budget_endpoint_success(self):
-        budget = self.create_budget()
+        budget = self._seed_budget()
         response = self.client.patch(
-            reverse('djangoapp:budget_update', kwargs={'budget_id': budget.id}),
+            reverse('djangoapp:budget_update', kwargs={'budget_id': budget['id']}),
             data=json.dumps({'amount': 1500}), content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-        budget.refresh_from_db()
-        self.assertEqual(budget.amount, Decimal('1500'))
+        self.assertEqual(response.json()['budget']['amount'], 1500.00)
 
-    def test_update_budget_endpoint_not_found_raises_bug(self):
-        with self.assertRaises(NameError):
-            self.client.patch(
-                reverse('djangoapp:budget_update', kwargs={'budget_id': 9999}),
-                data=json.dumps({'amount': 1500}), content_type='application/json'
-            )
+    def test_update_budget_endpoint_not_found(self):
+        response = self.client.patch(
+            reverse('djangoapp:budget_update', kwargs={'budget_id': 9999}),
+            data=json.dumps({'amount': 1500}), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 404)
     
     def test_toggle_recurring_endpoint(self):
-        budget = self.create_budget()
+        budget = self._seed_budget()
         response = self.client.patch(
-            reverse('djangoapp:toggle_budget_recurring', kwargs={'budget_id':budget.id}),
+            reverse('djangoapp:toggle_budget_recurring', kwargs={'budget_id': budget['id']}),
             data=json.dumps({'is_recurring': False}), content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-        budget.refresh_from_db()
-        self.assertFalse(budget.is_recurring)
+        self.assertFalse(response.json()['budget']['is_recurring'])
 
     def test_budget_delete_endpoint(self):
-        budget = self.create_budget()
+        budget = self._seed_budget()
         response = self.client.delete(
-            reverse('djangoapp:budget_delete', kwargs={'budget_id': budget.id}))
+            reverse('djangoapp:budget_delete', kwargs={'budget_id': budget['id']}))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(Budget.objects.filter(id=budget.id).exists())
+        self.assertFalse(
+            any(b['id'] == budget['id'] for b in self.test_api.resources['budgets'])
+        )
 
     def test_budget_delete_endpoint_not_found(self):
         response = self.client.delete(reverse('djangoapp:budget_delete', kwargs={'budget_id': 9999}))

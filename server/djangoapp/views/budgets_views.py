@@ -199,7 +199,7 @@ def budget_create(request):
         if field not in data:
             return JsonResponse({"error":f"Missing field: {field}"}, status=400)
         
-    budget = post_request("budgets/", {
+    row = post_request("budgets/", {
         "user_id": request.user.id,
         "category": data["category"],
         "amount": data["amount"],
