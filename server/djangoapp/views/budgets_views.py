@@ -1,49 +1,54 @@
-from ..models.models import Budget, Transaction
-from django.db.models import Sum
-from django.http import JsonResponse
 import json
 import logging
+from decimal import Decimal
+
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from ..services.category_service import filter_queryset_by_period
-from ..services.budgets import (
+from ..restapi import get_request, post_request, patch_request, delete_request
+from ..services.api_adapters import budget_from_row
+from ..services.date_filter import get_date_bounds
+from ..services.budgets_service import (
     reset_expired_budgets,
     compute_budget_spent,
     get_transactions_for_budget,
-    get_subscriptions_for_budget
+    get_subscriptions_for_budget,
+    update_budget,
 )
 
 logger = logging.getLogger(__name__)
 
+def _iso_date(dt):
+    """Normalize a datetime or date into a plain YYYY-MM-DD string."""
+    return dt.date().isoformat() if hasattr(dt, "date") else dt.isoformat()
 
 
 def get_budgets_data(user, period):
     """Get budget summary for dashboard."""
+    start, end = get_date_bounds(period)
 
+    budget_params = {"user_id": user.id}
+    transaction_params = {"user_id": user.id}
+
+    if start and end:
+        budget_params["period_start__gte"] = _iso_date(start)
+        budget_params["period_start__lte"] = _iso_date(end)
+        transaction_params["date__gte"] = _iso_date(start)
+        transaction_params["date__lte"] = _iso_date(end)
     # Get budgets for the period
-    budgets = filter_queryset_by_period(
-        Budget.objects.filter(user=user),
-        period=period,
-        date_field="period_start"
-    )
+    budgets = get_request("budgets/", **budget_params) or []
+    transactions = get_request("transactions/", **transaction_params) or []
 
-    transactions = filter_queryset_by_period(
-        Transaction.objects.filter(user=user),
-        period=period,
-        date_field="date"
-    )
-
-    # Calculate totals
-    total_budgeted = float(budgets.aggregate(total=Sum("amount"))["total"]or 0)
-    total_spent = float(transactions.aggregate(total=Sum("amount"))["total"] or 0)
+    total_budgeted = sum((Decimal(str(b["amount"])) for b in budgets), Decimal("0"))
+    total_spent = sum((Decimal(str(t["amount"])) for t in transactions), Decimal("0"))
     remaining = total_budgeted - total_spent
-    percent_used = round((total_spent / total_budgeted) * 100,1) if total_budgeted > 0 else 0
+    percent_used = round(float(total_spent / total_budgeted) * 100, 1) if total_budgeted > 0 else 0
 
     return {
-        "total_budgeted": total_budgeted,
-        "total_spent": total_spent,
-        "remaining": remaining,
+        "total_budgeted": float(total_budgeted),
+        "total_spent": float(total_spent),
+        "remaining": float(remaining),
         "percent_used": percent_used,
         "is_over": remaining < 0
     }
@@ -54,49 +59,51 @@ def get_budgets(request):
         return JsonResponse(
             {"error": "Unauthorized"}, status=401
         )
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Method Not Allowed"}, status=405
+        )
     
     reset_expired_budgets(request.user)
 
-    budgets = Budget.objects.filter(
-        user=request.user,
-        is_active=True).order_by('-period_start')
-    
-    budgets_data = []
+    try:
+        rows = get_request("budgets/", user_id=request.user.id) or []
+        budgets = [budget_from_row(r) for r in rows if r["is_active"]]
+        budgets.sort(key=lambda b: b.period_start, reverse=True)
 
-    if request.method == "GET":
-        try:
-            for budget in budgets:
-                spent_breakdown = compute_budget_spent(budget)
+        budgets_data = []
+        for budget in budgets:
+            spent_breakdown = compute_budget_spent(budget)
+            spent = spent_breakdown["total"]
 
-                spent = spent_breakdown["total"]
+            budgets_data.append({
+                "id": budget.id,
+                "category": budget.category,
+                "amount": float(budget.amount),
+                "period_start": budget.period_start.isoformat(),
+                "period_end": budget.period_end.isoformat(),
+                "recurrence": budget.recurrence,
+                "is_recurring": budget.is_recurring,
+                "is_active": budget.is_active,
+                "is_shared": budget.is_shared,
+                "spent": float(spent),
+                "transaction_spent": spent_breakdown["transactions"],
+                "subscription_spent": spent_breakdown["subscriptions"],
+                "remaining": float(budget.amount) - float(spent),
+            })
 
-                budgets_data.append({
-                    "id": budget.id,
-                    "category": budget.category,
-                    "amount": float(budget.amount),
-                    "period_start": budget.period_start.isoformat(),
-                    "period_end": budget.period_end.isoformat(),
-                    "recurrence": budget.recurrence,
-                    "is_recurring": budget.is_recurring,
-                    "is_active": budget.is_active,
-                    "is_shared": budget.is_shared,
-                    "spent": float(spent),
-                    "transaction_spent": spent_breakdown["transactions"],
-                    "subscription_spent" : spent_breakdown["subscriptions"],
-                    "remaining": float(budget.amount) - float(spent),
-                })
-            # print(budgets_data)
-            return JsonResponse({
-                "budgets": budgets_data,
-                "user": {
-                    "id": request.user.id,
-                    "username": request.user.username,
-                    "is_authenticated": request.user.is_authenticated
-                }
-            })  
-        except Exception as e:
-            logger.error(f"Error fetching budgets: {e}")
-            return JsonResponse({"error": "Failed to fetch budget"}, status=500)
+        return JsonResponse({
+            "budgets": budgets_data,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authenticated": request.user.is_authenticated,
+            },
+        })
+    except Exception as e:
+        logger.error(f"Error fetching budgets: {e}")
+        return JsonResponse({"error": "Failed to fetch budget"}, status=500)
 
 
 def get_budget(request, budget_id):
@@ -109,15 +116,18 @@ def get_budget(request, budget_id):
     if request.method != "GET":
         return JsonResponse({"error": "Method Not Allowed"}, status=405)
     
-    try:
-        budget = Budget.objects.get(id=budget_id, user=request.user)
-    except Budget.DoesNotExist:
+    row = get_request(f"budgets/{budget_id}")
+    # The generic API has no concept of "this user's budgets" -- it will
+    # happily return any row for any id. Ownership has to be enforced here.
+    if not row or row["user_id"] != request.user.id:
         return JsonResponse({"error": "Budget not found"}, status=404)
-    
+
+    budget = budget_from_row(row)
     spent_breakdown = compute_budget_spent(budget)
 
-    transactions = get_transactions_for_budget(budget).order_by('-date')
-
+    transactions = sorted(
+        get_transactions_for_budget(budget), key=lambda t: t.date, reverse=True
+    )
     tx_data = [
         {
             "id": t.id,
@@ -125,7 +135,7 @@ def get_budget(request, budget_id):
             "date": t.date.isoformat(),
             "description": t.description,
             "category": t.category,
-            "type": "transaction"
+            "type": "transaction",
         }
         for t in transactions
     ]
@@ -133,15 +143,15 @@ def get_budget(request, budget_id):
     subscriptions = get_subscriptions_for_budget(budget)
     subs_data = [
         {
-            "id": sub.id,
-            "name": sub.name,
-            "amount": float(sub.amount),
-            "billing_cycle": sub.billing_cycle,
-            "billing_day": sub.billing_day,
-            "category": sub.category,
-            "type": "subscription",
+            "id": s.id,
+            "name": s.name,
+            "amount": float(s.amount),
+            "billing_cycle": s.billing_cycle,
+            "billing_day": s.billing_day,
+            "category": s.cateogry,
+            "type": "subscription"
         }
-        for sub in subscriptions
+        for s in subscriptions
     ]
 
     budget_data = {
@@ -152,24 +162,22 @@ def get_budget(request, budget_id):
         "period_end": budget.period_end.isoformat() if budget.period_end else None,
         "recurrence": budget.recurrence,
         "is_active": budget.is_active,
-        "is_recurring": budget.is_recurring,
         "is_shared": budget.is_shared,
         "spent": spent_breakdown["total"],
         "transaction_spent": spent_breakdown["transactions"],
-        "subscriptions_spent": spent_breakdown["subscriptions"],
+        "subscription_spent": spent_breakdown["subscriptions"],
         "remaining": float(budget.amount) - float(spent_breakdown["total"]),
         "transactions": tx_data,
-        "subscriptions": subs_data
+        "subscriptions": subs_data,
     }
 
-    # logger.debug(f"Budget details: {budget_data}")
     return JsonResponse({
         "budget": budget_data,
         "user": {
             "id": request.user.id,
             "username": request.user.username,
-            "is_authenticated": request.user.is_authenticated
-        }       
+            "is_authenticated": request.user.is_authenticated,
+        }
     })
 
 
@@ -191,26 +199,29 @@ def budget_create(request):
         if field not in data:
             return JsonResponse({"error":f"Missing field: {field}"}, status=400)
         
-    budget = Budget.objects.create(
-        user=request.user,
-        category=data["category"],
-        amount=data["amount"],
-        period_start=data["period_start"],
-        period_end=data["period_end"],
-        recurrence=data.get("recurrence", "monthly"),
-        is_recurring=data.get("is_recurring", False),
-        is_active=True,
-        is_shared=data.get("is_shared", False),
-    )
+    budget = post_request("budgets/", {
+        "user_id": request.user.id,
+        "category": data["category"],
+        "amount": data["amount"],
+        "period_start": data["period_start"],
+        "period_end": data["period_end"],
+        "recurrence": data.get("recurrence", "monthly"),
+        "is_recurring": data.get("is_recurring", False),
+        "is_active": True,
+        "is_shared": data.get("is_shared", False),
+    })
+
+    if not row:
+        return JsonResponse({"error": "Failed to create budget"}, status=500)
 
     return JsonResponse({
         "message": "Budget created successfully",
         "budget": {
-            "id": budget.id,
-            "category": budget.category,
-            "amount": budget.amount,
-        }
-    }, status =201)
+            "id": row["id"],
+            "category": row["category"],
+            "amount": row["amount"],
+        },
+    }, status=201)
 
 
 @csrf_exempt
@@ -225,32 +236,31 @@ def update_budget_view(request, budget_id):
     except json.JSONDecodeError:
         return JsonResponse({"error":"Invalid JSON"}, status=400)
     
-    from ..services.budgets import update_budget
     result = update_budget(budget_id, request.user, data)
 
-    if result["success"]:
-        budget = result["budget"]
-        spent = compute_budget_spent(budget)['total']
-        return JsonResponse({
-            "message": "Budget updated successfully",
-            "budget": {
-                "id": budget.id,
-                "category": budget.category,
-                "amount": float(budget.amount),
-                "period_start": budget.period_start.isoformat(),
-                "period_end": budget.period_end.isoformat(),
-                "recurrence": budget.recurrence,
-                "is_recurring": budget.is_recurring,
-                "is_active": budget.is_active,
-                "is_shared": budget.is_shared,
-                "spent": float(spent),
-                "remaining": float(budget.amount - spent),
-            }
-        })
+    if not result["success"]:
+        return JsonResponse({"error": result["error"]}, status=404)
+
+    budget = result["budget"]
+    spent = compute_budget_spent(budget)["total"]
+
     return JsonResponse({
-        "id": budget.id,
-        "is_recurring": budget.is_recurring,
+        "message": "Budget updated successfully",
+        "budget": {
+            "id": budget.id,
+            "category": budget.category,
+            "amount": float(budget.amount),
+            "period_start": budget.period_start.isoformat(),
+            "period_end": budget.period_end.isoformat(),
+            "recurrence": budget.recurrence,
+            "is_recurring": budget.is_recurring,
+            "is_active": budget.is_active,
+            "is_shared": budget.is_shared,
+            "spent": float(spent),
+            "remaining": float(budget.amount) - float(spent),
+        },
     })
+
 
 @csrf_exempt
 def toggle_recurring(request, budget_id):
@@ -266,28 +276,26 @@ def toggle_recurring(request, budget_id):
     except json.JSONDecodeError:
         return JsonResponse({"error":"Invalid JSON"}, status=400)
     
-    is_recurring = data.get("is_recurring", False)
-    recurrence = data.get("recurrence")
-
-    try:
-        budget = Budget.objects.get(id=budget_id, user=request.user)
-        budget.is_recurring = is_recurring
-
-        if recurrence:
-            budget.recurrence = recurrence
-
-        budget.save(update_fields=["is_recurring", "recurrence"])
-
-        return JsonResponse({
-            "message": "Budget recurring status updated",
-            "budget": {
-                "id": budget.id,
-                "is_recurring": budget.is_recurring,
-                "recurrence": budget.recurrence,
-            }
-        })
-    except Budget.DoesNotExist:
+    row = get_request(f"budgets/{budget_id}")
+    if not row or row["user_id"] != request.user.id:
         return JsonResponse({"error": "Budget not found"}, status=404)
+
+    payload = {"is_recurring": data.get("is_recurring", False)}
+    if data.get("recurrence"):
+        payload["recurrence"] = data["recurrence"]
+
+    updated = patch_request(f"budgets/{budget_id}", payload)
+    if not updated:
+        return JsonResponse({"error": "Failed to update budget"}, status=500)
+
+    return JsonResponse({
+        "message": "Budget recurring status updated",
+        "budget": {
+            "id": updated["id"],
+            "is_recurring": updated["is_recurring"],
+            "recurrence": updated["recurrence"],
+        },
+    })
     
 @csrf_exempt
 def budget_delete(request, budget_id):
@@ -298,9 +306,9 @@ def budget_delete(request, budget_id):
     if request.method != "DELETE":
         return JsonResponse({"error": "Method not allowed"}, status=405)
     
-    try:
-        budget = Budget.objects.get(id=budget_id, user=request.user)
-        budget.delete()
-        return JsonResponse({"message": "Budget deleted successfully"})
-    except Budget.DoesNotExist:
-         return JsonResponse({"error": "Budget not found"}, status=404)
+    row = get_request(f"budgets/{budget_id}")
+    if not row or row["user_id"] != request.user.id:
+        return JsonResponse({"error": "Budget not found"}, status=404)
+
+    delete_request(f"budgets/{budget_id}")
+    return JsonResponse({"message": "Budget deleted successfully"})

@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods
 from .budgets_views import get_budgets_data
 from .incomes_views import get_income_data
 
-from ..services.budgets import (
+from ..services.budgets_service import (
     reset_expired_budgets,
     compute_budget_spent,
     get_transactions_for_budget,

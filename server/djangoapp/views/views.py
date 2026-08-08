@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from ..restapi import get_request
-from ..services.budgets import (
+from ..services.budgets_service import (
     reset_expired_budgets,
     compute_budget_spent,
     get_transactions_for_budget,
