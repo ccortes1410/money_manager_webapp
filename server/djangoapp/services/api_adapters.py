@@ -59,3 +59,14 @@ def subscription_from_row(row):
         end_date=_parse_date(row.get("end_date")),
         status=row["status"],
     )
+
+
+def subscription_payment_from_row(row):
+    return SimpleNamespace(
+        id=row["id"],
+        subscription_id=row["subscription_id"],
+        amount=_parse_decimal(row["amount"]),
+        due_date=_parse_date(row["due_date"]),
+        is_paid=bool(row["is_paid"]),
+        paid_date=_parse_date(row.get("paid_date")),
+    )
