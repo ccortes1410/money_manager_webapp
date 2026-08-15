@@ -65,7 +65,14 @@ class TestApiBackend:
         path = url.split("/api/", 1)[1] if "/api/" in url else url
         parts = path.strip("/").split("/")
         resource = parts[0]
-        item_id = int(parts[1]) if len(parts) > 1 and parts[1] else None
+        item_id = None
+        if len(parts) > 1 and parts[1]:
+            # Only treat as ID if it's a number
+            try:
+                item_id = int(parts[1])
+            except ValueError:
+                # Not a number, treat as part of resource path (e.g., /incomes/summary/)
+                item_id = None
         return resource, item_id
 
     def _compare(self, row_value, op, value):

@@ -112,7 +112,7 @@ urlpatterns = [
     # Subscriptions
     path(
         route='subscriptions',
-        view=subscriptions_views.subscriptions_list,
+        view=subscriptions_views.get_subscriptions,
         name='subscriptions'
     ),
     path(

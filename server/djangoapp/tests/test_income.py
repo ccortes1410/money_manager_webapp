@@ -11,6 +11,8 @@ from django.utils import timezone
 from djangoapp.models.models import Income
 
 from .test_base import BaseTestCase
+from .test_api_backend import TestApiBackend
+from unittest.mock import patch
 
 
 class IncomeModelTests(BaseTestCase):
@@ -58,22 +60,58 @@ class IncomeAPITests(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client.force_login(self.user1)
+        # Set up mock API backend
+        self.test_api = TestApiBackend()
+        self.get_patcher = patch('djangoapp.restapi.requests.get', side_effect=self.test_api.get)
+        self.post_patcher = patch('djangoapp.restapi.requests.post', side_effect=self.test_api.post)
+        self.patch_patcher = patch('djangoapp.restapi.requests.patch', side_effect=self.test_api.patch)
+        self.delete_patcher = patch('djangoapp.restapi.requests.delete', side_effect=self.test_api.delete)
+        self.get_patcher.start()
+        self.post_patcher.start()
+        self.patch_patcher.start()
+        self.delete_patcher.start()
+
+    def tearDown(self):
+        self.get_patcher.stop()
+        self.post_patcher.stop()
+        self.patch_patcher.stop()
+        self.delete_patcher.stop()
+        super().tearDown()
 
     def test_get_incomes_requires_auth(self):
         self.client.logout()
         response = self.client.get(reverse('djangoapp:get_incomes'))
         self.assertEqual(response.status_code, 401)
 
+    def _seed_income(self, **overrides):
+        row = {
+            "user_id": self.user1.id,
+            "amount": "5000.00",
+            "source": "Salary",
+            "date_received": self.today.isoformat(),
+            "period_start": self.today.replace(day=1).isoformat(),
+            "period_end": (self.today.replace(day=28) + timezone.timedelta(days=3)).isoformat(),
+        }
+        row.update(overrides)
+        return self.test_api.seed("incomes", row)
+
     def test_get_incomes_returns_data(self):
-        self.create_income()
+        self._seed_income()
         response = self.client.get(reverse('djangoapp:get_incomes'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()['incomes']), 1)
+        data = response.json()
+        self.assertEqual(len(data['incomes']), 1)
+        self.assertEqual(data['incomes'][0]['source'], 'Salary')
+        self.assertEqual(float(data['incomes'][0]['amount']), 5000.00)
 
-    def test_get_income_endpoint_always_raises_bug(self):
-        income = self.create_income()
-        with self.assertRaises(AttributeError):
-            self.client.get(reverse('djangoapp:get_income', kwargs={'income_id': income.id}))
+    def test_get_income_endpoint_success(self):
+        income = self._seed_income()
+        response = self.client.get(reverse('djangoapp:get_income', kwargs={'income_id': income['id']}))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['income']['id'], income['id'])
+        self.assertEqual(data['income']['source'], income['source'])
+        self.assertEqual(float(data['income']['amount']), float(income['amount']))
 
     def test_income_create_endpoint_success(self):
         payload = {
@@ -87,7 +125,11 @@ class IncomeAPITests(BaseTestCase):
             reverse('djangoapp:income_create'), data=json.dumps(payload), content_type='application/json'
         )
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(Income.objects.filter(user=self.user1, source='Freelance').exists())
+        # Check that the income was added to the mock API
+        incomes = self.test_api.resources.get("incomes", [])
+        self.assertEqual(len(incomes), 1)
+        self.assertEqual(incomes[0]['source'], 'Freelance')
+        self.assertEqual(float(incomes[0]['amount']), 2000.0)
 
     def test_income_create_endpoint_rejects_invalid_period(self):
         payload = {
@@ -108,21 +150,25 @@ class IncomeAPITests(BaseTestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_income_update_endpoint_always_raises_bug(self):
-        income = self.create_income()
-        with self.assertRaises(AttributeError):
-            self.client.patch(
-                reverse('djangoapp:income_update', kwargs={'income_id': income.id}),
-                data=json.dumps({'amount': 3000}), content_type='application/json'
-            )
-    
-    def test_income_delete_endpoint(self):
-        income = self.create_income()
-        response = self.client.delete(
-            reverse('djangoapp:income_delete'), data=json.dumps({'income_ids': [income.id]}), content_type='application/json'
+    def test_income_update_endpoint_updates_amount(self):
+        income = self._seed_income(amount="1500.00")
+        response = self.client.patch(
+            reverse('djangoapp:income_update', kwargs={'income_id': income['id']}),
+            data=json.dumps({'amount': 3000}), content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(Income.objects.filter(id=income.id).exists())
+        # Check that the income was updated in the mock API
+        updated_income = next((i for i in self.test_api.resources["incomes"] if i["id"] == income['id']), None)
+        self.assertIsNotNone(updated_income)
+        self.assertEqual(float(updated_income['amount']), 3000.0)
+    
+    def test_income_delete_endpoint(self):
+        income = self._seed_income()
+        response = self.client.delete(
+            reverse('djangoapp:income_delete'), data=json.dumps({'income_ids': [income["id"]]}), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Income.objects.filter(id=income["id"]).exists())
 
     def test_income_delete_endpoint_no_ids_provided(self):
         response = self.client.delete(

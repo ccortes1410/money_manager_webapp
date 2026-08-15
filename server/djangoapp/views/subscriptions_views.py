@@ -24,7 +24,7 @@ def get_subscriptions_data(user, period):
     payment_params = {"user_id": user.id}
 
     if start and end:
-        subscription_params["start_date__lte"]: _iso_date(end) # Started before or during period
+        subscription_params["start_date__lte"]= _iso_date(end) # Started before or during period
         subscription_params["end_date__gte"] = _iso_date(start) # Ends after or during period (or NULL)
         payment_params["due_date__gte"] = _iso_date(start)
         payment_params["due_date__lte"] = _iso_date(end)
@@ -155,6 +155,7 @@ def subscription_create(request):
         "end_date": data.get("end_date"),
         "status": data.get("status", "active"),
         "description": data.get("description", ""),
+        "created_at": data.get("creted_at", None)
     })
 
     if not row:
@@ -183,7 +184,7 @@ def subscription_create(request):
             "end_date": subscription.end_date,
             "billing_cycle": subscription.billing_cycle,
             "billing_day": subscription.billing_day,
-            "description": subscription.description,
+            "status": subscription.status,
         }
     }, status=201)
 
@@ -335,7 +336,7 @@ def subscription_delete(request, subscription_id):
     
     try:
         # Verify subscription belongs to user
-        row = get_request(f"subscription/{subscription_id}")
+        row = get_request(f"subscriptions/{subscription_id}")
         if not row or row["user_id"] != request.user.id:
             return JsonResponse(
                 {"error": "Subscription not found"}, status=404

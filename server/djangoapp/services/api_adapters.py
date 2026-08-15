@@ -58,6 +58,9 @@ def subscription_from_row(row):
         start_date=_parse_date(row["start_date"]),
         end_date=_parse_date(row.get("end_date")),
         status=row["status"],
+        description=row["description"],
+        created_at=_parse_date(row.get("created_at")),
+        updated_at=_parse_date(row.get("updated_at")),
     )
 
 
@@ -69,4 +72,15 @@ def subscription_payment_from_row(row):
         due_date=_parse_date(row["due_date"]),
         is_paid=bool(row["is_paid"]),
         paid_date=_parse_date(row.get("paid_date")),
+    )
+
+def income_from_row(row):
+    return SimpleNamespace(
+        id=row["id"],
+        user_id=row["user_id"],
+        amount=_parse_decimal(row["amount"]),
+        source=row["source"],
+        date_received=_parse_date(row["date_received"]),
+        period_start=_parse_date(row["period_start"]),
+        period_end=_parse_date(row["period_end"]),
     )

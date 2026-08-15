@@ -61,7 +61,7 @@ def serialize_expense(expense):
 
     return {
         'id': expense.id,
-        'desription': expense.description,
+        'description': expense.description,
         'amount': expense.amount,
         'paid_by': {
             'id': expense.paid_by.id,
@@ -273,7 +273,7 @@ def get_shared_budgets(request):
     invites_data = [{
         'id': invite.id,
         'budget_name': invite.shared_budget.name,
-        'buget_amount': float(invite.shared_budget.total_amount),
+        'budget_amount': float(invite.shared_budget.total_amount),
         'invited_by': {
             'id': invite.invited_by.id,
             'username': invite.invited_by.username,
