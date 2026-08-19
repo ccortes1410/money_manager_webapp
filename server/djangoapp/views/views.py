@@ -147,8 +147,6 @@ def session_view(request):
         })
     return JsonResponse({"is_authenticated": False})
 
-def logout_view(request):
-    logout(request)
-    return JsonResponse({"success": True})
+
 
 

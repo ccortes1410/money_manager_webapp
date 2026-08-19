@@ -190,12 +190,12 @@ urlpatterns = [
         name='send_friend_request'
     ),
     path(
-        route='friends/request/<int:friendship_id>/respond',
+        route='friends/requests/<int:friendship_id>/respond',
         view=friendship_views.respond_to_request,
         name='respond_to_request'
     ),
     path(
-        route='friends/request/<int:friendship_id>/cancel',
+        route='friends/requests/<int:friendship_id>/cancel',
         view=friendship_views.cancel_request,
         name='cancel_request'
     ),
@@ -232,7 +232,7 @@ urlpatterns = [
         name='update_shared_budget'
     ),
     path(
-        route='shared-bugdets/<int:budget_id>/delete',
+        route='shared-budgets/<int:budget_id>/delete',
         view=shared_budget_views.delete_shared_budget,
         name='delete_shared_budget'
     ),
@@ -332,10 +332,5 @@ urlpatterns = [
         route='session',
         view=views.session_view,
         name='session'   
-    ),
-    path(
-        route='logout',
-        view=views.logout_view,
-        name='logout'
     ),
 ]
