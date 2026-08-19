@@ -149,3 +149,6 @@ staticfiles/
 EOF
 
 node_modules/
+
+# Claude
+CLAUDE.md
