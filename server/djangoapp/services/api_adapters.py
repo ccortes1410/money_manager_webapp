@@ -82,7 +82,7 @@ def income_from_row(row):
         source=row["source"],
         date_received=_parse_date(row["date_received"]),
         period_start=_parse_date(row["period_start"]),
-        period_end=_parse_date(row["period_end"]),
+        period_end=_parse_date(row.get("period_end")),
     )
 
 
@@ -170,6 +170,30 @@ def shared_budget_notification_from_row(row):
         from_user_id=row["from_user"],
         notification_type=row["notification_type"],
         shared_budget_id=row["shared_budget"],
+        message=row["message"],
+        is_read=bool(row["is_read"]),
+        created_at=_parse_date(row.get("created_at")),
+    )
+
+
+def friendship_from_row(row):
+    return SimpleNamespace(
+        id=row["id"],
+        sender_id=row["sender"],
+        receiver_id=row["receiver"],
+        status=row["status"],
+        created_at=_parse_date(row.get("created_at")),
+        updated_at=_parse_date(row.get("updated_at")),
+    )
+
+
+def friendship_notification_from_row(row):
+    return SimpleNamespace(
+        id=row["id"],
+        user_id=row["user_id"],
+        from_user_id=row["from_user"],
+        notification_type=row["notification_type"],
+        friendship_id=row.get("friendship_id"),
         message=row["message"],
         is_read=bool(row["is_read"]),
         created_at=_parse_date(row.get("created_at")),
