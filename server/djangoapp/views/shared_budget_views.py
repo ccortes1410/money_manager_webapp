@@ -18,10 +18,14 @@ from ..services.api_adapters import (
     transaction_from_row,
     subscription_from_row,
     subscription_payment_from_row,
-    income_from_row
+    income_from_row,
+    get_username,
+    get_user_first_name,
+    get_user_last_name,
+    get_user_email,
+    get_user_data
 )
 from ..services.date_filter import get_date_bounds
-from ..models.friendship import Friendship
 
 
 def login_required_json(view_func):
@@ -108,7 +112,7 @@ def get_budget_data(budget_row, user_id=None):
         'member_count': len(members_data),
         'members': members_data,
         'user_role': user_role,
-        'user_balance': user_balanace,
+        'user_balance': user_balance,
         'created_at': budget_row["created_at"],
     }
 
@@ -126,29 +130,6 @@ def get_budget_members(budget_id):
         member_data = get_member_data(member_row)
         members_data.append(member_data)
     return members_data
-
-def get_username(user_id):
-    """Get username for a user ID."""
-    user_row = get_request(f"users/{user_id}")
-    return user_row["username"] if user_row else f"user_{user_id}"
-
-
-def get_user_email(user_id):
-    """Get email for a user ID."""
-    user_row = get_request(f"users/{user_id}")
-    return user_row["email"] if user_row else ""
-
-
-def get_user_first_name(user_id):
-    """Get first name for a user ID."""
-    user_row = get_request(f"users/{user_id}")
-    return user_row["first_name"] if user_row else ""
-
-
-def get_user_last_name(user_id):
-    """Get last name for a user ID."""
-    user_row = get_request(f"users/{user_id}")
-    return user_row["last_name"] if user_row else ""
 
 
 def get_total_paid_by_member(user_id, budget_id):
@@ -378,8 +359,20 @@ def create_shared_budget(request):
             if not friend_row:
                 continue
 
-            # Verify they are friends
-            if not Friendship.are_friends(user, friend_row):
+            # Verify they are friends via API
+            friendship_check = get_request(
+                "friendships/",
+                sender=user.id,
+                receiver=friend_row["id"],
+                status='accepted'
+            ) or []
+            reverse_check = get_request(
+                "friendships/",
+                sender=friend_row["id"],
+                receiver=user.id,
+                status='accepted'
+            ) or []
+            if not (friendship_check or reverse_check):
                 continue
 
             # Create invite via API
@@ -562,8 +555,20 @@ def invite_to_budget(request, budget_id):
         if not friend_row:
             return JsonResponse({'error': 'User not found'}, status=404)
 
-        # Verify they are friends
-        if not Friendship.are_friends(user, friend_row):
+        # Verify they are friends via API
+        friendship_check = get_request(
+            "friendships/",
+            sender=user.id,
+            receiver=friend_row["id"],
+            status='accepted'
+        ) or []
+        reverse_check = get_request(
+            "friendships/",
+            sender=friend_row["id"],
+            receiver=user.id,
+            status='accepted'
+        ) or []
+        if not (friendship_check or reverse_check):
             return JsonResponse({'error': 'You can only invite friends'}, status=400)
 
         # Check if already a pending invite
@@ -1571,21 +1576,3 @@ def get_budget_debts_data(budget_id):
             j += 1
 
     return debts
-
-def get_user_data(user_id):
-    """Get user data by ID."""
-    user_row = get_request(f"users/{user_id}")
-    if user_row:
-        return {
-            'id': user_row["id"],
-            'username': user_row["username"],
-            'first_name': user_row["first_name"],
-            'last_name': user_row["last_name"],
-        }
-    else:
-        return {
-            'id': user_id,
-            'username': f'user_{user_id}',
-            'first_name': '',
-            'last_name': '',
-        }

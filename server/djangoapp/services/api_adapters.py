@@ -11,6 +11,8 @@ from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
 
+from ..restapi import get_request
+
 
 def _parse_date(value):
     return date.fromisoformat(value) if value else None
@@ -198,3 +200,43 @@ def friendship_notification_from_row(row):
         is_read=bool(row["is_read"]),
         created_at=_parse_date(row.get("created_at")),
     )
+
+
+def get_username(user_id):
+    """Get username for a user ID."""
+    user_row = get_request(f"users/{user_id}")
+    return user_row["username"] if user_row else f"user_{user_id}"
+
+
+def get_user_email(user_id):
+    user_row = get_request(f"users/{user_id}")
+    return user_row["email"] if user_row else ""
+
+
+def get_user_first_name(user_id):
+    user_row = get_request(f"users/{user_id}")
+    return user_row["first_name"] if user_row else ""
+
+
+def get_user_last_name(user_id):
+    user_row = get_request(f"users/{user_id}")
+    return user_row["last_name"] if user_row else ""
+
+def get_user_data(user_id):
+    user_row = get_request(f"users/{user_id}")
+    if user_row:
+        return {
+            'id': user_row["id"],
+            'username': user_row["username"],
+            'first_name': user_row["first_name"],
+            'last_name': user_row["last_name"],
+            'email': user_row["email"],
+        }
+    else:
+        return {
+            'id': user_id,
+            'username': f'user_{user_id}',
+            'first_name': '',
+            'last_name': '',
+            'email': '',
+        }

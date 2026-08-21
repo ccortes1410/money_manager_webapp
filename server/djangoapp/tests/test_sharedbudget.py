@@ -1,7 +1,6 @@
 """
 Test for the SharedBudget model and its API endpoints.
 """
-
 import json
 from decimal import Decimal
 
@@ -12,6 +11,8 @@ from django.utils import timezone
 from djangoapp.models.models import SharedBudget, SharedBudgetMember, SharedExpense
 
 from .test_base import BaseTestCase
+from .test_api_backend import TestApiBackend
+from unittest.mock import patch
 
 
 class SharedBudgetModelTests(BaseTestCase):
@@ -23,20 +24,6 @@ class SharedBudgetModelTests(BaseTestCase):
     def test_str_representation(self):
         budget = self.create_shared_budget()
         self.assertEqual(str(budget), f"{budget.name} (${budget.total_amount})")
-
-    # def test_total_amount_field_is_too_restrictive_bug(self):
-    #     """
-    #     total_amount = DecimalField(max_digits=12, decimal_places=12)
-    #     leaves zero digits for the integer part, so amount >= 1 fail validation.
-    #     Likely meant to be decimal_places=2.
-    #     """
-    #     budget = SharedBudget(
-    #         name='Big Budget', total_amount=Decimal('1000'),
-    #         created_by=self.user1, period_start=self.today,
-    #         period_end=self.today + timezone.timedelta(days=30),
-    #     )
-    #     with self.assertRaises(Exception):
-    #         budget.full_clean()
 
     def test_get_total_spent_with_no_expenses(self):
         budget = self.create_shared_budget()
@@ -95,6 +82,61 @@ class SharedBudgetAPITests(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client.force_login(self.user1)
+        # Set up mock API backend
+        self.test_api = TestApiBackend()
+        self.get_patcher = patch('djangoapp.restapi.requests.get', side_effects=self.test_api.get)
+        self.post_patcher = patch('djangoapp.restapi.requests.post', side_effects=self.test_api.post)
+        self.patch_patcher = patch('djangoapp.restapi.requests.patch', side_effects=self.test_api.patch)
+        self.delete_patcher = patch('djangoapp.restapi.requests.delete', side_effects=self.test_api.delete)
+        self.get_patcher.start()
+        self.post_patcher.start()
+        self.patch_patcher.start()
+        self.delete_patcher.start()
+
+    def tearDown(self):
+        self.get_patcher.stop()
+        self.post_patcher.stop()
+        self.patch_patcher.stop()
+        self.delete_patcher.stop()
+        super().tearDown()
+
+    def _seed_user(self, username_suffix="", **overrides):
+        """Helper to seed a user via the mock API"""
+        base_data = {
+            "username": f"testuser{username_suffix}",
+            "email": f"testuser{username_suffix}",
+            "first_name": f"Test{username_suffix}",
+            "last_name": "User",
+        }
+        base_data.update(overrides)
+        return self.test_api.seed("users", base_data)
+
+    def _seed_shared_budget(self, **overrides):
+        """Helper to seed a shared budget via the mock API"""
+        base_data = {
+            "name": "Test Budget",
+            "description": "Test Description",
+            "total_amount": "1000.00",
+            "category": "Test Category",
+            "created_by": self.user1.id,
+            "start_date": self.today.isoformat(),
+            "end_date": (self.today + timezone.timedelta(days=30)).isoformat(),
+            "default_split_type": "equal",
+            "is_active": True,
+        }
+        base_data.update(overrides)
+        return self.test_api.seed("shared-budgets", base_data)
+
+    def _seed_shared_budget_member(self, **overrides):
+        """Helper to seed a shared budget member via the mock API"""
+        base_data = {
+            "shared_budget": 1, # Will be updated after budget creation
+            "user_id": self.user1.id,
+            "role": "owner",
+            "contribution_percentage": "100.00",
+        }
+        base_data.update(overrides)
+        return self.test_api.seed("shared-budget-members", base_data)
 
     def test_get_shared_budgets_requires_auth(self):
         self.client.logout()
@@ -106,49 +148,75 @@ class SharedBudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['total_count'], 0)
 
-    # def test_get_shared_budgets_with_a_budget_raises_serialize_bug(self):
-    #     budget = self.create_shared_budget()
-    #     SharedBudgetMember.objects.create(shared_budget=budget, user=self.user1, role='owner')
-    #     with self.assertRaises(AttributeError):
-    #         self.client.get(reverse('djangoapp:get_shared_budgets'))
+    def test_create_shared_budget_endpoint_success(self):
+        # Seed users for invites
+        self._seed_user("2")
+        self._seed_user("3")
 
-    def test_create_shared_budget_endpoint_fails_bug(self):
-        """
-        create_shared_budget() calls
-        SharedBudget.objects.create(start_date=..., end_date=..., ...) but
-        the model's actual fields are 'period_start' / 'period_end', not
-        'start_date' / 'end_date'. Django raises a TypeError for the
-        invalid keyword arguments, which the view's try/except catches and
-        turns into a 500 response -- so no budget is ever created.
-        """
         payload = {
             'name': 'Vacations',
             'total_amount': 0.5,
-            'start_date': self.today.isoformat(),
-            'end_date': (self.today + timezone.timedelta(days=30)).isoformat(),
+            'period_start': self.today.isoformat(),
+            'period_end': (self.today + timezone.timedelta(days=30)).isoformat(),
+            # Note: Using correct field names period_start/period_end
         }
         response = self.client.post(
-            reverse('djangoapp:create_shared_budget'), data=json.dumps(payload), content_type='application/json'
+            reverse('djangoapp:create_shared_budget'),
+            data=json.dumps(payload),
+            content_type='application/json'
         )
-        self.assertEqual(response.status_code, 500)
-        self.assertFalse(SharedBudget.objects.filter(name='Vacations').exists())
+        self.assertEqual(response.status_code, 201)
 
-    # def test_get_shared_budget_detail_raises_queryset_bug(self):
-    #     budget = self.create_shared_budget()
-    #     with self.assertRaises(AttributeError):
-    #         self.client.get(
-    #             reverse('djangoapp:get_shared_budget_detail', kwargs={'budget_id': budget.id})
-    #         )
-    
-    # def test_update_shared_budget_raises_json_load_bug(self):
-    #     budget = self.create_shared_budget()
-    #     with self.assertRaises(AttributeError):
-    #         self.client.patch(
-    #             reverse('djangoapp:update_shared_budget', kwargs={'budget_id': budget.id}),
-    #             data=json.dumps({'name': 'New Name'}), content_type='application/json'
-    #         )
+        # Check that the budget was added to the mock API
+        budgets = self.test_api.resources.get("shared-budgets", [])
+        self.assertEqual(len(budgets), 1)
+        self.assertEqual(budgets[0]['name'], 'Vacations')
+        self.assertEqual(float(budgets[0]['total_amount']), 0.5)
 
-    # def test_delete_shared_budget_raises_queryset_bug(self):
-    #     budget = self.create_shared_budget()
-    #     with self.assertRaises(AttributeError):
-    #         self.client.delete(reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget.id}))
+    def test_get_shared_budget_detail_success(self):
+        # Seed budget
+        budget = self._seed_shared_budget()
+
+        response = self.client.get(
+            reverse('djangoapp:get_shared_budget_detail', kwargs={'budget_id': budget['id']})
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['id'], budget['id'])
+        self.assertEqual(data['name'], budget['name'])
+
+    def test_update_shared_budget_endpoint_success(self):
+        # Seed budget
+        budget = self._seed_shared_budget()
+
+        # Ssed member (creator as owner)
+        member_data = self._seed_shared_budget_member(shared_budget=budget['id'])
+
+        response = self.client.patch(
+            reverse('djangoapp:update_shared_budget', kwargs={'budget_id': budget['id']}),
+            data=json.dumps({'name': 'Updated Budget Name'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Check that the budget was updated in the mock API
+        updated_budget = next((b for b in self.test_api.resources["shared-budgets"] if b['id'] == budget['id']), None)
+        self.assertIsNotNone(updated_budget)
+        self.assertEqual(updated_budget['name'], 'Updated Budget Name')
+
+        def test_delete_shared_budget_endpoint_success(self):
+            # Seed budget
+            budget = self._seed_shared_budget()
+
+            # Seed member (creator as owner)
+            member_data = self._seed_shared_budget_member(shared_budget=budget['id'])
+
+            response = self.client.delete(
+                reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget['id']}),
+                content_type='appication/json'
+            )
+            self.assertEqual(response.status_code, 200)
+
+            # Check that the budget was deleted from the mock API
+            budgets = self.test_api.resources.get("shared-budgets", [])
+            self.assertEqual(len(budgets), 0)
