@@ -84,10 +84,10 @@ class SharedBudgetAPITests(BaseTestCase):
         self.client.force_login(self.user1)
         # Set up mock API backend
         self.test_api = TestApiBackend()
-        self.get_patcher = patch('djangoapp.restapi.requests.get', side_effects=self.test_api.get)
-        self.post_patcher = patch('djangoapp.restapi.requests.post', side_effects=self.test_api.post)
-        self.patch_patcher = patch('djangoapp.restapi.requests.patch', side_effects=self.test_api.patch)
-        self.delete_patcher = patch('djangoapp.restapi.requests.delete', side_effects=self.test_api.delete)
+        self.get_patcher = patch('djangoapp.restapi.requests.get', side_effect=self.test_api.get)
+        self.post_patcher = patch('djangoapp.restapi.requests.post', side_effect=self.test_api.post)
+        self.patch_patcher = patch('djangoapp.restapi.requests.patch', side_effect=self.test_api.patch)
+        self.delete_patcher = patch('djangoapp.restapi.requests.delete', side_effect=self.test_api.delete)
         self.get_patcher.start()
         self.post_patcher.start()
         self.patch_patcher.start()
@@ -119,8 +119,8 @@ class SharedBudgetAPITests(BaseTestCase):
             "total_amount": "1000.00",
             "category": "Test Category",
             "created_by": self.user1.id,
-            "start_date": self.today.isoformat(),
-            "end_date": (self.today + timezone.timedelta(days=30)).isoformat(),
+            "period_start": self.today.isoformat(),
+            "period_end": (self.today + timezone.timedelta(days=30)).isoformat(),
             "default_split_type": "equal",
             "is_active": True,
         }
@@ -130,7 +130,6 @@ class SharedBudgetAPITests(BaseTestCase):
     def _seed_shared_budget_member(self, **overrides):
         """Helper to seed a shared budget member via the mock API"""
         base_data = {
-            "shared_budget": 1, # Will be updated after budget creation
             "user_id": self.user1.id,
             "role": "owner",
             "contribution_percentage": "100.00",
@@ -177,6 +176,9 @@ class SharedBudgetAPITests(BaseTestCase):
         # Seed budget
         budget = self._seed_shared_budget()
 
+        # Seed member (creator as owner)
+        member_data = self._seed_shared_budget_member(shared_budget=budget['id'])
+
         response = self.client.get(
             reverse('djangoapp:get_shared_budget_detail', kwargs={'budget_id': budget['id']})
         )
@@ -204,19 +206,19 @@ class SharedBudgetAPITests(BaseTestCase):
         self.assertIsNotNone(updated_budget)
         self.assertEqual(updated_budget['name'], 'Updated Budget Name')
 
-        def test_delete_shared_budget_endpoint_success(self):
-            # Seed budget
-            budget = self._seed_shared_budget()
+    def test_delete_shared_budget_endpoint_success(self):
+        # Seed budget
+        budget = self._seed_shared_budget()
 
-            # Seed member (creator as owner)
-            member_data = self._seed_shared_budget_member(shared_budget=budget['id'])
+        # Seed member (creator as owner)
+        member_data = self._seed_shared_budget_member(shared_budget=budget['id'])
 
-            response = self.client.delete(
-                reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget['id']}),
-                content_type='appication/json'
-            )
-            self.assertEqual(response.status_code, 200)
+        response = self.client.delete(
+            reverse('djangoapp:delete_shared_budget', kwargs={'budget_id': budget['id']}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
 
-            # Check that the budget was deleted from the mock API
-            budgets = self.test_api.resources.get("shared-budgets", [])
-            self.assertEqual(len(budgets), 0)
+        # Check that the budget was deleted from the mock API
+        budgets = self.test_api.resources.get("shared-budgets", [])
+        self.assertEqual(len(budgets), 0)

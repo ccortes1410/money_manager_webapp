@@ -74,7 +74,11 @@ def _group_by_month(transactions):
     for t in transactions:
         if t["date"]:
             try:
-                date_obj = datetime.fromisoformat(t["date"]).date()
+                # Handle datetime strings by splitting on 'T' and taking just the date part
+                date_str = t["date"]
+                if isinstance(date_str, str):
+                    date_str = date_str.split('T')[0]
+                date_obj = datetime.fromisoformat(date_str).date()
                 month_key = (date_obj.year, date_obj.month)
                 data_by_month[month_key] += Decimal(str(t["amount"]))
             except ValueError:
@@ -108,7 +112,11 @@ def _group_by_year(transactions):
     for t in transactions:
         if t["date"]:
             try:
-                date_obj = datetime.fromisoformat(t["date"]).date()
+                # Handle datetime strings by splitting on 'T' and taking just the date part
+                date_str = t["date"]
+                if isinstance(date_str, str):
+                    date_str = date_str.split('T')[0]
+                date_obj = datetime.fromisoformat(date_str).date()
                 year_key = date_obj.year
                 data_by_year[year_key] += Decimal(str(t["amount"]))
             except ValueError:

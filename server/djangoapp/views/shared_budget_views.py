@@ -113,7 +113,7 @@ def get_budget_data(budget_row, user_id=None):
         'members': members_data,
         'user_role': user_role,
         'user_balance': user_balance,
-        'created_at': budget_row["created_at"],
+        'created_at': budget_row.get("created_at", ""),
     }
 
 
@@ -326,8 +326,8 @@ def create_shared_budget(request):
         'total_amount': str(total_amount),
         'category': data.get('category',''),
         'created_by': user.id,
-        'start_date': data['period_start'],
-        'end_date': data['period_end'],
+        'period_start': data['period_start'],
+        'period_end': data['period_end'],
         'default_split_type': data.get('split_type', 'equal'),
         'is_active': True,
     })
@@ -431,8 +431,8 @@ def update_shared_budget(request, budget_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Check if user can edit (owner or editor)
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] not in ['owner', 'editor']:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows or member_rows[0]["role"] not in ['owner', 'editor']:
             return JsonResponse({'error': 'You do not have permission to edit this budget'}, status=403)
 
         # Prepare update payload
@@ -500,8 +500,8 @@ def delete_shared_budget(request, budget_id):
         if not budget_row:
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
-        member_row = get_request("shared-budget_members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] != 'owner':
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows or member_rows[0]["role"] != 'owner':
             return JsonResponse({'error': 'Only the owner can delete this budget'}, status=403)
 
         budget_name = budget_row["name"]
@@ -542,8 +542,8 @@ def invite_to_budget(request, budget_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Check if user can invite (must be owner or editor)
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] not in ['owner', 'editor']:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows or member_rows[0]["role"] not in ['owner', 'editor']:
             return JsonResponse({'error': 'You do not have permission to invite members'}, status=403)
 
         friend_id = data.get('user_id')
@@ -586,6 +586,7 @@ def invite_to_budget(request, budget_id):
             'invited_user': friend_id,
             'role': role,
             'message': message,
+            'status': 'pending',
         })
 
         # Create notification via API
@@ -648,12 +649,12 @@ def respond_to_budget_invite(request, invite_id):
 
             # Add user as member with appropriate role
             # For equal split, we need to update all members' contributions
-            budget_id = invite_row["shared-budget"]
+            budget_id = invite_row["shared_budget"]
             budget_row = get_request(f"shared-budgets/{budget_id}")
 
             # Add member
             member_row = post_request("shared-budget-members/", {
-                'shared-budget': budget_id,
+                'shared_budget': budget_id,
                 'user_id': user.id,
                 'role': invite_row["role"],
                 'contribution_percentage': 0, # Will be updated if equal split
@@ -666,7 +667,7 @@ def respond_to_budget_invite(request, invite_id):
                 percentage = 100.0 / member_count if member_count > 0 else 0
 
                 for member in member_rows:
-                    patch_request(f"shared-budget=members/{member['id']}", {
+                    patch_request(f"shared-budget-members/{member['id']}", {
                         'contribution_percentage': percentage
                     })
 
@@ -700,12 +701,14 @@ def respond_to_budget_invite(request, invite_id):
             inviter_row = get_request(f"users/{invite_row['invited_by']}")
             inviter_username = inviter_row["username"] if inviter_row else f"user_{invite_row['invited_by']}"
 
+            budget_row = get_request(f"shared-budgets/{invite_row['shared_budget']}")
+            budget_name = budget_row["name"] if budget_row else "Unknown Budget"
             post_request("shared-budget-notifications/", {
                 'user_id': invite_row["invited_by"],
                 'from_user_id': user.id,
                 'notification_type': 'invite_declined',
                 'shared_budget_id': invite_row["shared_budget"],
-                'message': f'{user.username} declined your invitation to "{invite_row["shared_budget_name"]}"'
+                'message': f'{user.username} declined your invitation to "{budget_name}"'
             })
 
             return JsonResponse({
@@ -719,17 +722,18 @@ def respond_to_budget_invite(request, invite_id):
 # ======================== MEMBER MANAGEMENT ===============================
 
 @csrf_exempt
+@csrf_exempt
 @login_required_json
 def update_member_role(request, budget_id, member_id):
     """Update a member's role in a shared budget."""
     if request.method not in ['PUT', 'PATCH']:
         return JsonResponse({'error': 'Method Not Allowed'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    
+
     user = request.user
 
     try:
@@ -739,8 +743,8 @@ def update_member_role(request, budget_id, member_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Only owner can change roles
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] != 'owner':
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows or member_rows[0]["role"] != 'owner':
             return JsonResponse({'error': 'Only the owner can change member roles'}, status=403)
 
         # Verify member exists and belongs to this budget
@@ -764,6 +768,7 @@ def update_member_role(request, budget_id, member_id):
         # If role changed to owner, we might need to handle ownership transfer logic
         # For now, just update the role
 
+        budget_row = get_request(f"shared-budgets/{budget_id}")  # Refresh budget row
         member_data = get_member_data(updated_member_row, budget_row)
 
         return JsonResponse({
@@ -781,7 +786,7 @@ def leave_budget(request, budget_id):
     """Leave a shared budget."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method Not Allowed'}, status=405)
-    
+
     user = request.user
 
     try:
@@ -791,15 +796,18 @@ def leave_budget(request, budget_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Verify user is a member
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows:
             return JsonResponse({'error': 'You are not a member of this budget'}, status=404)
 
         # Owner can't leave, must transfer or delete
-        if member_row["role"] == 'owner':
+        if member_rows[0]["role"] == 'owner':
             # Check if there are other members
-            member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
-            other_members = [m for m in member_rows if m["user_id"] != user.id]
+            all_member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
+            other_members = []
+            for m in all_member_rows:
+                if m.get("user_id") != user.id:
+                    other_members.append(m)
 
             if other_members:
                 return JsonResponse({
@@ -816,8 +824,11 @@ def leave_budget(request, budget_id):
 
         # Notify members
         budget_name = budget_row["name"]
-        member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
-        member_user_ids = [m["user_id"] for m in member_rows if m["user_id"] != user.id]
+        all_member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
+        member_user_ids = []
+        for m in all_member_rows:
+            if m.get("user_id") != user.id:
+                member_user_ids.append(m.get("user_id"))
 
         for member_user_id in member_user_ids:
             post_request("shared-budget-notifications/", {
@@ -829,16 +840,16 @@ def leave_budget(request, budget_id):
             })
 
         # Remove member via API
-        result = delete_request(f"shared-budget-members/{member_row['id']}")
+        result = delete_request(f"shared-budget-members/{member_rows[0]['id']}")
         if result is None:
             return JsonResponse({'error': 'Failed to leave budget'}, status=500)
 
         # Recalculate percentages for equal split
         if budget_row and budget_row["default_split_type"] == 'equal':
-            member_row = get_request("shared-budget-members/", shared_budget=budget_id) or []
-            if len(member_rows) > 0:
-                percentage = 100.0 / len(member_rows)
-                for member in member_rows:
+            updated_member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
+            if len(updated_member_rows) > 0:
+                percentage = 100.0 / len(updated_member_rows)
+                for member in updated_member_rows:
                     patch_request(f"shared-budget-members/{member['id']}", {
                         'contribution_percentage': percentage
                     })
@@ -857,7 +868,7 @@ def remove_member(request, budget_id, member_id):
     """Remove a member from a shared budget."""
     if request.method != 'DELETE':
         return JsonResponse({'error': 'Method Not Allowed'}, status=405)
-    
+
     user = request.user
 
     try:
@@ -867,8 +878,8 @@ def remove_member(request, budget_id, member_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Only owner can remove members
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] != 'owner':
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id) or []
+        if not member_rows or member_rows[0]["role"] != 'owner':
             return JsonResponse({'error': 'Only the owner can remove members'}, status=403)
 
         # Verify member exists and belongs to this budget
@@ -898,10 +909,10 @@ def remove_member(request, budget_id, member_id):
 
         # Recalculate percentages for equal split
         if budget_row and budget_row["default_split_type"] == 'equal':
-            member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
-            if len(member_rows) > 0:
-                percentage = 100.0 / len(member_rows)
-                for member in member_rows:
+            updated_member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
+            if len(updated_member_rows) > 0:
+                percentage = 100.0 / len(updated_member_rows)
+                for member in updated_member_rows:
                     patch_request(f"shared-budget-members/{member['id']}", {
                         'contribution_percentage': percentage
                     })
@@ -922,12 +933,12 @@ def add_expense(request, budget_id):
     """Add an expense to a shared budget."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method Not Allowed'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Shared budget not found'}, status=404)
-    
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
     user = request.user
 
     try:
@@ -937,8 +948,8 @@ def add_expense(request, budget_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Check permissions
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] not in ['owner', 'editor']:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
+        if not member_rows or len(member_rows) == 0 or member_rows[0]["role"] not in ['owner', 'editor']:
             return JsonResponse({'error': 'You do not have permission to add expenses'}, status=403)
 
         # Validate fields
@@ -993,7 +1004,7 @@ def add_expense(request, budget_id):
                 post_request("expense-splits/", {
                     'shared_expense': expense_row["id"],
                     'user_id':split_data["user_id"],
-                    'amount_owed': str(split_data["amount_owed"]),
+                    'amount_owed': str(split_data["amount"]),
                     'is_settled':split_data.get("is_settled", False)
                 })
         else:
@@ -1045,8 +1056,8 @@ def update_expense(request, budget_id, expense_id):
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Check permissions
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] not in ['owner', 'editor']:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
+        if not member_rows or len(member_rows) == 0 or member_rows[0]["role"] not in ['owner', 'editor']:
             return JsonResponse({'error': 'You do not have permission to edit expenses'}, status=403)
 
         # Verify expense exists and belongs to this budget
@@ -1139,13 +1150,13 @@ def delete_expense(request, budget_id, expense_id):
 
     try:
         # Verify budget exists
-        budget_row = get_request(f"shared-bugdets/{budget_id}")
+        budget_row = get_request(f"shared-budgets/{budget_id}")
         if not budget_row:
             return JsonResponse({'error': 'Shared budget not found'}, status=404)
 
         # Check permissions
-        member_row = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
-        if not member_row or member_row["role"] not in ['owner', 'editor']:
+        member_rows = get_request("shared-budget-members/", shared_budget=budget_id, user_id=user.id)
+        if not member_rows or len(member_rows) == 0 or member_rows[0]["role"] not in ['owner', 'editor']:
             return JsonResponse({'error': 'You do not have permission to delete expenses'}, status=403)
 
         # Verify expense exists and belongs to this budget
@@ -1393,7 +1404,7 @@ def get_budget_notifications(request):
             notification_rows = [n for n in notification_rows if not n.get("is_read", False)]
 
         # Sort by date descending and limit to 50
-        notification_rows.sort(ket=lambda x: x.get("created_at") or "", reverse=True)
+        notification_rows.sort(key=lambda x: x.get("created_at") or "", reverse=True)
         notification_rows = notification_rows[:50]
 
         notifications_data = []
@@ -1402,15 +1413,15 @@ def get_budget_notifications(request):
             if notification_row.get("shared_budget"):
                 budget_row = get_request(f"shared-budgets/{notification_row['shared_budget']}")
 
-            from_user_row = get_request(f"users/{notification_row['from_user']}")
+            from_user_row = get_request(f"users/{notification_row['from_user_id']}")
 
             notifications_data.append({
                 'id': notification_row["id"],
                 'type': notification_row["notification_type"],
                 'message': notification_row["message"],
                 'from_user': {
-                    'id': notification_row["from_user"],
-                    'username': from_user_row["username"] if from_user_row else f"user_{notification_row['from_user']}", 
+                    'id': notification_row["from_user_id"],
+                    'username': from_user_row["username"] if from_user_row else f"user_{notification_row['from_user_id']}",
                 },
                 'budget': {
                     'id': notification_row["shared_budget"],

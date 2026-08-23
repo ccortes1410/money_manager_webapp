@@ -9,7 +9,7 @@ Usage in a test's setUp():
     from unittest.mock import patch
     
     self.test_api = TestApiBackend()
-    for verb in ("ger", "post", "patch", "delete"):
+    for verb in ("get", "post", "patch", "delete"):
         patcher = patch(f"djangoapp.restapi.requests.{verb}",
                         side_effect=getattr(self.test_api, verb))
         patcher.start()

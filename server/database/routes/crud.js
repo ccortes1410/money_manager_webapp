@@ -1,4 +1,5 @@
 const express = require('express');
+const { Sequelize } = require('sequelize');
 
 /**
  * Build a generic CRUD router for a Sequelize model.
@@ -19,10 +20,66 @@ const express = require('express');
  */
 function buildCrudRouter(model, { include } = {}) {
     const router = express.Router();
+    const Op = Sequelize.Op;
 
     router.get('/', async (req, res) => {
         try {
-            const where = { ...req.query };
+            // Convert Django-style query parameters to Sequelize operators
+            const where = {};
+            for (const [key, value] of Object.entries(req.query)) {
+                if (key.includes('__')) {
+                    // Handle Django-style lookups like date__gte, date__lte
+                    const [field, operator] = key.split('__');
+                    if (!where[field]) {
+                        where[field] = {};
+                    }
+                    // Map Django operators to Sequelize operators
+                    switch (operator) {
+                        case 'gte':
+                            where[field][Op.gte] = value;
+                            break;
+                        case 'lte':
+                            where[field][Op.lte] = value;
+                            break;
+                        case 'gt':
+                            where[field][Op.gt] = value;
+                            break;
+                        case 'lt':
+                            where[field][Op.lt] = value;
+                            break;
+                        case 'exact':
+                            where[field][Op.eq] = value;
+                            break;
+                        case 'iexact':
+                            where[field][Op.iLike] = value;
+                            break;
+                        case 'contains':
+                            where[field][Op.contains] = value;
+                            break;
+                        case 'icontains':
+                            where[field][Op.iContains] = value;
+                            break;
+                        case 'in':
+                            where[field][Op.in] = value.split(',');
+                            break;
+                        case 'startswith':
+                            where[field][Op.startsWith] = value;
+                            break;
+                        case 'endswith':
+                            where[field][Op.endsWith] = value;
+                            break;
+                        case 'isnull':
+                            where[field][Op.eq] = value === 'true' ? null : value;
+                            break;
+                        default:
+                            // Default to exact match if operator not recognized
+                            where[field] = value;
+                    }
+                } else {
+                    // Direct field match
+                    where[key] = value;
+                }
+            }
             const rows = await model.findAll({ where, include });
             res.json(rows);
         } catch (err) {

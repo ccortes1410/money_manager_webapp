@@ -23,8 +23,8 @@ def get_transactions_data(user, period):
     transaction_params = {"user_id": user.id}
 
     if start and end:
-        transaction_params["date__gte"]: _iso_date(start)
-        transaction_params["date__lte"]: _iso_date(end)
+        transaction_params["date__gte"] = _iso_date(start)
+        transaction_params["date__lte"] = _iso_date(end)
     # Get transactions for the period
     transactions = get_request("transactions/", **transaction_params) or []
 

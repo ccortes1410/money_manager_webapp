@@ -148,7 +148,7 @@ def get_budget(request, budget_id):
             "amount": float(s.amount),
             "billing_cycle": s.billing_cycle,
             "billing_day": s.billing_day,
-            "category": s.cateogry,
+            "category": s.category,
             "type": "subscription"
         }
         for s in subscriptions

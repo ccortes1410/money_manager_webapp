@@ -122,8 +122,8 @@ def get_period_label(period: str) -> str:
         label = get_period_label("monthly")  # "Last 30 Days"
     """
     labels = {
-        "daily": "Today"
-        "weekly" "Last 7 Days",
+        "daily": "Today",
+        "weekly": "Last 7 Days",
         "monthly": "Last 30 Days",
         "yearly": "Last Year",
         "total": "All Time"

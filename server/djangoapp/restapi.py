@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path='.env.local')
 
 # In docker-compose, "api" is the service name for the Node container, so
 # it's resolvable by name on the shared Docker network -- no localhost/port

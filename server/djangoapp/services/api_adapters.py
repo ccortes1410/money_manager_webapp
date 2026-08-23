@@ -15,11 +15,21 @@ from ..restapi import get_request
 
 
 def _parse_date(value):
-    return date.fromisoformat(value) if value else None
+    if value is None or value == "":
+        return None
+    # Handle datetime strings (with or without timezone) by extracting just the date part
+    if isinstance(value, str):
+        # Split on 'T' to separate date from time, and take just the date part
+        date_part = value.split('T')[0]
+        return date.fromisoformat(date_part)
+    # If it's already a date object, return as-is
+    return value
 
 
 def _parse_decimal(value):
-    return Decimal(str(value)) if value is not None else Decimal("0")
+    if value is None or value == "":
+        return Decimal("0")
+    return Decimal(str(value))
 
 
 def budget_from_row(row):

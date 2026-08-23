@@ -69,10 +69,10 @@ const Dashboard = () => {
     // Set the urls from where to get data
     let dashboard_url = "/djangoapp/dashboard";
 
-    let trans_url = "/djangoapp/transactions";
-    let subs_url = "/djangoapp/subscriptions";
-    let budget_url = "/djangoapp/budgets";
-    let income_url = "/djangoapp/income";
+    let trans_url = "/djangoapp/api/transactions";
+    let subs_url = "/djangoapp/api/subscriptions";
+    let budget_url = "/djangoapp/api/budgets";
+    let income_url = "/djangoapp/api/income";
     
 
     const navigate = useNavigate();

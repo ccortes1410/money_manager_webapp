@@ -10,7 +10,7 @@ def get_subscription_amount_for_period(subscription, period_start, period_end):
     Takes into account billing cycle and weather the subscription is active.
     """
 
-    if not subscription.status != 'active':
+    if subscription.status != 'active':
         return 0
     
     # If subscription started after period ends or hasn't started yet

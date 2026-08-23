@@ -8,9 +8,11 @@ services:
       - "3307:3306"
     restart: always
     command: --secure-file-priv=""
+    env_file:
+      - .env.api
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: money_manager_db
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - mysql_data:/var/lib/mysql
       - C:\Users\corte\Desktop\Money Manager\MySQL Uploads:/export
@@ -28,14 +30,8 @@ services:
     depends_on:
       mysql_db:
         condition: service_healthy
-    environment:
-      DB_NAME: ${DB_NAME:-money_manager_db}
-      DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: mysql_db
-      DB_PORT: 3306
-      PORT: 3030
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+    env_file:
+      - .env.api
 
 volumes:
   mysql_data: {}
