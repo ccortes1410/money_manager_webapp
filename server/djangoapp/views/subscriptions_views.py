@@ -117,6 +117,40 @@ def get_subscriptions(request):
         logger.error(f"Error fetching subscriptions: {e}")
         return JsonResponse({"error": "Failed to fetch subscriptions"}, status=500)
 
+def get_subscription_payments(request, subscription_id):
+    """Get payments for a subscription."""
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {'error': 'Unauthorized'}, status=401
+        )
+
+    if request.method != "GET":
+        return JsonResponse(
+            {'error': 'Method not allowed'}, status=405
+        )
+
+    try:
+        rows = get_request(f"subscription-payments/{subscription_id}")
+        subscription_payments = [subscription_payment_from_row(row) for row in rows]
+        subscription_payments.sort(key=lambda p: p.paid_date or p.due_date, reverse=True)
+
+        total_paid = sum((p.amount for p in subscription_payments if p.is_paid), Decimal('0'))
+
+        data = []
+        for p in subscription_payments:
+            data.append({
+                'id': p.id,
+                'subscription_id': subscription_id,
+                'amount': float(p.amount),
+                'due_date': p.due_date,
+                'paid_date': p.paid_date if p.is_paid else None,
+                'is_paid': p.is_paid,
+                'total_paid': total_paid
+            })
+    except Exception as e:
+        logger.error(f"Error fetching payments for subscription {subscription_id}")
+        return JsonResponse({'error': 'Failed to fetch payments'}, status=500)
+    
 @csrf_exempt
 def subscription_create(request):
     """Create new subscription."""

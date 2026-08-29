@@ -140,10 +140,17 @@ urlpatterns = [
         view=subscriptions_views.subscription_update_status,
         name='subscription_status'
     ),
+
+    # Subscription Payments
     path(
         route='payments/<int:payment_id>/toggle',
         view=subscriptions_views.payment_toggle_paid,
         name='payment_toggle'
+    ),
+    path(
+        route='subscription-payments/',
+        view=subscriptions_views.get_subscription_payments,
+        name='subscription_payments'
     ),
 
     # Incomes
