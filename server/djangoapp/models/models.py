@@ -94,7 +94,8 @@ class Subscription(models.Model):
 
 class SubscriptionPayment(models.Model):
     """ Records each individual payment/charge for a subscription."""
-    
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, default=1)
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,

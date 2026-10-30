@@ -117,12 +117,12 @@ urlpatterns = [
     ),
     path(
         route='subscriptions/create',
-        view=subscriptions_views.subscriptions_create,
+        view=subscriptions_views.subscription_create,
         name='subscriptions_create'
     ),
     path(
         route='subscriptions/<int:subscription_id>',
-        view=subscriptions_views.subscriptions_detail,
+        view=subscriptions_views.subscription_detail,
         name='subscription_detail'
     ),
     path(
@@ -149,8 +149,38 @@ urlpatterns = [
     ),
     path(
         route='subscription-payments/',
+        view=subscriptions_views.get_user_subscription_payments,
+        name='user_subscription_payments'
+    ),
+    path(
+        route='subscription-payments/generate-for-user',
+        view=subscriptions_views.generate_subscription_payments,
+        name='generate_subscription_payments'
+    ),
+    path(
+        route='subscriptions/<int:subscription_id>/payments/',
         view=subscriptions_views.get_subscription_payments,
         name='subscription_payments'
+    ),
+    path(
+        route='subscription-payments/create',
+        view=subscriptions_views.subscription_payment_create,
+        name='subscription_payment_create'
+    ),
+    path(
+        route='payments/<int:payment_id>',
+        view=subscriptions_views.subscription_payment_detail,
+        name='subscription_payment_detail'
+    ),
+    path(
+        route='payments/<int:payment_id>/update',
+        view=subscriptions_views.subscription_payment_update,
+        name='subscription_payment_update'
+    ),
+    path(
+        route='payments/<int:payment_id>/delete',
+        view=subscriptions_views.subscription_payment_delete,
+        name='subscription_payment_delete'
     ),
 
     # Incomes

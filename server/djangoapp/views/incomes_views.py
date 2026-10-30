@@ -42,7 +42,7 @@ def get_income_data(user, period):
     subscription_payments = get_request("subscription-payments/", **subscription_payment_params) or []
 
     # Calculate totals
-    total_income = sum((Decimal(str(i.amount)) for i in incomes), Decimal('0'))
+    total_income = sum((Decimal(str(i.get("amount", 0))) for i in incomes), Decimal('0'))
     transaction_spending = sum((Decimal(str(t["amount"])) for t in transactions), Decimal('0'))
     subscription_spending = sum((Decimal(str(p["amount"])) for p in subscription_payments), Decimal('0'))
     total_spent = transaction_spending + subscription_spending

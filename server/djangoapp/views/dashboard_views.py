@@ -254,11 +254,12 @@ def dashboard(request):
             categories = compute_spending_by_category(request.user, period)
 
             # Generate subscription payments (side effect to keep data current)
-            # Try to call via API if endpoint exists, otherwise skip
+            # Use internal service directly to avoid circular API call
             try:
-                post_request("subscription-payments/generate", {"user_id": request.user.id})
+                from ..services.subscription_service import generate_subscription_payments as generate_subscription_payments_service
+                generate_subscription_payments_service(request.user.id)
             except Exception:
-                # If API endpoint doesn't exist, continue without generating payments
+                # If internal service fails, continue without generating payments
                 # This maintains backward compatibility
                 pass
 
@@ -267,8 +268,30 @@ def dashboard(request):
             start, end = get_date_bounds(period)
             if start and end:
                 subscription_params["start_date__lte"] = _iso_date(end)  # Started before or during period
-                subscription_params["end_date__gte"] = _iso_date(start)  # Ends after or during period (or NULL)
+                # Handle NULL end_date (ongoing subscriptions) by using OR condition
+                # We'll fetch all active subscriptions and filter in Python for simplicity
+                # In a production app, you might want to optimize this with raw SQL or better API filtering
+                pass
             subscriptions = get_request("subscriptions/", **subscription_params) or []
+
+            # Filter subscriptions to include those active during the period
+            # A subscription is active during the period if:
+            # 1. It started before or during the period (start_date <= period_end)
+            # 2. AND (it has no end_date OR it ends after or during the period (end_date >= period_start))
+            if start and end:
+                start_iso = _iso_date(start)
+                end_iso = _iso_date(end)
+                filtered_subscriptions = []
+                for sub in subscriptions:
+                    sub_start = sub.get("start_date")
+                    sub_end = sub.get("end_date")
+
+                    # Check if subscription started before or during period
+                    if sub_start and sub_start <= end_iso:
+                        # Check if subscription has no end_date (ongoing) or ends after/during period
+                        if not sub_end or sub_end >= start_iso:
+                            filtered_subscriptions.append(sub)
+                subscriptions = filtered_subscriptions
 
             # Get budgets data (already API-based via local view)
             budgets = get_budgets_data(request.user, period)

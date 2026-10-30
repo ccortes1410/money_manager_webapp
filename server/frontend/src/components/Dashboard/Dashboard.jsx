@@ -10,6 +10,7 @@ import CategorySpendingCard from './Dashboard Cards/CategorySpendingCard';
 import SubscriptionsCard from './Dashboard Cards/SubscriptionsCard';
 import BudgetsCard from './Dashboard Cards/BudgetsCard';
 import IncomeCard from './Dashboard Cards/IncomeCard';
+import { apiFetch } from '../../utils/csrf';
 Chart.register(BarElement, ArcElement, LineController, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Title);
 
 const PERIODS = ["daily", "weekly", "monthly", "yearly", "total"];
@@ -72,7 +73,7 @@ const Dashboard = () => {
     let trans_url = "/djangoapp/api/transactions";
     let subs_url = "/djangoapp/api/subscriptions";
     let budget_url = "/djangoapp/api/budgets";
-    let income_url = "/djangoapp/api/income";
+    let income_url = "/djangoapp/api/incomes";
     
 
     const navigate = useNavigate();
@@ -166,7 +167,7 @@ const Dashboard = () => {
     
     const get_income = async () => {
         try {
-            const res = await fetch(income_url, {
+            const res = await apiFetch(income_url, {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -462,13 +463,22 @@ const Dashboard = () => {
     // console.log("Total Income: ", totalIncomeThisMonth)
     // console.log(remainingFundsPercent)   
     
-    useEffect(() => {
-        get_transactions();
-        get_subscriptions();
-        get_budgets();
-        get_income();
-    }, []);
+    // Individual fetch functions removed - relying on dashboard endpoint for all data
+// useEffect(() => {
+    // get_transactions();
+    // get_subscriptions();
+    // get_budgets();
+    // get_income();
+// }, []);
 
+
+    // Individual fetch functions disabled - relying on dashboard endpoint for all data
+    // useEffect(() => {
+    //     get_transactions();
+    //     get_subscriptions();
+    //     get_budgets();
+    //     get_income();
+    // }, [])
 
     useEffect(() => {
         if (user !== null && !user.is_authenticated) {

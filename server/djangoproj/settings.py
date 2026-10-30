@@ -47,7 +47,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'money-manager-cxwe.onrender.com',
+    '.vercel.app',
 ]
 
 CORS_ALLOWED_ORIGINS = [

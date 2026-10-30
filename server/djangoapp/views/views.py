@@ -30,9 +30,9 @@ from ..services.transactions import get_transactions_chart_data
 from ..services.category_service import compute_spending_by_category
 from ..services.subscription_service import (
     get_subscriptions_for_period,
-    compute_subscription_summary,
-    compute_subscription_total
+    compute_subscription_summary
     )
+from ..services.spending_calculations import compute_subscription_total
 from django_ratelimit.decorators import ratelimit
 
 import logging

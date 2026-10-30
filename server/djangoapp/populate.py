@@ -115,11 +115,13 @@ def initiate():
         )
         # One already-paid payment, one upcoming/unpaid.
         SubscriptionPayment.objects.get_or_create(
+            user=alex,
             subscription=sub,
             due_date=month_start,
             defaults={"amount": sub.amount, "is_paid": True, "paid_date": month_start},
         )
         SubscriptionPayment.objects.get_or_create(
+            user=alex,
             subscription=sub,
             due_date=month_end,
             defaults={"amount": sub.amount, "is_paid": False},

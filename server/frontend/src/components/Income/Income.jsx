@@ -125,7 +125,7 @@ const Income = () => {
         if (!window.confirm(`Delete ${selectedIncomeIds.length} income record(s)?`)) return;
 
         try {
-            const res = await fetch(income_url+`delete`, {
+            const res = await fetch(income_url+`/delete`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -348,7 +348,7 @@ const Income = () => {
                         ${formatCurrency(summary.remaining)}
                     </span>
                     <span className="inc-percent">
-                        {summary.percent_remaining?.toFixed(1) || 0}% of income
+                        {Number(summary.percent_remaining || 0).toFixed(1)}% of income
                     </span>
                 </div>
             </div>
@@ -493,7 +493,7 @@ const Income = () => {
                         />
                     </div>
                     <span className="inc-progress-label">
-                        {(summary.percent_remaining || 0).toFixed(1)}%
+                        {Number(summary.percent_remaining || 0).toFixed(1)}%
                     </span>
                     <span className="inc-progress-sublabel">remaining</span>
                 </div>

@@ -3,6 +3,7 @@ const sequelize = require('./db');
 
 const SubscriptionPayment = sequelize.define('SubscriptionPayment', {
     id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
+    user_id: { type: DataTypes.INTEGER, allowNull: false },
     subscription_id: { type: DataTypes.INTEGER, allowNull: false },
     amount: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     due_date: { type: DataTypes.DATEONLY, allowNull: false },

@@ -16,34 +16,40 @@ def _headers():
 
 
 def get_request(endpoint, **params):
-    """GET <BACKEND_URL><endpoint>?<params>. Returns None on failuer."""
+    """GET <BACKEND_URL><endpoint>?<params>. Returns None on failure."""
     url = BACKEND_URL + endpoint
     try:
         response = requests.get(url, params=params, headers=_headers(), timeout=5)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Error caliing GET {url}: {e}")
+        print(f"Error calling GET {url}: {e}")
         return None
 
 
-def post_request(endpoint, data):
+def post_request(endpoint, data=None, **params):
     """POST a JSON body to <BACKEND_URL><endpoint>. Returns None on failure."""
     url = BACKEND_URL + endpoint
     try:
-        response = requests.post(url, json=data, headers=_headers(), timeout=5)
+        response = requests.post(url, json=data, params=params, headers=_headers(), timeout=5)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         print(f"Error calling POST {url}: {e}")
+        # Try to get error response details if available
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                return e.response.json()  # Return the error details from backend
+            except:
+                pass  # If we can't parse JSON, fall through to return None
         return None
 
 
-def patch_request(endpoint, data):
+def patch_request(endpoint, data=None, **params):
     """PATCH a JSON body to <BACKEND_URL><endpoint>. Return None on failure."""
     url = BACKEND_URL + endpoint
     try:
-        response = requests.patch(url, json=data, headers=_headers(), timeout=5)
+        response = requests.patch(url, json=data, params=params, headers=_headers(), timeout=5)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
@@ -51,11 +57,11 @@ def patch_request(endpoint, data):
         return None
 
 
-def delete_request(endpoint):
+def delete_request(endpoint, **params):
     """DELETE <BACKEND_URL><endpoint>. Return None on failure."""
     url = BACKEND_URL + endpoint
     try:
-        response = requests.delete(url, headers=_headers(), timeout=5)
+        response = requests.delete(url, params=params, headers=_headers(), timeout=5)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:

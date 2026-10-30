@@ -184,9 +184,9 @@ const Budgets = () => {
     const handleToggleRecurring = async (budgetId, isRecurring, recurrence = "monthly") => {
         const toggle_url = `/djangoapp/budgets/${budgetId}/toggle-recurring`;
         try {
-            const response = await fetch(toggle_url, {
+            const response = await apiFetch(toggle_url, {
                 method: 'PATCH',
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     is_recurring: isRecurring,
                     recurrence,
                 })
