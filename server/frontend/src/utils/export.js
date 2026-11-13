@@ -51,7 +51,7 @@ function downloadFile(content, filename, mimeType) {
 export function exportToCSV(data, columns, filename = "export") {
     const csv = objectsToCSV(data, columns);
     if (!csv) return false;
-    downloadFile(csv, `${filename}.csv`, "text/csv;charset-utf-8;");
+    downloadFile(csv, `${filename}.csv`, "text/csv;charset=utf-8;");
     return true;
 }
 
@@ -172,7 +172,7 @@ export function exportToPDF({
     const tableData = data.map((item) =>
         columns.map((col) => {
             const val = col.accesor(item);
-            return val !== null & val !== undefined ? String(val) : "";
+            return val !== null && val !== undefined ? String(val) : "";
         })
     );
 
@@ -273,7 +273,7 @@ export const EXPORT_CONFIGS = {
             {
                 label: "Remaining",
                 accesor: (b) =>
-                    `$${parseFloat(b.amount || 0) - parseFloat(b.spent || 0).toFixed(2)}`,
+                    `$${(parseFloat(b.amount || 0) - parseFloat(b.spent || 0)).toFixed(2)}`,
             },
             {
                 label: "% Used",
@@ -288,7 +288,7 @@ export const EXPORT_CONFIGS = {
         ],
         getFilename: () =>
             `budgets_${new Date().toISOString().split('T')[0]}`,
-        getTile: () => "Budget Report"
+        getTitle: () => "Budget Report"
     },
 
     subscriptions: {
@@ -328,9 +328,10 @@ export const EXPORT_CONFIGS = {
             },
             {
                 label: "Date Received",
-                accesor: (inc) => inc.period_start,
+                accesor: (inc) => inc.date_received || "-",
             },
-            { label: "Period End", accesor: (inc) => inc.period_end },
+            { label: "Period Start", accesor: (inc) => inc.period_start || "-" },
+            { label: "Period End", accesor: (inc) => inc.period_end || "-" },
         ],
         getFilename: () =>
             `income_${new Date().toISOString().split('T')[0]}`,

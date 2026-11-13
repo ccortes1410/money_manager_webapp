@@ -1,7 +1,6 @@
-import React, { useRef, useState, useEffect, useContext, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../AuthContext";
+import React, { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useToast } from '../Toast/ToastContext';
+import { apiFetch } from "../../utils/csrf";
 import ExportButton from "../ExportButton/ExportButton";
 import { EXPORT_CONFIGS } from "../../utils/export";
 import IncomeModal from './IncomeModal';
@@ -36,19 +35,16 @@ const Income = () => {
     const [ filter, setFilter ] = useState("all");
     const [ searchQuery, setSearchQuery ] = useState("");
 
-    const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
     const monthsRefs = useRef({}); 
     const toast = useToast();
     
     const income_url = "/djangoapp/incomes";
 
     // Fetch income data for the logged-in user
-    const fetchIncome = async () => {
+    const fetchIncome = useCallback(async () => {
         try {
-            const res = await fetch(income_url, {
+            const res = await apiFetch(income_url, {
                 method: "GET",
-                credentials: "include",
             });
 
             const data = await res.json();
@@ -59,11 +55,11 @@ const Income = () => {
             }
 
             if (data.summary) {
-                setSummary(data.summary)
+                setSummary(data.summary);
             }
 
             if (data.by_source) {
-                setBySource(data.by_source)
+                setBySource(data.by_source);
             }
         } catch (error) {
             console.error("Error fetching income data:", error);
@@ -71,14 +67,12 @@ const Income = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const handleCreate = async (incomeData) => {
         try {
-            const res = await fetch(income_url+`/create`, {
+            const res = await apiFetch(`${income_url}/create`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(incomeData),
             });
 
@@ -87,21 +81,21 @@ const Income = () => {
             if (res.ok) {
                 fetchIncome();
                 setShowModal(false);
+                toast.success("Income added successfully");
             } else {
                 console.error("Error adding income:", data.error);
-                alert(data.error || "Faile to add income");
+                toast.error(data.error || "Failed to add income");
             }
         } catch (error) {
             console.error("Error adding income:", error);
+            toast.error("Something went wrong");
         }
     };
 
     const handleUpdate = async (id, incomeData) => {
         try {
-            const res = await fetch(income_url+`/${id}/update`, {
+            const res = await apiFetch(`${income_url}/${id}/update`, {
                 method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(incomeData),
             });
 
@@ -111,12 +105,14 @@ const Income = () => {
                 fetchIncome();
                 setShowModal(false);
                 setEditingIncome(null);
+                toast.success("Income updated");
             } else {
                 console.error("Error updating income:", data.error);
-                alert(data.error || "Failed to update income");
+                toast.error(data.error || "Failed to update income");
             }
         } catch (error) {
             console.error("Error updating income:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -125,10 +121,8 @@ const Income = () => {
         if (!window.confirm(`Delete ${selectedIncomeIds.length} income record(s)?`)) return;
 
         try {
-            const res = await fetch(income_url+`/delete`, {
+            const res = await apiFetch(`${income_url}/delete`, {
                 method: 'DELETE',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ income_ids: selectedIncomeIds }),
             });
 
@@ -138,11 +132,13 @@ const Income = () => {
                 fetchIncome();
                 setSelectedIncomeIds([]);
                 setSelectedIncome(null);
+                toast.success("Income record(s) deleted");
             } else {
-                alert(data.error || "Failed to delete income");
+                toast.error(data.error || "Failed to delete income");
             }
         } catch (error) {
             console.error("Error deleting income:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -259,13 +255,7 @@ const Income = () => {
 
     useEffect(() => {
         fetchIncome();
-    }, []);
-
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/");
-        }
-    }, [user]);
+    }, [fetchIncome]);
 
     const formatCurrency = (value) => {
         const num = parseFloat(value) || 0;
@@ -326,7 +316,7 @@ const Income = () => {
                 </div>
                 <div className="inc-summary-card this-month">
                     <span className="label">This Month Income</span>
-                    <span className="value">${formatCurrency(summary.this_month)}</span>
+                    <span className="value">${formatCurrency(summary.this_month?.income)}</span>
                 </div>
                 <div className="inc-summary-card spent">
                     <span className="label">Total Spent</span>
@@ -338,7 +328,7 @@ const Income = () => {
                         </span>
                         <span className="inc-breakdown-item">
                             <span className="inc-breakdown-dot subscriptions"></span>
-                            Susbcriptions: ${formatCurrency(summary.subscription_spent)}
+                            Subscriptions: ${formatCurrency(summary.subscription_spent)}
                         </span>
                     </div>
                 </div>
@@ -562,7 +552,7 @@ const Income = () => {
                                             <input
                                                 type="checkbox"
                                                 checked={
-                                                    selectedIncomeIds.length === filteredIncome &&
+                                                    selectedIncomeIds.length === filteredIncome.length &&
                                                     filteredIncome.length > 0
                                                 }
                                                 onChange={handleSelectAll}
@@ -594,7 +584,7 @@ const Income = () => {
                                             <td className="source-col">
                                                 <span className="source-badge">{inc.source}</span>
                                             </td>
-                                            <td clasName="amount-col">
+                                            <td className="amount-col">
                                                 ${formatCurrency(inc.amount)}
                                             </td>
                                             <td className="date-col">{inc.date_received}</td>

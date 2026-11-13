@@ -195,19 +195,16 @@ def compute_spending_by_category(user, period: str):
     subscription_payments = get_request("subscription-payments/", **payment_params) or []
 
     # Process subscription payments by category (need to get subscription details)
-    # For now, we'll use a default category since we don't have easy access to subscription category
-    # In a full implementation, we might need to fetch subscriptions to get their categories
     for p in subscription_payments:
-        # Try to get subscription details to get category
-        subscription_id = p.get("subscription")
-        if subscription_id:
-            subscription_row = get_request(f"subscriptions/{subscription_id}")
-            if subscription_row:
-                category = subscription_row.get("category") or "Uncategorized"
-            else:
-                category = "Uncategorized"
-        else:
-            category = "Uncategorized"
+        subscription_id = p.get("subscription_id") or p.get("subscription")
+        if not subscription_id:
+            continue
+
+        subscription_row = get_request(f"subscriptions/{subscription_id}")
+        if not subscription_row or subscription_row.get("status") != "active":
+            continue
+
+        category = subscription_row.get("category") or "Uncategorized"
 
         amount = float(p.get("amount", 0))
         category_totals[category]["subscriptions"] += amount

@@ -1,19 +1,13 @@
-import { useContext, useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../AuthContext';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useToast } from '../Toast/ToastContext';
 import { apiFetch } from '../../utils/csrf';
 import ExportButton from '../ExportButton/ExportButton';
 import { EXPORT_CONFIGS } from '../../utils/export';
 import './Budgets.css';
-import '../Dashboard/Dashboard.css';
 import Budget from './Budget';
-import { Chart, ArcElement, Tooltip, Legend, Title } from 'chart.js';
 import BudgetModal from './BudgetModal';
 import BudgetCard from './BudgetCard';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
-
-Chart.register(ArcElement, Tooltip, Legend, Title);
 
 const Budgets = () => {
     const [budgets, setBudgets] = useState([]);
@@ -24,14 +18,12 @@ const Budgets = () => {
     const [ showModal, setShowModal ] = useState(false);
     const [ editingBudget, setEditingBudget ] = useState(null);
     const [ filter, setFilter ] = useState("all");
-    const { user } = useContext(AuthContext);
     const [ deleteConfirm, setDeleteConfirm ] = useState(null);
 
     const budgets_url = '/djangoapp/budgets';
-    const navigate = useNavigate();
     const toast = useToast();
 
-    const get_budgets = async () => {
+    const get_budgets = useCallback(async () => {
         try {
             const response = await apiFetch(budgets_url, {
                 method: 'GET',
@@ -49,10 +41,10 @@ const Budgets = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
 
-    const get_budget = async (budgetId) => {
-        if (budgetCache[budgetId]) {
+    const get_budget = useCallback(async (budgetId, forceRefresh = false) => {
+        if (!forceRefresh && budgetCache[budgetId]) {
             setBudgetDetail(budgetCache[budgetId]);
             return;
         }
@@ -64,7 +56,7 @@ const Budgets = () => {
             });
             
             if (!response.ok) {
-                throw new Error("Error fetching budget")
+                throw new Error("Error fetching budget");
             }
             
             const data = await response.json();
@@ -76,14 +68,12 @@ const Budgets = () => {
                     [budgetId]: data.budget
                 }));
             }
-
-            
         } catch (error) {
-            console.log("Couldn't fetch budget:", error)
+            console.error("Couldn't fetch budget:", error);
             toast.error("Failed to load budget details");
             setBudgetDetail(null);
         }
-    }
+    }, [budgetCache, toast]);
 
     const handleCreate = async (budgetData) => {
         const add_url = `/djangoapp/budgets/create`;
@@ -125,9 +115,9 @@ const Budgets = () => {
                     delete copy[budgetId];
                     return copy;
                 });
-                // Refresh deatil if it's selected
+                // Refresh detail if it's selected
                 if (selectedBudgetId === budgetId) {
-                    get_budget(budgetId);
+                    get_budget(budgetId, true);
                 }
                 toast.success("Budget updated");
             } else {
@@ -140,16 +130,14 @@ const Budgets = () => {
     };
 
     const handleDelete = async (budgetId) => {
-        if (!window.confirm("Delete this budget?")) return;
-
-        const delete_url = `/djangoapp/budgets/${budgetId}/delete`;
+        const delete_url = `/djangoapp/budgets/${budgetId}/delete/`;
         try {
             const response = await apiFetch(delete_url, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                setBudgets((prev) => prev.filter((b) => b.i !== budgetId));
+                setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
                 if (selectedBudgetId === budgetId) {
                     setSelectedBudgetId(null);
                     setBudgetDetail(null);
@@ -216,18 +204,12 @@ const Budgets = () => {
 
     useEffect(() => {
         get_budgets();
-    }, [])
+    }, [get_budgets]);
 
     useEffect(() => {
         if (selectedBudgetId === null) return;
         get_budget(selectedBudgetId);
-    }, [selectedBudgetId]);
-
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate('/');
-        }
-    }, [user, navigate]);
+    }, [selectedBudgetId, get_budget]);
 
     // Filter budgets
     const filteredBudgets = filter === "all"
@@ -240,13 +222,11 @@ const Budgets = () => {
     
     // Calculate totals
     const totals = useMemo(() => ({
-        totalBudgeted: budgets.reduce((sum, b) => sum + Number(b.amount), 0),
-        totalSpent: budgets.reduce((sum, b) => sum + b.spent, 0),
+        totalBudgeted: budgets.reduce((sum, b) => sum + Number(b.amount || 0), 0),
+        totalSpent: budgets.reduce((sum, b) => sum + Number(b.spent || 0), 0),
         overBudget: budgets.filter((b) => b.isOver).length,
         onTrack: budgets.filter((b) => !b.isOver).length,
     }), [budgets]);
-
-    console.log("Budget detail:", budgetDetail);
 
     return (
             <div className="budgets-page">
@@ -256,7 +236,7 @@ const Budgets = () => {
                         <ExportButton
                             data={filteredBudgets}
                             columns={EXPORT_CONFIGS.budgets.columns}
-                            title={EXPORT_CONFIGS.budgets.getTile()}
+                            title={EXPORT_CONFIGS.budgets.getTitle()}
                             subtitle={`${filteredBudgets.length} budgets - ${filter} filter`}
                             filename={EXPORT_CONFIGS.budgets.getFilename()}
                             summary={[
@@ -278,7 +258,7 @@ const Budgets = () => {
                                 {
                                     label: "Over Budget",
                                     value: String(totals.overBudget),
-                                    color: [245, 258, 11],
+                                    color: [245, 158, 11],
                                 },
                             ]}
                             onExport={(status, message) => {

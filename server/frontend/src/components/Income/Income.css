@@ -160,7 +160,7 @@
 }
 
 @media (max-width: 768px) {
-    .this-month-cards {
+    .inc-this-month-cards {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -346,7 +346,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column-reverse;
-    border: 2px sold #333;
+    border: 2px solid #333;
 }
 
 .inc-progress-bar-vertical .inc-progress-fill {

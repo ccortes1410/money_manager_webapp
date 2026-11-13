@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from calendar import monthrange
 from decimal import Decimal
 from ..restapi import get_request, post_request
@@ -15,28 +15,7 @@ def generate_subscription_payments(user_id, up_to_date=None):
     if up_to_date is None:
         up_to_date = date.today()
 
-    # Call the Node.js backend to generate subscription payments
-    # We need to pass the user_id and up_to_date to the backend
-    try:
-        # Assuming there's an endpoint to generate payments for a user
-        # This would need to be implemented in the Node.js backend
-        data = {
-            "user_id": user_id,
-            "up_to_date": up_to_date.isoformat()
-        }
-        # Note: This endpoint may not exist yet in the Node.js backend
-        # For now, we'll return 0 to maintain compatibility
-        # TODO: Implement this endpoint in Node.js backend
-        # response = post_request("subscription-payments/generate-for-user", data)
-        # return response.get("created_count", 0) if response else 0
-
-        # Fallback: if the endpoint doesn't exist, we'll need to generate
-        # payments by fetching subscriptions and creating them one by one
-        # via the API (less efficient but works)
-        return _generate_subscription_payments_via_api(user_id, up_to_date)
-    except Exception:
-        # If anything goes wrong, return 0 to avoid breaking the calling code
-        return 0
+    return _generate_subscription_payments_via_api(user_id, up_to_date)
 
 
 def _generate_subscription_payments_via_api(user_id, up_to_date):
@@ -54,22 +33,34 @@ def _generate_subscription_payments_via_api(user_id, up_to_date):
 
     for sub_data in subscriptions_data:
         subscription_id = sub_data["id"]
-        start_date = sub_data["start_date"]
-        end_date = sub_data.get("end_date")
+        start_date = _parse_api_date(sub_data["start_date"])
+        end_date = _parse_api_date(sub_data.get("end_date"))
         amount = Decimal(str(sub_data["amount"]))
         billing_cycle = sub_data["billing_cycle"]
         billing_day = int(sub_data["billing_day"])
 
         # Generate payments for this subscription
         created_count += _generate_payments_for_subscription_via_api(
-            subscription_id, start_date, end_date, amount,
+            user_id, subscription_id, start_date, end_date, amount,
             billing_cycle, billing_day, up_to_date
         )
 
     return created_count
 
 
-def _generate_payments_for_subscription_via_api(subscription_id, start_date, end_date,
+def _parse_api_date(value):
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        return date.fromisoformat(value.split("T", 1)[0])
+    raise ValueError(f"Invalid subscription date: {value!r}")
+
+
+def _generate_payments_for_subscription_via_api(user_id, subscription_id, start_date, end_date,
                                                amount, billing_cycle, billing_day, up_to_date):
     """
     Generate all missing SubscriptionPayment records for a subscription
@@ -98,14 +89,15 @@ def _generate_payments_for_subscription_via_api(subscription_id, start_date, end
         # If no payment exists for this date, create one
         if not existing_payments:
             payment_data = {
-                "subscription": subscription_id,
+                "user_id": user_id,
+                "subscription_id": subscription_id,
                 "due_date": billing_date.isoformat(),
                 "amount": str(amount),
                 "is_paid": False
             }
 
             response = post_request("subscription-payments/", payment_data)
-            if response:
+            if response and "error" not in response:
                 created_count += 1
 
     return created_count

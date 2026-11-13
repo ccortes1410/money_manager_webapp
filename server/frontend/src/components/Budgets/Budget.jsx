@@ -29,15 +29,6 @@ const Budget = ({ budget }) => {
     const transactions = Array.isArray(budget.transactions) ? budget.transactions : [];
     const subscriptions = Array.isArray(budget.subscriptions) ? budget.subscriptions : [];
 
-    console.log("Budget data:", {
-        raw_amount: budget.amount,
-        raw_spent: budget.spent,
-        parsed_amount: amount,
-        parsed_spent: spent,
-        remaining,
-        percentUsed
-    });
-
     return (
         <div className="budget-details">
             {/* Header */}
@@ -134,12 +125,12 @@ const Budget = ({ budget }) => {
                             <tfoot>
                                 <tr>
                                     <td colSpan="2" className="total-label">Total</td>
-                                    <td className="total-value">${spent.toFixed(2)}</td>
+                                    <td className="total-value">${transactionSpent.toFixed(2)}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-                )};
+                )}
             </div>
             
             {/* Subscriptions Section */}

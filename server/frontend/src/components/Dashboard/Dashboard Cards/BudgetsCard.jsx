@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Doughnut } from "react-chartjs-2";
 
-const BudgetsCard = ({ budgets, period }) => {
+const BudgetsCard = ({ budgets = {}, period }) => {
     const {
         total_budgeted = 0,
         total_spent = 0,
@@ -13,19 +13,17 @@ const BudgetsCard = ({ budgets, period }) => {
     const displayRemaining = Math.max(remaining, 0);
     const displayOverage = Math.abs(Math.min(remaining, 0));
 
-    const COLORS = {
-        spent: isOverBudget ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 1)',
-        remaining: 'rgba(34, 197, 94, 1)',
-        overage: 'rgba(239, 68, 68, 1)',
-    };
-
     const chartData = useMemo(() => {
+        const spentColor = isOverBudget ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 1)';
+        const remainingColor = 'rgba(34, 197, 94, 1)';
+        const overageColor = 'rgba(239, 68, 68, 1)';
+
         if (isOverBudget) {
             return {
-                labels: ['Spent', 'Remaining'],
+                labels: ['Budgeted', 'Over'],
                 datasets: [{
-                    data: [total_budgeted, displayRemaining],
-                    backgroundColor: [COLORS.spent, COLORS.overage],
+                    data: [total_budgeted, displayOverage],
+                    backgroundColor: [spentColor, overageColor],
                     borderWidth: 0,
                 }],
             };
@@ -34,11 +32,17 @@ const BudgetsCard = ({ budgets, period }) => {
             labels: ['Spent', 'Remaining'],
             datasets: [{
                 data: [total_spent, displayRemaining],
-                backgroundColor: [COLORS.spent, COLORS.remaining],
+                backgroundColor: [spentColor, remainingColor],
                 borderWidth: 0,
             }],
         };
-    }, [total_spent, displayRemaining, isOverBudget, displayOverage, total_budgeted])
+    }, [total_spent, displayRemaining, isOverBudget, displayOverage, total_budgeted]);
+
+    const COLORS = {
+        spent: isOverBudget ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 1)',
+        remaining: 'rgba(34, 197, 94, 1)',
+        overage: 'rgba(239, 68, 68, 1)',
+    };
 
     const chartOptions = useMemo(() => ({
         responsive: true,
@@ -89,7 +93,7 @@ const BudgetsCard = ({ budgets, period }) => {
 
     if (total_budgeted === 0) {
         return (
-            <div className="card-inner>">
+            <div className="card-inner">
                 <h3>Budgets ({period})</h3>
                 <div className="no-data-container">
                     <p className="no-data">No budgets for this period.</p>

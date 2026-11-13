@@ -1,6 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo } from 'react';
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from '../../AuthContext';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useToast } from '../Toast/ToastContext';
 import { apiFetch } from '../../utils/csrf';
 import ExportButton from '../../components/ExportButton/ExportButton';
@@ -18,13 +16,11 @@ const Transactions = () => {
     const [ filter, setFilter ] = useState("all");
     const [ sortConfig, setSortConfig ] = useState({ key: 'date', direction: 'desc' });
 
-    const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
     const toast = useToast();
 
     const transaction_url = "/djangoapp/transactions";
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
             const res = await apiFetch(transaction_url, {
                 method: 'GET',
@@ -43,7 +39,7 @@ const Transactions = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
 
     const handleCreate = async (transactionData) => {
         try {
@@ -86,10 +82,9 @@ const Transactions = () => {
         }
     };
 
-    const [ showDeleteConfirm, setShowDeleteConfirm ] = useState(false);
-
     const handleDelete = async () => {
         if (selectedTransactions.length === 0) return;
+        if (!window.confirm(`Delete ${selectedTransactions.length} transaction(s)?`)) return;
         
         try {
             const res = await apiFetch(transaction_url+`/delete`, {
@@ -213,13 +208,7 @@ const Transactions = () => {
 
     useEffect(() => {
         fetchTransactions();
-    }, []);
-
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/");
-        }
-    }, [user, navigate]);
+    }, [fetchTransactions]);
 
     // Sort indicator component
     const SortIndicator = ({ columnKey}) => {
@@ -350,7 +339,7 @@ const Transactions = () => {
                 ) : filteredAndSortedTransactions.length === 0 ? (
                     <div className="empty-state">
                         {searchQuery || filter !== "all"
-                            ? "No tranasctions match your filters."
+                            ? "No transactions match your filters."
                             : "No transactions yet. Add your first one!"}
                     </div>
                 ) : (
@@ -384,7 +373,7 @@ const Transactions = () => {
                                     className="sortable"
                                     onClick={() => handleSort('category')}
                                 >
-                                    Cateogry <SortIndicator columnKey="category" />
+                                    Category <SortIndicator columnKey="category" />
                                 </th>
                                 <th
                                     className="sortable amount-col"

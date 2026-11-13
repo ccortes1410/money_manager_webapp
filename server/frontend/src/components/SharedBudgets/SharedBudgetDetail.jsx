@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
+import { apiFetch } from '../../utils/csrf';
+import { getAvatarColor, getInitials } from '../../utils/formatters';
 import AddExpenseModal from './AddExpenseModal';
 import SettleUpModal from './SettleUpModal';
 import InviteFriendModal from './InviteFriendModal';
@@ -19,12 +21,10 @@ const SharedBudgetDetail = () => {
     const navigate = useNavigate();
     const baseUrl = "/djangoapp";
 
-    const fetchBudgetDetail = async () => {
+    const fetchBudgetDetail = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${id}`, {
-                credentials: 'include',
-            });
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${id}`);
             const data = await res.json();
 
             if (res.ok) {
@@ -38,14 +38,12 @@ const SharedBudgetDetail = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, navigate]);
 
     const handleAddExpense = async (expenseData) => {
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${id}/expenses/add`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${id}/expenses/add`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(expenseData),
             });
             const data = await res.json();
@@ -65,9 +63,8 @@ const SharedBudgetDetail = () => {
         if (!window.confirm("Delete this expense?")) return;
 
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${id}/expenses/${expenseId}/delete`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${id}/expenses/${expenseId}/delete`, {
                 method: 'DELETE',
-                credentials: 'include'
             });
             const data = await res.json();
 
@@ -83,10 +80,8 @@ const SharedBudgetDetail = () => {
 
     const handleSettle = async (settlementData) => {
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${id}/settle`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${id}/settle`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settlementData),
             });
             const data = await res.json();
@@ -106,9 +101,8 @@ const SharedBudgetDetail = () => {
         if (!window.confirm("Are you sure you want to leave this budget?")) return;
 
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${id}/leave`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${id}/leave`, {
                 method: 'POST',
-                credentials: 'include',
             });
             const data = await res.json();
 
@@ -120,28 +114,6 @@ const SharedBudgetDetail = () => {
         } catch (error) {
             console.error("Error leaving budget:", error);
         }
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#06b6d4",
-            "#f97316"
-        ]
-        if (!username) return colors[0];
-        return colors[username.charAt(0) % colors.length];
-    };
-
-    const getInitials = (userObj) => {
-        if (userObj.first_name && userObj.last_name) {
-            return `${userObj.first_name[0]}${userObj.last_name[0]}`.toUpperCase();
-        }
-        return userObj.username?.slice(0, 2).toUpperCase() || "??";
     };
 
     const formatCurrency = (value) => parseFloat(value || 0).toFixed(2);
@@ -163,13 +135,7 @@ const SharedBudgetDetail = () => {
 
     useEffect(() => {
         fetchBudgetDetail();
-    }, [id]);
-
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/login");
-        }
-    }, [user, navigate]);
+    }, [fetchBudgetDetail]);
 
     if (loading) {
         return (
@@ -216,7 +182,7 @@ const SharedBudgetDetail = () => {
                         <>
                             <button
                                 className="sbd-action-btn primary"
-                                onClick={() => setShowInviteModal(true)}
+                                onClick={() => setShowExpenseModal(true)}
                             >
                                 + Add Expense
                             </button>
@@ -240,7 +206,7 @@ const SharedBudgetDetail = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className="sbd-primary">
+            <div className="sbd-summary">
                 <div className="sbd-summary-card">
                     <span className="sbd-summary-label">Total Budget</span>
                     <span className="sbd-summary-value">
@@ -309,7 +275,7 @@ const SharedBudgetDetail = () => {
                             className={`sbd-section-tab ${activeSection === "debts" ? "active" : ""}`}
                             onClick={() => setActiveSection("debts")}
                         >
-                            Debts {debts.length > 0 && `(${debts.legnth})`}
+                            Debts {debts.length > 0 && `(${debts.length})`}
                         </button>
                         <button
                             className={`sbd-section-tab ${activeSection === "settlements" ? "active" : ""}`}
@@ -321,7 +287,7 @@ const SharedBudgetDetail = () => {
 
                     {/* Expenses List */}
                     {activeSection === "expenses" && (
-                        <div className="sbd-length-list">
+                        <div className="sbd-expenses-list">
                             {expenses.length === 0 ? (
                                 <div className="sbd-section-empty">
                                     <p>No expenses yet</p>
@@ -535,7 +501,7 @@ const SharedBudgetDetail = () => {
                     {/* Actions */}
                     <div className="sbd-panel-actions">
                         {!isOwner && (
-                            <button className="sbd-leave-btn" onClick={{handleLeaveBudget}}>
+                            <button className="sbd-leave-btn" onClick={handleLeaveBudget}>
                                 Leave Budget
                             </button>
                         )}

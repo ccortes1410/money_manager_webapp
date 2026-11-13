@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 import './LandingPage.css';
 
 
 const LandingPage = () => {
     const navigate = useNavigate();
-    const token = localStorage.getItem("token");
+    const { user } = useContext(AuthContext);
     const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false);
     const [ activeFeature, setActiveFeature ] = useState(0);
     const [ visibleSections, setVisibleSections ] = useState(new Set());
-    const sectionRefs = useRef({});
 
     useEffect(() => {
-        if(token) {
+        if (user) {
             navigate("/dashboard");
         }
-    }, [token, navigate])
+    }, [user, navigate]);
     // Intersection Observer for scroll animations
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -262,7 +262,7 @@ const LandingPage = () => {
         }
 
         if (p.budgets) {
-            (
+            return (
                 <div className="lp-preview-budgets-view">
                     <div className="lp-preview-title-bar">
                         <div className="lp-preview-dots">
@@ -289,7 +289,7 @@ const LandingPage = () => {
                                         }}
                                     />
                                 </div>
-                                <span className="lp-pb-percent">{b.used}</span>
+                                <span className="lp-pb-percent">{b.used}%</span>
                             </div>
                         ))}
                     </div>
@@ -490,7 +490,7 @@ const LandingPage = () => {
                                     ))}
                             </div>
 
-                            <div clasName="lp-hp-main">
+                            <div className="lp-hp-main">
                                 <div className="lp-hp-header">
                                     <span>Dashboard</span>
                                     <div className="lp-hp-user">JD</div>
@@ -625,6 +625,7 @@ const LandingPage = () => {
 
             {/* SHARED BUDGETS HIGHLIGHT */}
             <section
+                id="shared-highlight"
                 className={`lp-shared-highlight animate-section ${visibleSections.has("shared-highlight") ? "visible" : ""}`}
             >
                 <div className="lp-sh-content">

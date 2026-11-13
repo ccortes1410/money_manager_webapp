@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../AuthContext';
-import FriendCard from  './FriendCard';
+import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../utils/csrf';
+import FriendCard from './FriendCard';
 import FriendRequestCard from './FriendRequestCard';
 import AddFriendModal from './AddFriendModal';
 import './Friends.css';
@@ -15,17 +14,12 @@ const Friends = () => {
     const [ activeTab, setActiveTab ] = useState("friends");
     const [ searchQuery, setSearchQuery ] = useState("");
 
-    const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
-
     const baseUrl = "/djangoapp";
 
     const fetchFriendData = async () => {
         setLoading(true);
         try { 
-            const friendsRes = await fetch(baseUrl+`/friends`, {
-                credentials: 'include',
-            });
+            const friendsRes = await apiFetch(`${baseUrl}/friends`);
             const friendsData = await friendsRes.json();
 
             if (friendsData.friends) {
@@ -33,9 +27,7 @@ const Friends = () => {
             }
             
             // Fetch pending requests
-            const requestsRes = await fetch(baseUrl+`/friends/requests`, {
-                credentials: 'include',
-            });
+            const requestsRes = await apiFetch(`${baseUrl}/friends/requests`);
             const requestsData = await requestsRes.json();
 
             if (requestsData.received_requests) {
@@ -50,16 +42,13 @@ const Friends = () => {
             setLoading(false);
         }
     };
-    console.log("Sent Requests:", sentRequests)
-    console.log("Received Requests:", receivedRequests)
+
     const handleAcceptRequest = async (friendshipId) => {
         try {
-            const res = await fetch(baseUrl+`/friends/request/${friendshipId}/respond`, {
+            const res = await apiFetch(`${baseUrl}/friends/requests/${friendshipId}/respond`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'accept' }),
-            })
+            });
 
             const data = await res.json();
 
@@ -75,10 +64,8 @@ const Friends = () => {
 
     const handleDeclineRequest = async (friendshipId) => {
         try {
-            const res = await fetch(baseUrl+`/friends/request/${friendshipId}/respond`, {
+            const res = await apiFetch(`${baseUrl}/friends/requests/${friendshipId}/respond`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'decline' }),
             });
 
@@ -98,9 +85,8 @@ const Friends = () => {
         if (!window.confirm("Cancel this friend request?")) return;
 
         try {
-            const res = await fetch(baseUrl+`/friends/request/${friendshipId}/cancel`, {
+            const res = await apiFetch(`${baseUrl}/friends/requests/${friendshipId}/cancel`, {
                 method: 'DELETE',
-                credentials: 'include',
             });
 
             const data = await res.json();
@@ -119,9 +105,8 @@ const Friends = () => {
         if (!window.confirm(`Remove ${friendUsername} from your friends?`)) return;
 
         try {
-            const res = await fetch(baseUrl+`/friends/${friendId}/remove`, {
+            const res = await apiFetch(`${baseUrl}/friends/${friendId}/remove`, {
                 method: 'DELETE',
-                credentials: 'include',
             });
 
             const data = await res.json();
@@ -138,10 +123,8 @@ const Friends = () => {
 
     const handleSendRequest = async (userId) => {
         try {
-            const res = await fetch(baseUrl+`/friends/request`, {
+            const res = await apiFetch(`${baseUrl}/friends/request`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: userId }),
             });
 
@@ -151,7 +134,7 @@ const Friends = () => {
                 fetchFriendData();
                 return { success: true, message: data.message };
             } else {
-                return { success: false, message: data.message };
+                return { success: false, message: data.error || data.message || "Failed to send request" };
             }
         } catch (error) {
             console.error("Error sending request:", error);
@@ -173,12 +156,6 @@ const Friends = () => {
     useEffect(() => {
         fetchFriendData();
     }, []);
-
-    useEffect(() => {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/login");
-        }
-    }, [user, navigate]);
 
     const totalPendingCount = receivedRequests.length;
 
@@ -261,7 +238,7 @@ const Friends = () => {
                     <>
                         {/* Search Bar */}
                         <div className="friends-search">
-                            <span classname="search-icon">🔍</span>
+                            <span className="search-icon">🔍</span>
                             <input
                                 id="search"
                                 type="text"

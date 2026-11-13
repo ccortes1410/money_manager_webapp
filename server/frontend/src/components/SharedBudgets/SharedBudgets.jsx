@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../AuthContext';
+import { apiFetch } from '../../utils/csrf';
+import { getAvatarColor, getInitials } from '../../utils/formatters';
 import CreateSharedBudgetModal from './CreateSharedBudgetModal';
 import './SharedBudgets.css';
 
@@ -13,16 +14,13 @@ const SharedBudgets = () => {
     const [ showCreateModal, setShowCreateModal ] = useState(false);
     const [ activeTab, setActiveTab ] = useState('active');
 
-    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const baseUrl = "/djangoapp";
 
     const fetchBudgets = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`'${baseUrl}/shared-budgets`, {
-                credentials: 'include',
-            });
+            const res = await apiFetch(`${baseUrl}/shared-budgets`);
 
             const data = await res.json();
 
@@ -40,10 +38,8 @@ const SharedBudgets = () => {
 
     const handleCreateBudget = async (budgetData) => {
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/create`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/create`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(budgetData),
             });
             const data = await res.json();
@@ -61,10 +57,8 @@ const SharedBudgets = () => {
 
     const handleRespondToInvite = async (inviteId, action) => {
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/invite/${inviteId}/respond`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/invite/${inviteId}/respond`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action }),
             });
             const data = await res.json();
@@ -79,31 +73,9 @@ const SharedBudgets = () => {
         }
     };
 
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6", 
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#06b6d4",
-            "#f97316",
-        ];
-        if (!username) return colors[0];
-        return colors[username.charAt(0) % colors.length];
-    };
-
-    const getInitials = (user) => {
-        if (user.first_name && user.last_name) {
-            return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-        }
-        return user.username?.slice(0, 2).toUpperCase() || "??";
-    };
-
     const formatCurrency = (value) => {
         return parseFloat(value || 0).toFixed(2);
-    }
+    };
 
     const getProgressColor = (progress) => {
         if (progress >= 90) return "#ef4444";
@@ -114,12 +86,6 @@ const SharedBudgets = () => {
     useEffect(() => {
         fetchBudgets();
     }, []);
-
-    useEffect(()=> {
-        if (user !== null && !user.is_authenticated) {
-            navigate("/login");
-        }
-    }, [user, navigate]);
 
     return (
         <div className="shared-budgets-page">
@@ -154,7 +120,7 @@ const SharedBudgets = () => {
                     <span className="sb-stat-icon">💰</span>
                     <div className="sb-stat-info">
                         <span className="sb-stat-value">
-                            ${formatCurrency(activeBudgets.reduce((sum, b) => sum + b.total_amount, 0))}
+                            ${formatCurrency(activeBudgets.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0))}
                         </span>
                         <span className="sb-stat-label">Total Budget</span>
                     </div>
@@ -163,7 +129,7 @@ const SharedBudgets = () => {
                     <span className="sb-stat-icon">📊</span>
                     <div className="sb-stat-info">
                         <span className="sb-stat-value">
-                            ${formatCurrency(activeBudgets.reduce((sum, b) => sum + b.total_amount, 0))}
+                            ${formatCurrency(activeBudgets.reduce((sum, b) => sum + (parseFloat(b.total_spent) || 0), 0))}
                         </span>
                         <span className="sb-stat-label">Total Spent</span>
                     </div>
@@ -237,7 +203,7 @@ const SharedBudgets = () => {
                     onClick={() => setActiveTab("active")}
                 >
                     Active
-                    <span className="sb-tab-count">{activeBudgets.legnth}</span>
+                    <span className="sb-tab-count">{activeBudgets.length}</span>
                 </button>
                 <button
                     className={`sb-tab ${activeTab === "inactive" ? "active" : ""}`}
@@ -309,7 +275,7 @@ const SharedBudgets = () => {
                                     </div>
                                     <div className="sb-progress-bar">
                                         <div
-                                            className="sb-progress-fil"
+                                            className="sb-progress-fill"
                                             style={{
                                                 width: `${Math.min(budget.progress, 100)}%`,
                                                 backgroundColor: getProgressColor(budget.progress),
@@ -347,7 +313,7 @@ const SharedBudgets = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <span className="sb-amount-count">
+                                    <span className="sb-member-count">
                                         {budget.member_count} member{budget.member_count > 1 ? "s" : ""}
                                     </span>
                                 </div>
@@ -356,7 +322,7 @@ const SharedBudgets = () => {
                                 <div className="sb-card-balance">
                                     <span className="sb-balance-label">Your Balance:</span>
                                     <span
-                                        className={`sb-balance-valu ${
+                                        className={`sb-balance-value ${
                                             budget.user_balance > 0
                                                 ? "positive"
                                                 : budget.user_balance < 0
@@ -367,7 +333,7 @@ const SharedBudgets = () => {
                                         {budget.user_balance > 0
                                             ? `You are owed $${formatCurrency(budget.user_balance)}`
                                             : budget.user_balance < 0
-                                            ? `You owe $${formatCurrency(formatCurrency(budget.user_balance))}`
+                                            ? `You owe $${formatCurrency(Math.abs(budget.user_balance))}`
                                             : "All settled ✓"}
                                     </span>
                                 </div>

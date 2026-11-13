@@ -1,16 +1,5 @@
 
 const BudgetCard = ({ budget, isSelected, onSelect, onEdit, onDelete, onToggleRecurring }) => {
-    // const { 
-    //     category,
-    //     amount,
-    //     spent,
-    //     percentUsed,
-    //     isOver,
-    //     period_start,
-    //     period_end,
-    //     recurrence,
-    //     is_recurring,
-    // } = budget;
     const parseAmount = (value) => {
         if (value === null || value === undefined) return 0;
         const parsed = parseFloat(value);
@@ -29,8 +18,6 @@ const BudgetCard = ({ budget, isSelected, onSelect, onEdit, onDelete, onToggleRe
     const recurrence = budget?.recurrence || 'monthly';
     const is_recurring = budget?.is_recurring || false;
 
-    console.log("Budget recevied in BudgetCard:", budget)
-    console.log("Spent in BudgetCard:", spent);
     return (
         <div
             className={`budget-card ${isSelected ? "selected" : ""} ${isOver ? "over-budget" : "on-track"}`}
@@ -98,10 +85,10 @@ const BudgetCard = ({ budget, isSelected, onSelect, onEdit, onDelete, onToggleRe
                         className={`budget-progress-fill ${isOver ? "over" : "remaining"}`}
                         style={{ width: `${Math.min(percentUsed, 100)}%` }}
                     />
-                    <span className={`budget-progress-percent ${isOver ? "over" : ""}`} style={{ width: `${Math.min(percentUsed, 100)}%` }}>
-                        {percentUsed.toFixed(0)}%
-                    </span>
                 </div>
+                <span className={`budget-progress-percent ${isOver ? "over" : ""}`}>
+                    {percentUsed.toFixed(0)}%
+                </span>
 
                 {/* Period Info */}
                 <div className="budget-period">

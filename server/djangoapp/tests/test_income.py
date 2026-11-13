@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from djangoapp.models.models import Income
+from djangoapp.views.incomes_views import get_income_data
 
 from .test_base import BaseTestCase
 from .test_api_backend import TestApiBackend
@@ -103,6 +104,23 @@ class IncomeAPITests(BaseTestCase):
         self.assertEqual(len(data['incomes']), 1)
         self.assertEqual(data['incomes'][0]['source'], 'Salary')
         self.assertEqual(float(data['incomes'][0]['amount']), 5000.00)
+
+    def test_dashboard_income_summary_includes_income_period_overlapping_window(self):
+        self._seed_income(
+            amount="800.00",
+            period_start=(self.today - timezone.timedelta(days=40)).isoformat(),
+            period_end=(self.today - timezone.timedelta(days=10)).isoformat(),
+        )
+        self._seed_income(
+            source="Old income",
+            amount="5000.00",
+            period_start=(self.today - timezone.timedelta(days=60)).isoformat(),
+            period_end=(self.today - timezone.timedelta(days=31)).isoformat(),
+        )
+
+        summary = get_income_data(self.user1, "monthly")
+
+        self.assertEqual(summary["total_income"], 800.0)
 
     def test_get_income_endpoint_success(self):
         income = self._seed_income()

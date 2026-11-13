@@ -1,23 +1,23 @@
 import React, { useContext } from 'react';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
+import { useToast } from '../Toast/ToastContext';
 import "../Sidebar/Sidebar.css";
 
-// import travelIcon from '../assets/travel.png';
 import budgetIcon from '../assets/budget.png';
 import detailIcon from '../assets/detail.png';
 import logoutIcon from '../assets/salida.png';
 import homeIcon from '../assets/home.png';
 import subscriptionIcon from '../assets/subscription.png';
-// import bankIcon from '../assets/bank.png';
 import friendIcon from '../assets/friend.png';
 import incomeIcon from '../assets/income.png';
 import sharedBudgetIcon from '../assets/sharedBudget.png';
 
 const Sidebar = ({ collapsed, onToggle }) => {
-    const { user, setUser } = useContext(AuthContext);
+    const { user, logout: authLogout } = useContext(AuthContext);
     const location = useLocation();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const navItems = [
         { path: "/dashboard", label: "Dashboard", icon: homeIcon },
@@ -30,33 +30,16 @@ const Sidebar = ({ collapsed, onToggle }) => {
     ];
 
     const isActive = (path) => {
-        return location.pathname === path || location.pathname === `${path}/`;
+        return location.pathname === path || location.pathname.startsWith(`${path}/`);
     };
 
-    const logout = async (e) => {
+    const handleLogout = async (e) => {
         e.preventDefault();
-        const logout_url = window.location.origin + "/djangoapp/logout";
-
-        try {
-            const res = await fetch(logout_url, {
-                method: 'GET',
-                credentials: 'include'
-            });
-
-            const json = await res.json();
-            if (json && json.status === "logged_out") {
-                const username = user ? user.username : "";
-                alert(`Logging out ${username}...`)
-                setUser(null);
-                navigate("/login")
-            } else {
-                alert("The user could not be logged out");
-            }
-        } catch (error) {
-            console.error("The user could not be logged out");
-            alert("An error ocurred during logout")
-        }
-    }
+        const username = user ? user.username : "";
+        await authLogout();
+        toast.info(`Logged out ${username}`);
+        navigate("/login");
+    };
 
     if (!user) return null;
 
@@ -106,7 +89,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
             {user && (
                 <div className="sidebar-user">
                     <div className="user-avatar">
-                        {user.userName?.charAt(0).toUpperCase() || "U"}
+                        {user.username?.charAt(0).toUpperCase() || "U"}
                     </div>
                     <div className="user-info">
                         <span className="user-name">{user.username}</span>
@@ -121,7 +104,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                     <NavLink
                         to="/"
                         className="nav-link"
-                        onClick={logout}
+                        onClick={handleLogout}
                     >
                         <span className="nav-icon">
                             <img src={logoutIcon} alt="Logout" className="img_icon" />

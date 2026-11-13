@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../../utils/csrf';
+import { getAvatarColor } from '../../utils/formatters';
 
 const CreateSharedBudgetModal = ({ onClose, onSave }) => {
     const [ formData, setFormData ] = useState({
@@ -26,9 +28,7 @@ const CreateSharedBudgetModal = ({ onClose, onSave }) => {
 
     const fetchFriends = async () => {
         try {
-            const res = await fetch("/djangoapp/friends", {
-                credentials: 'include',
-            });
+            const res = await apiFetch("/djangoapp/friends");
             const data = await res.json();
             
             if (data.friends) {
@@ -93,22 +93,9 @@ const CreateSharedBudgetModal = ({ onClose, onSave }) => {
         const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         setFormData((prev) => ({
             ...prev,
-            start_data: start.toISOString().split('T')[0],
+            start_date: start.toISOString().split('T')[0],
             end_date: end.toISOString().split('T')[0],
         }));
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-        ];
-        if (!username) return colors[0];
-        return colors[username.charAt(0) % colors.length];
     };
 
     return (

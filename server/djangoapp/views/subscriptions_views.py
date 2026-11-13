@@ -102,19 +102,19 @@ def get_subscriptions(request):
                 "total_paid": float(total_paid),
                 "payment_count": len(payments),
             })
-            
-            # Get summary data
-            summary = get_subscriptions_data(request.user, "monthly")
 
-            return JsonResponse({
-                "subscriptions": data,
-                "summary": summary,
-                "user": {
-                    "id": request.user.id,
-                    "username": request.user.username,
-                    "is_authenticated": request.user.is_authenticated
-                }
-            })
+        # Get summary data after collecting every subscription.
+        summary = get_subscriptions_data(request.user, "monthly")
+
+        return JsonResponse({
+            "subscriptions": data,
+            "summary": summary,
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "is_authenticated": request.user.is_authenticated
+            }
+        })
                           
     except Exception as e:
         logger.error(f"Error fetching subscriptions: {e}")
@@ -359,12 +359,8 @@ def subscription_create(request):
 
     subscription = subscription_from_row(row)
 
-    # Generate initial payments (non-critical, so we don't fail if this has issues)
-
     try:
-        # In a real implementation, we might cal a payments generation endpoint
-        # For now, we'll skip this as it's marked non-critical in the original code
-        pass
+        generate_subscription_payments_service(request.user.id)
     except Exception as e:
         logger.warning(f"Payment generation failed (non-critical): {e}")
 

@@ -1,21 +1,8 @@
 import React from 'react';
+import { getAvatarColor, getInitials, getDisplayName } from '../../utils/formatters';
 
 const FriendRequestCard = ({ request, type, onAccept, onDecline, onCancel }) => {
     const user = type === "received" ? request?.from_user : request?.to_user;
-
-    const getInitials = (user) => {
-        if (user.first_name && user.last_name) {
-            return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-        }
-        return user.username.slice(0, 2).toUpperCase();
-    };
-
-    const getDisplayName = (user) => {
-        if (user.first_name && user.last_name) {
-            return `${user.first_name} ${user.last_name}`;
-        }
-        return user.username;
-    };
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -30,25 +17,10 @@ const FriendRequestCard = ({ request, type, onAccept, onDecline, onCancel }) => 
         if (diffHours < 24) return `${diffHours}h ago`;
         if (diffDays < 7) return `${diffDays}d ago`;
 
-        return date.toLocaleDateString("en-Us", {
+        return date.toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
         });
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#06b6d4",
-            "#f97316",
-        ];
-        const index = username.charAt(0) % colors.length;
-        return colors[index];
     };
 
     return (

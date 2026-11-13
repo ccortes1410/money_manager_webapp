@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../../utils/csrf';
+import { getAvatarColor, getInitials, getDisplayName } from '../../utils/formatters';
 
 const InviteFriendModal = ({ budgetId, existingMembers, onClose, onInvited }) => {
     const [ friends, setFriends ] = useState([]);
@@ -9,23 +11,17 @@ const InviteFriendModal = ({ budgetId, existingMembers, onClose, onInvited }) =>
     const [ searchQuery, setSearchQuery ] = useState("");
 
     const baseUrl = "/djangoapp";
-    const safeExistingMembers = Array.isArray(existingMembers) ? existingMembers : [];
 
-    useEffect(() => {
-        fetchFriends();
-    }, []);
-
-    const fetchFriends = async () => {
+    const fetchFriends = useCallback(async () => {
+        const safeExisting = Array.isArray(existingMembers) ? existingMembers : [];
         try {
-            const res = await fetch(`${baseUrl}/friends`, {
-                credentials: 'include',
-            });
+            const res = await apiFetch(`${baseUrl}/friends`);
             const data = await res.json();
 
             if (res.ok && data.friends) {
                 // Filter out existing members
                 const available = (Array.isArray(data.friends) ? data.friends : []).filter(
-                    (f) => !safeExistingMembers.includes(f.id)
+                    (f) => !safeExisting.includes(f.id)
                 );
                 setFriends(available);
             }
@@ -35,7 +31,11 @@ const InviteFriendModal = ({ budgetId, existingMembers, onClose, onInvited }) =>
         } finally {
             setLoading(false);
         }
-    };
+    }, [existingMembers]);
+
+    useEffect(() => {
+        fetchFriends();
+    }, [fetchFriends]);
 
     const handleInvite = async (friendId, friendName) => {
         setSending(friendId);
@@ -43,10 +43,8 @@ const InviteFriendModal = ({ budgetId, existingMembers, onClose, onInvited }) =>
         setSuccess("");
 
         try {
-            const res = await fetch(`${baseUrl}/shared-budgets/${budgetId}/invite`, {
+            const res = await apiFetch(`${baseUrl}/shared-budgets/${budgetId}/invite`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     user_id: friendId,
                     role: 'editor',
@@ -64,39 +62,10 @@ const InviteFriendModal = ({ budgetId, existingMembers, onClose, onInvited }) =>
             }
         } catch (error) {
             console.error("Error inviting friend:", error);
-            setError("An error ocurred");
+            setError("An error occurred");
         } finally {
             setSending(null);
         }
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#06b6d4",
-            "#f97316"
-        ];
-        if (!username) return colors[0];
-        return colors[username.charAt(0) & colors.length];
-    };
-
-    const getInitials = (friend) => {
-        if (friend.first_name && friend.last_name) {
-            return `${friend.first_name[0]}${friend.last_name[0]}`.toUpperCase();
-        }
-        return friend.username?.slice(0, 2).toUpperCase() || "??";
-    };
-
-    const getDisplayName = (friend) => {
-        if (friend.first_name && friend.last_name) {
-            return `${friend.first_name} ${friend.last_name}`;
-        }
-        return friend.username || "Unknown";
     };
 
     const filteredFriends = friends.filter((friend) => {

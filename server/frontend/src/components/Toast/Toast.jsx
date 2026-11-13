@@ -8,11 +8,11 @@ const icons = {
 };
 
 const Toast = ({ id, message, type, duration, onClose }) => {
-    const [ existing, setExisting ] = useState(false);
+    const [ exiting, setExiting ] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setExisting(true);
+            setExiting(true);
             setTimeout(onClose, 300);
         }, duration);
 
@@ -20,12 +20,12 @@ const Toast = ({ id, message, type, duration, onClose }) => {
     }, [duration, onClose]);
 
     const handleClose = () => {
-        setExisting(true);
+        setExiting(true);
         setTimeout(onClose, 300);
     };
 
     return (
-        <div className={`toast toast-${type} ${existing ? "toast-exist" : ""}`}>
+        <div className={`toast toast-${type} ${exiting ? "toast-exit" : ""}`}>
             <span className="toast-icon">{icons[type]}</span>
             <span className="toast-message">{message}</span>
             <button className="toast-close" onClick={handleClose}>

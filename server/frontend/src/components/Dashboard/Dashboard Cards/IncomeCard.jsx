@@ -1,5 +1,5 @@
 
-const IncomeCard = ({ income, period }) => {
+const IncomeCard = ({ income = {}, period }) => {
     const {
         total_income = 0,
         total_spent = 0,
@@ -22,7 +22,7 @@ const IncomeCard = ({ income, period }) => {
         return (
             <div className="card-inner">
                 <h3>Income ({period})</h3>
-                <div className="no-ta-container">
+                <div className="no-data-container">
                     <p className="no-data">No income for this period.</p>
                 </div>
             </div>

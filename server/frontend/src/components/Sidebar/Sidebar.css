@@ -67,8 +67,8 @@
     justify-content: center;
     padding: 1.25rem 1rem;
     text-decoration: none;
-    border-bottom: 1px soloid #2a2a2a;
-    transition: padding 0.3 ease;
+    border-bottom: 1px solid #2a2a2a;
+    transition: padding 0.3s ease;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -149,7 +149,7 @@
     color: #888;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.2 ease;
+    transition: all 0.2s ease;
     white-space: nowrap;
 }
 
@@ -234,7 +234,7 @@
 }
 
 .nav-links.logout .nav-link:hover,
-.nav-links.logout .siedbar-link:hover {
+.nav-links.logout .sidebar-link:hover {
     background-color: rgba(239, 68, 68, 0.15);
     color: #ef4444;
 }

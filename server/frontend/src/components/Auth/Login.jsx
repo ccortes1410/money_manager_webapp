@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import { useToast } from '../Toast/ToastContext';
 import { apiFetch } from '../../utils/csrf';
@@ -14,10 +14,11 @@ const Login = () => {
 
     const { setUser } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
     const login_url = "/djangoapp/login";
     const toast = useToast();
 
-    // const from = location.state?.from?.pathname || "/dashboard";
+    const from = location.state?.from?.pathname || "/dashboard";
 
     const login = async (e) => {
         e.preventDefault();
@@ -43,7 +44,7 @@ const Login = () => {
                 const user = await res.json();
                 setUser(user);
                 toast.success(`Welcome back, ${user.username}!`);
-                navigate('/dashboard');
+                navigate(from, { replace: true });
             } else {
                 setError('Invalid username or password. Please try again.');
             }

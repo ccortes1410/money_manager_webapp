@@ -60,7 +60,7 @@
 }
 
 @media (max-width: 1024px) {
-    .frieds-stats {
+    .friends-stats {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -107,7 +107,7 @@
     gap: 0.5rem;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid #2a2a2a;
-    padding-bottom: 0.5;
+    padding-bottom: 0.5rem;
 }
 
 .tab-btn {
@@ -130,7 +130,7 @@
     color: #fff;
 }
 
-.tab-btn:active {
+.tab-btn.active {
     background-color: #1a1a1a;
     color: #22c55e;
 }
@@ -390,7 +390,7 @@
     border-radius: 50%;
     display: flex;
     align-items: center;
-    justify-items: center;
+    justify-content: center;
     color: #fff;
     font-weight: 600;
     font-size: 1.1rem;
@@ -412,7 +412,7 @@
 .request-username {
     color: #888;
     font-size: 0.85rem;
-    margin: 0 0 0 0.25rem 0;
+    margin: 0 0 0.25rem 0;
 }
 
 .request-time {

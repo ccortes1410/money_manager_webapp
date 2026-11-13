@@ -26,11 +26,11 @@ const Register = () => {
     const validate = () => {
         const errors = {};
         if (!userName.trim()) errors.username = 'Username is required';
-        if (!firstName.trim()) errors.firsstName = 'First Name is required';
+        if (!firstName.trim()) errors.firstName = 'First Name is required';
         if (!lastName.trim()) errors.lastName = 'Last name is required';
         if (!email.trim()) {
             errors.email = 'Email is required';
-        } else if (isValidEmail(email)) {
+        } else if (!isValidEmail(email)) {
             errors.email = 'Please enter a valid email';
         }
         if (!password) {
@@ -42,7 +42,7 @@ const Register = () => {
             errors.confirmPassword = 'Passwords do not match';
         }
         setFieldErrors(errors);
-        return Object.keys(errors).length = 0;
+        return Object.keys(errors).length === 0;
     };
 
     const register = async (e) => {
@@ -69,7 +69,11 @@ const Register = () => {
 
             if (json.status) {
                 setUser({
-                    username: json.userName,
+                    id: json.id,
+                    username: json.userName || sanitizeInput(userName),
+                    email: sanitizeInput(email),
+                    first_name: sanitizeInput(firstName),
+                    last_name: sanitizeInput(lastName),
                     is_authenticated: true,
                 });
                 toast.success("Account created! Welcome to Money Manager 🎉")
@@ -233,7 +237,7 @@ const Register = () => {
 
                         {/* Confirm Password */}
                         <div className="auth-form-group">
-                            <label htmlFor="confirmPassowrd">Confirm Password</label>
+                            <label htmlFor="confirmPassword">Confirm Password</label>
                             <div className={`auth-input-wrapper ${fieldErrors.confirmPassword ? 'error' : ''}`}>
                                 <span className="auth-input-icon">🔒</span>
                                 <input

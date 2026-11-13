@@ -52,7 +52,7 @@ const SubscriptionCard = ({
                     </span>
                 </div>
                 <div className="card-amount">
-                    <span className="amount">${(subscription.amount || 0).toFixed(2)}</span>
+                    <span className="amount">${parseFloat(subscription.amount || 0).toFixed(2)}</span>
                     <span className="cycle">{getBillingLabel(subscription.billing_cycle)}</span>
                 </div>
             </div>
@@ -67,7 +67,7 @@ const SubscriptionCard = ({
                     <span className="label">Billing day:</span> {subscription.billing_day}
                 </span>
                 <span className="detail">
-                    <span className="label">Started:</span> {subscription.end_date}
+                    <span className="label">Started:</span> {subscription.start_date}
                 </span>
                 {subscription.end_date && (
                     <span className="detail">
@@ -110,22 +110,22 @@ const SubscriptionCard = ({
                     className="toggle-payments"
                     onClick={() => setShowPayments(!showPayments)}
                 >
-                    {showPayments ? "Hide" : "Show"} Payments ({subscription.payment_count})
+                    {showPayments ? "Hide" : "Show"} Payments ({subscription.payment_count || 0})
                 </button>
                 
                 {showPayments && (
                     <div className="payments-list">
-                        {subscription.payments.length === 0 ? (
+                        {(subscription.payments || []).length === 0 ? (
                             <p className="no-payments">No payments recorded yet.</p>
                         ) : (
-                            subscription.payments.map((payment) => (
+                            (subscription.payments || []).map((payment) => (
                                 <div
                                     key={payment.id}
                                     className={`payment-item ${payment.is_paid ? "paid" : "unpaid"}`}
                                 >
                                     <span className="payment-date">{payment.date}</span>
                                     <span className="payment-amount">
-                                        ${payment.amount.toFixed(2)}
+                                        ${parseFloat(payment.amount || 0).toFixed(2)}
                                     </span>
                                     <button
                                         className={`payment-status ${payment.is_paid ? "paid" : "unpaid"}`}
@@ -138,7 +138,7 @@ const SubscriptionCard = ({
                         )}
                         <div className="payment-total">
                             <span>Total paid:</span>
-                            <strong>${subscription.total_paid.toFixed(2)}</strong>
+                            <strong>${parseFloat(subscription.total_paid || 0).toFixed(2)}</strong>
                         </div>
                     </div>
                 )}

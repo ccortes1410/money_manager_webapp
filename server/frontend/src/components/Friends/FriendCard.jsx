@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAvatarColor, getInitials, getDisplayName } from '../../utils/formatters';
 
 const FriendCard = ({ friend, onRemove }) => {
     const [ showMenu, setShowMenu ] = useState(false);
-
-    const getInitials = (friend) => {
-        if (friend.first_name && friend.last_name) {
-            return `${friend.first_name[0]}${friend.last_name[0]}`.toUpperCase();
-        }
-        return friend.username.slice(0, 2).toUpperCase();
-    };
-
-    const getDisplayName = (friend) => {
-        if (friend.first_name && friend.last_name) {
-            return `${friend.first_name} ${friend.last_name}`;
-        }
-        return friend.username;
-    };
+    const navigate = useNavigate();
 
     const formatDate = (dateString) => {
         if (!dateString) return "Recently";
@@ -26,26 +15,11 @@ const FriendCard = ({ friend, onRemove }) => {
         });
     };
 
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6", // blue
-            "#22c55e", // green
-            "#f59e0b", // amber
-            "#ef4444", // red
-            "#8b5cf6", // violet
-            "#ec4899", // pink
-            "#06b6d4", // cyan
-            "#f97316", // orange
-        ];
-        const index = username.charAt(0) % colors.length;
-        return colors[index];
-    };
-
     return (
         <div className="friend-card">
             <div className="friend-card-header">
                 <div 
-                    className="frien-avatar"
+                    className="friend-avatar"
                     style={{ backgroundColor: getAvatarColor(friend.username) }}
                 >
                     {getInitials(friend)}
@@ -63,14 +37,14 @@ const FriendCard = ({ friend, onRemove }) => {
                                 className="menu-item"
                                 onClick={() => {
                                     setShowMenu(false);
-                                    // TODO: Navigate to shared budgets with this friend
+                                    navigate("/shared-budgets");
                                 }}
                             >
                                 🤝 Shared Budgets
                             </button>
                             <button
                                 className="menu-item danger"
-                                onRemove={() => {
+                                onClick={() => {
                                     setShowMenu(false);
                                     onRemove();
                                 }}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getAvatarColor } from '../../utils/formatters';
 
 const SettleUpModal = ({ debts, userId, onClose, onSave }) => {
     const [ selectedDebt, setSelectedDebt ] = useState(null);
@@ -12,7 +13,7 @@ const SettleUpModal = ({ debts, userId, onClose, onSave }) => {
 
     const handleSelectDebt = (debt) => {
         setSelectedDebt(debt);
-        setAmount(debt.amount.toFixed(2));
+        setAmount(parseFloat(debt.amount || 0).toFixed(2));
         setError("");
     };
 
@@ -37,19 +38,6 @@ const SettleUpModal = ({ debts, userId, onClose, onSave }) => {
             date: date,
             notes: notes,
         });
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899"
-        ];
-        if (!username) return colors[0];
-        return colors[username.charAt(0) & colors.length];
     };
 
     return (
@@ -97,7 +85,7 @@ const SettleUpModal = ({ debts, userId, onClose, onSave }) => {
                                                     {debt.to_user.first_name || debt.to_user.username}
                                                 </span>
                                                 <span className="sb-debt-option-amount">
-                                                    You owe ${debt.amount.toFixed(2)}
+                                                    You owe ${parseFloat(debt.amount || 0).toFixed(2)}
                                                 </span>
                                             </div>
                                             {selectedDebt === debt && (
@@ -154,20 +142,20 @@ const SettleUpModal = ({ debts, userId, onClose, onSave }) => {
                                     </div>
 
                                     {/* Quick Amount Button */}
-                                    <div className="sb-quicka-amounts">
+                                    <div className="sb-quick-amounts">
                                         <button
                                             type="button"
                                             className="sb-preset-btn small"
-                                            onClick={() => setAmount(selectedDebt.amount.toFixed(2))}
+                                            onClick={() => setAmount(parseFloat(selectedDebt.amount || 0).toFixed(2))}
                                         >
-                                            Full Amount (${selectedDebt.amount.toFixed(2)})
+                                            Full Amount (${parseFloat(selectedDebt.amount || 0).toFixed(2)})
                                         </button>
                                         <button
                                             type="button"
                                             className="sb-preset-btn small"
-                                            onClick={() => setAmount((selectedDebt.amount / 2).toFixed(2))}
+                                            onClick={() => setAmount((parseFloat(selectedDebt.amount || 0) / 2).toFixed(2))}
                                         >
-                                            Half (${(selectedDebt.amount / 2).toFixed(2)})
+                                            Half (${(parseFloat(selectedDebt.amount || 0) / 2).toFixed(2)})
                                         </button>
                                     </div>
 

@@ -6,6 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from djangoapp.models.models import Budget
+from djangoapp.views.dashboard_views import compute_spending_by_category
+from djangoapp.views.budgets_views import get_budgets_data
 
 from .test_base import BaseTestCase
 from .test_api_backend import TestApiBackend
@@ -118,6 +120,65 @@ class BudgetAPITests(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data['budgets']), 1)
+
+    def test_dashboard_budget_summary_includes_budgets_overlapping_period(self):
+        self._seed_budget(
+            amount="800.00",
+            period_start=(self.today - timezone.timedelta(days=40)).isoformat(),
+            period_end=(self.today - timezone.timedelta(days=10)).isoformat(),
+        )
+        self._seed_budget(
+            category="Old budget",
+            amount="5000.00",
+            period_start=(self.today - timezone.timedelta(days=60)).isoformat(),
+            period_end=(self.today - timezone.timedelta(days=31)).isoformat(),
+        )
+        self.test_api.seed("transactions", {
+            "user_id": self.user1.id,
+            "amount": "200.00",
+            "date": self.today.isoformat(),
+        })
+
+        summary = get_budgets_data(self.user1, "monthly")
+
+        self.assertEqual(summary["total_budgeted"], 800.0)
+        self.assertEqual(summary["total_spent"], 200.0)
+        self.assertEqual(summary["remaining"], 600.0)
+
+    def test_dashboard_categories_assign_subscription_payments_to_subscription_category(self):
+        self.test_api.seed("subscriptions", {
+            "user_id": self.user1.id,
+            "name": "Streaming",
+            "amount": "12.00",
+            "category": "Entertainment",
+            "status": "active",
+        })
+        self.test_api.seed("subscription-payments", {
+            "user_id": self.user1.id,
+            "subscription_id": 1,
+            "amount": "12.00",
+            "due_date": self.today.isoformat(),
+        })
+        self.test_api.seed("subscriptions", {
+            "user_id": self.user1.id,
+            "name": "Old streaming",
+            "amount": "8.00",
+            "category": "Entertainment",
+            "status": "cancelled",
+        })
+        self.test_api.seed("subscription-payments", {
+            "user_id": self.user1.id,
+            "subscription_id": 2,
+            "amount": "8.00",
+            "due_date": self.today.isoformat(),
+        })
+
+        summary = compute_spending_by_category(self.user1, "monthly")
+
+        self.assertEqual(summary["subscription_total"], 12.0)
+        self.assertEqual(summary["total"], 12.0)
+        self.assertEqual(summary["categories"][0]["category"], "Entertainment")
+        self.assertEqual(summary["categories"][0]["subscriptions"], 12.0)
 
     def test_get_budget_detail_success(self):
         budget = self._seed_budget()

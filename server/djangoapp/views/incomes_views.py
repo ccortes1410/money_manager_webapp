@@ -24,8 +24,8 @@ def get_income_data(user, period):
     # Get income for the period
     income_params = {"user_id": user.id}
     if start and end:
-        income_params["period_start__gte"] = _iso_date(start)
         income_params["period_start__lte"] = _iso_date(end)
+        income_params["period_end__gte"] = _iso_date(start)
     incomes = get_request("incomes/", **income_params) or []
 
     # Get all spending (transactions + subscriptions payments)

@@ -82,7 +82,7 @@ const AddExpenseModal = ({ members, splitType, onClose, onSave }) => {
     };
 
     return (
-        <div className="modal-overal" onClick={onClose}>
+        <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content sb-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2>Add Expense</h2>
@@ -201,7 +201,7 @@ const AddExpenseModal = ({ members, splitType, onClose, onSave }) => {
                                             step="0.01"
                                             min="0"
                                             placeholder="0.00"
-                                            value={customSplits[member.iser.id] || ""}
+                                            value={customSplits[member.user.id] || ""}
                                             onChange={(e) =>
                                                 handleCustomSplitChange(member.user.id, e.target.value)
                                             }
@@ -209,7 +209,7 @@ const AddExpenseModal = ({ members, splitType, onClose, onSave }) => {
                                     </div>
                                 ))}
                             </div>
-                            {errors.splits && <span className="sb-error">{errors.split}</span>}
+                            {errors.splits && <span className="sb-error">{errors.splits}</span>}
                         </div>
                     )}
 

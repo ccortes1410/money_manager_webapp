@@ -21,7 +21,8 @@ const IncomeModal = ({ income, sources, onClose, onSave }) => {
                 amount: income.amount || '',
                 source: income.source || '',
                 date_received: income.date_received || getToday(),
-                period_en: income.period_end || '',
+                period_start: income.period_start || '',
+                period_end: income.period_end || '',
             });
         }
     }, [income]);

@@ -32,8 +32,8 @@ def get_budgets_data(user, period):
     transaction_params = {"user_id": user.id}
 
     if start and end:
-        budget_params["period_start__gte"] = _iso_date(start)
         budget_params["period_start__lte"] = _iso_date(end)
+        budget_params["period_end__gte"] = _iso_date(start)
         transaction_params["date__gte"] = _iso_date(start)
         transaction_params["date__lte"] = _iso_date(end)
     # Get budgets for the period

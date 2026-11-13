@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-const TransactionModal = ({ transaction, category, onClose, onSave }) => {
+const TransactionModal = ({ transaction, categories = [], onClose, onSave }) => {
     const getToday = () => new Date().toISOString().split('T')[0];
+    const safeCategories = Array.isArray(categories) ? categories : [];
 
     const [ formData, setFormData ] = useState({
         amount: '',
@@ -107,8 +108,16 @@ const TransactionModal = ({ transaction, category, onClose, onSave }) => {
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
+                            list="tx-category-suggestions"
                             className={errors.category ? 'error' : ''}
                         />
+                        {safeCategories.length > 0 && (
+                            <datalist id="tx-category-suggestions">
+                                {safeCategories.map((cat) => (
+                                    <option key={cat} value={cat} />
+                                ))}
+                            </datalist>
+                        )}
                         {errors.category && <span className="error-message">{errors.category}</span>}
                     </div>
 

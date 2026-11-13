@@ -1,5 +1,5 @@
-import { useContext, useState, useEffect } from 'react';
-import { AuthContext } from '../../AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../../utils/csrf';
 import ExportButton from '../ExportButton/ExportButton';
 import { EXPORT_CONFIGS } from '../../utils/export';
 import { useToast } from '../Toast/ToastContext';
@@ -9,7 +9,6 @@ import './Subscriptions.css';
 
 
 const Subscriptions = () => {
-    const { user } = useContext(AuthContext);
     const [ subscriptions, setSubscriptions ] = useState([]);
     const [ loading, setLoading ] = useState(true);
     const [ showModal, setShowModal ] = useState(false);
@@ -17,66 +16,52 @@ const Subscriptions = () => {
     const [ filter, setFilter ] = useState("all");
 
     const toast = useToast();
-    
-    const BILLING_CYCLE_OPTIONS = [
-        { value: "daily", label: "Daily" },
-        { value: "weekly", label: "Weekly" },
-        { value: "monthly", label: "Monthly" },
-        { value: "yearly", label: "Yearly" },
-    ];
-
-    const getToday = () => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    }
-
     const subscription_url = "/djangoapp/subscriptions";
-    // const addSubscription_url = "/djangoapp/addSubscription";
 
-    useEffect(() => {
-        fetchSubscriptions();
-    }, []);
-
-    const fetchSubscriptions = async () => {
+    const fetchSubscriptions = useCallback(async () => {
         try {
-            const response = await fetch(subscription_url, {
+            const response = await apiFetch(subscription_url, {
                 method: "GET",
-                credentials: "include",
             });
 
             const data = await response.json();
             setSubscriptions(data.subscriptions || []);
         } catch (error) {
-            console.error("Error fetching subscriptions");
+            console.error("Error fetching subscriptions:", error);
+            toast.error("Failed to load subscriptions");
         } finally {
             setLoading(false);
         }
-    }
+    }, [toast]);
+
+    useEffect(() => {
+        fetchSubscriptions();
+    }, [fetchSubscriptions]);
 
     const handleCreate = async (subscriptionData) => {
         try {
-            const response = await fetch(subscription_url+'/create', {
+            const response = await apiFetch(`${subscription_url}/create`, {
                 method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json"},
                 body: JSON.stringify(subscriptionData),
             });
 
             if (response.ok) {
                 fetchSubscriptions();
                 setShowModal(false);
+                toast.success("Subscription created");
+            } else {
+                toast.error("Failed to create subscription");
             }
         } catch (error) {
             console.error("Error creating subscription", error);
+            toast.error("Something went wrong");
         }
     };
 
     const handleUpdate = async (id, subscriptionData) => {
         try {
-            const response = await fetch(subscription_url+`/${id}/update`, {
+            const response = await apiFetch(`${subscription_url}/${id}/update`, {
                 method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(subscriptionData),
             });
 
@@ -84,30 +69,36 @@ const Subscriptions = () => {
                 fetchSubscriptions();
                 setShowModal(false);
                 setEditingSubscription(null);
+                toast.success("Subscription updated");
+            } else {
+                toast.error("Failed to update subscription");
             }
         } catch (error) {
             console.error("Error updating subscription:", error);
+            toast.error("Something went wrong");
         }
     };
 
     const handleStatusChange = async (id, newStatus) => {
         try {
-            const response = await fetch(subscription_url+`/${id}/status`, {
+            const response = await apiFetch(`${subscription_url}/${id}/status`, {
                 method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "aplication/json" },
                 body: JSON.stringify({ status: newStatus }),
             });
 
             if (response.ok) {
                 setSubscriptions((prev) =>
-                prev.map((sub) =>
-                    sub.id === id ? { ...sub, status: newStatus } : sub
-                )
-            );
+                    prev.map((sub) =>
+                        sub.id === id ? { ...sub, status: newStatus } : sub
+                    )
+                );
+                toast.info(`Subscription ${newStatus}`);
+            } else {
+                toast.error("Failed to update status");
             }
         } catch (error) {
             console.error("Error updating status:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -115,16 +106,19 @@ const Subscriptions = () => {
         if (!window.confirm("Delete this subscription?")) return;
 
         try {
-            const response = await fetch(subscription_url+`/${id}/delete`, {
+            const response = await apiFetch(`${subscription_url}/${id}/delete`, {
                 method: "DELETE",
-                credentials: "include",
             });
 
             if (response.ok) {
                 setSubscriptions((prev) => prev.filter((sub) => sub.id !== id));
+                toast.success("Subscription deleted");
+            } else {
+                toast.error("Failed to delete subscription");
             }
         } catch (error) {
             console.error("Error deleting subscription:", error);
+            toast.error("Something went wrong");
         }
     };
 
@@ -132,13 +126,12 @@ const Subscriptions = () => {
     const handleEdit = (subscription) => {
         setEditingSubscription(subscription);
         setShowModal(true);
-    }
+    };
 
     const handleTogglePayment = async (paymentId, subscriptionId) => {
         try {
-            const response = await fetch(`/djangoapp/payments/${paymentId}/toggle`, {
+            const response = await apiFetch(`/djangoapp/payments/${paymentId}/toggle`, {
                 method: "PATCH",
-                credentials: "include",
             });
 
             if (response.ok) {
@@ -160,6 +153,7 @@ const Subscriptions = () => {
             }
         } catch (error) {
             console.error("Error toggling payment:", error);
+            toast.error("Failed to update payment");
         }
     };
 
@@ -173,10 +167,10 @@ const Subscriptions = () => {
     const totals = {
         active: subscriptions
             .filter((s) => s.status === "active")
-            .reduce((sum, s) => sum + s.amount, 0),
+            .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0),
         paused: subscriptions
             .filter((s) => s.status === "paused")
-            .reduce((sum, s) => sum + s.amount, 0),
+            .reduce((sum, s) => sum + parseFloat(s.amount || 0), 0),
         cancelled: subscriptions
             .filter((s) => s.status === "cancelled").length,
     };
@@ -265,7 +259,9 @@ const Subscriptions = () => {
 
             {/*  Subscriptions list */}
             <div className="subscriptions-list">
-                {filteredSubscriptions.length === 0 ? (
+                {loading ? (
+                    <p className="loading-state">Loading subscriptions...</p>
+                ) : filteredSubscriptions.length === 0 ? (
                     <p className="empty-state">No subscriptions found.</p>
                 ) : (
                     filteredSubscriptions.map((subscription) => (

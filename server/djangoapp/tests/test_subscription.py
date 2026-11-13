@@ -9,6 +9,7 @@ from datetime import timezone, timedelta
 from django.urls import reverse
 
 from djangoapp.models.models import Subscription
+from djangoapp.services.subscription_service import generate_subscription_payments
 
 from .test_base import BaseTestCase
 from .test_api_backend import TestApiBackend
@@ -110,6 +111,20 @@ class SubscriptionAPITests(BaseTestCase):
         self.assertEqual(data['subscriptions'][0]['name'], 'Netflix')
         self.assertEqual(data['subscriptions'][0]['created_at'], self.today.isoformat())
 
+    def test_list_returns_all_subscriptions(self):
+        self._seed_subscription(name="Netflix")
+        self._seed_subscription(name="Music", status="paused")
+        self._seed_subscription(name="Gym", status="cancelled")
+
+        response = self.client.get(reverse('djangoapp:subscriptions'))
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(
+            {subscription['name'] for subscription in data['subscriptions']},
+            {"Netflix", "Music", "Gym"},
+        )
+
     def test_create_endpoint(self):
         payload = {
             'name': 'Hulu',
@@ -129,6 +144,26 @@ class SubscriptionAPITests(BaseTestCase):
         self.assertEqual(len(subscriptions), 1)
         self.assertEqual(subscriptions[0]['name'], 'Hulu')
         self.assertEqual(float(subscriptions[0]['amount']), 899.0)
+        payments = self.test_api.resources.get("subscription-payments", [])
+        self.assertEqual(len(payments), 1)
+        self.assertEqual(payments[0]['user_id'], self.user1.id)
+        self.assertEqual(payments[0]['subscription_id'], subscriptions[0]['id'])
+        self.assertEqual(payments[0]['due_date'], self.today.isoformat())
+
+    def test_api_payment_generation_catches_up_and_is_idempotent(self):
+        start_date = self.today - timedelta(days=40)
+        self._seed_subscription(
+            start_date=start_date.isoformat(),
+            end_date=None,
+        )
+
+        created_count = generate_subscription_payments(self.user1.id, self.today)
+        repeated_count = generate_subscription_payments(self.user1.id, self.today)
+
+        payments = self.test_api.resources["subscription-payments"]
+        self.assertGreater(created_count, 1)
+        self.assertEqual(repeated_count, 0)
+        self.assertEqual(len(payments), created_count)
 
     def test_detail_endpoint_success_with_end_date_set(self):
         sub = self._seed_subscription()

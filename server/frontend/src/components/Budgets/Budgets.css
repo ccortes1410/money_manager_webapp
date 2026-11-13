@@ -395,7 +395,7 @@
     transition: width 0.3s ease;
 }
 
-.budget-progres-fill.over {
+.budget-progress-fill.over {
     background-color: #ef4444;
 }
 
@@ -817,7 +817,7 @@
     background-color: #333;
     color: #fff;
     border: none;
-    padding: 0.75rem 1.rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;

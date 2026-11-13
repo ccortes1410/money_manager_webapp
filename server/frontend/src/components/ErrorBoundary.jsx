@@ -40,10 +40,10 @@ class ErrorBoundary extends React.Component {
             return (
                 <div className="error-boundary">
                     <div className="error-boundary-content">
-                        <div className="error-bounding-icon">⚠️</div>
+                        <div className="error-boundary-icon">⚠️</div>
                         <h1>Something went wrong</h1>
                         <p>
-                            An unexpected error ocurred. Don't worry - your data is safe.
+                            An unexpected error occurred. Don't worry - your data is safe.
                         </p>
 
                         {process.env.NODE_ENV === "development" && this.state.error && (

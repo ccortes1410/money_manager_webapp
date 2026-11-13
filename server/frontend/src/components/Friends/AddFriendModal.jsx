@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../../utils/csrf';
+import { getAvatarColor, getInitials, getDisplayName } from '../../utils/formatters';
 
 const AddFriendModal = ({ onClose, onSendRequest }) => {
     const [ searchQuery, setSearchQuery ] = useState("");
@@ -20,9 +22,8 @@ const AddFriendModal = ({ onClose, onSendRequest }) => {
         setError("");
 
         try {
-            const res = await fetch(
-                `${baseUrl}/friends/search?q=${encodeURIComponent(query)}`,
-                { credentials: 'include' }
+            const res = await apiFetch(
+                `${baseUrl}/friends/search?q=${encodeURIComponent(query)}`
             );
             const data = await res.json();
 
@@ -66,35 +67,6 @@ const AddFriendModal = ({ onClose, onSendRequest }) => {
         }
 
         setSendingTo(null);
-    };
-
-    const getInitials = (user) => {
-        if (user.first_name && user.last_name) {
-            return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
-        }
-        return user.username.slice(0, 2).toUpperCase();
-    };
-
-    const getDisplayName = (user) => {
-        if (user.first_name && user.last_name) {
-            return `${user.first_name} ${user.last_name}`;
-        }
-        return user.username;
-    };
-
-    const getAvatarColor = (username) => {
-        const colors = [
-            "#3b82f6",
-            "#22c55e",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#06b6d4",
-            "#f97316",
-        ];
-        const index = username.charAt(0) % colors.length;
-        return colors[index];
     };
 
     const getRelationShipButton = (user) => {

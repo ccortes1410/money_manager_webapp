@@ -2,8 +2,24 @@ import { useMemo } from "react";
 import { Doughnut } from "react-chartjs-2";
 
 const SubscriptionsCard = ({ subscriptions, period }) => {
-    const active = subscriptions?.active || { count: 0, total: 0};
-    const inactive = subscriptions?.inactive || { count: 0, total: 0};
+    const { active, inactive } = useMemo(() => {
+        if (!Array.isArray(subscriptions)) {
+            return {
+                active: subscriptions?.status?.active || subscriptions?.active || { count: 0, total: 0 },
+                inactive: subscriptions?.status?.inactive || subscriptions?.inactive || { count: 0, total: 0 },
+            };
+        }
+
+        return subscriptions.reduce((summary, subscription) => {
+            const status = subscription.status === "active" ? "active" : "inactive";
+            summary[status].count += 1;
+            summary[status].total += Number(subscription.amount) || 0;
+            return summary;
+        }, {
+            active: { count: 0, total: 0 },
+            inactive: { count: 0, total: 0 },
+        });
+    }, [subscriptions]);
     const totalCount = (active.count || 0) + (inactive.count || 0);
     const totalAmount = (active.total || 0) + (inactive.total || 0);
 
