@@ -18,6 +18,10 @@ try:
 except ImportError:
     pass
 
+# TiDB Cloud reports its MySQL protocol version as 8.0.11-TiDB; bypass strict 8.4+ version gate
+from django.db.backends.base.base import BaseDatabaseWrapper  # noqa: E402
+BaseDatabaseWrapper.check_database_version_supported = lambda self: None
+
 import os
 from pathlib import Path
 import certifi

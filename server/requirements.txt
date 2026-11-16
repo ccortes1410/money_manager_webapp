@@ -1,5 +1,5 @@
 requests
-Django>=4.2
+Django>=5.2,<6.0
 Pillow
 gunicorn
 python-dotenv
