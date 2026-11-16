@@ -1,4 +1,4 @@
-require('dotenv').config();
+try { require('dotenv').config(); } catch (_) {}
 const { Sequelize } = require('sequelize');
 const mysql2 = require('mysql2');
 
