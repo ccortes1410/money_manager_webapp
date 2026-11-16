@@ -6,7 +6,7 @@
  * internet in production.
  */
 module.exports = function requireInteralApiKey(req, res, next) {
-    const expected = process.env.INTERNAL_API_KEY;
+    const expected = process.env.INTERNAL_API_KEY || process.env.DJANGO_SECRET_KEY;
 
     if (!expected) {
         // Fail closed: if it isn't configured, don't silently allow everything through.
