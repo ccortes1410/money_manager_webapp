@@ -43,24 +43,32 @@ const IncomeCard = ({ income = {}, period }) => {
 
                 {/*  Vertical Bar */}
                 <div className="dashboard-income-bar-container">
-                    <div className="dashboard-income-bar">
-                        {/* Remaining funs (green) - fills from bottom */}
-                        <div
-                            className={`dashboard-income-bar-fill remaining ${isNegative ? 'negative' : ''}`}
-                            style={{ height: `${isNegative ? 0 : fillPercent}%`}}
-                        />
-                        {/* Spent funds (blue) - fills from bottom above remaining */}
-                        <div 
-                            className="dashboard-income-bar-fill spent"
-                            style={{ height: `${Math.min(spentPercent, 100)}%`}}
-                        />
-                        {/* Overage (red) - shows when over budget */}
-                        {isNegative && (
+                    <div
+                        className="dashboard-income-bar-wrapper"
+                        title={`${fillPercent.toFixed(1)}% remaining`}
+                    >
+                        <div className="dashboard-income-tooltip">
+                            {fillPercent.toFixed(1)}% remaining
+                        </div>
+                        <div className="dashboard-income-bar">
+                            {/* Remaining funs (green) - fills from bottom */}
                             <div
-                                className="dashboard-income-bar-fill overage"
-                                style={{ height: `${Math.min(Math.abs((remaining / total_income) * 100), 30)}%` }}
+                                className={`dashboard-income-bar-fill remaining ${isNegative ? 'negative' : ''}`}
+                                style={{ height: `${isNegative ? 0 : fillPercent}%`}}
                             />
-                        )}
+                            {/* Spent funds (blue) - fills from bottom above remaining */}
+                            <div 
+                                className="dashboard-income-bar-fill spent"
+                                style={{ height: `${Math.min(spentPercent, 100)}%`}}
+                            />
+                            {/* Overage (red) - shows when over budget */}
+                            {isNegative && (
+                                <div
+                                    className="dashboard-income-bar-fill overage"
+                                    style={{ height: `${Math.min(Math.abs((remaining / total_income) * 100), 30)}%` }}
+                                />
+                            )}
+                        </div>
                     </div>
 
                     {/* Scale markers */}

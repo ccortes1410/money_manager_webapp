@@ -5,6 +5,17 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def add_user_column_safely(apps, schema_editor):
+    table = "djangoapp_subscriptionpayment"
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+        existing_cols = {row[0] for row in cursor.fetchall()}
+        if "user_id" not in existing_cols:
+            cursor.execute(
+                f"ALTER TABLE `{table}` ADD COLUMN `user_id` int NULL"
+            )
+
+
 def populate_subscription_payment_users(apps, schema_editor):
     SubscriptionPayment = apps.get_model('djangoapp', 'SubscriptionPayment')
     database = schema_editor.connection.alias
@@ -27,10 +38,17 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='subscriptionpayment',
-            name='user',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(add_user_column_safely, migrations.RunPython.noop),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='subscriptionpayment',
+                    name='user',
+                    field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+                ),
+            ],
         ),
         migrations.RunPython(
             populate_subscription_payment_users,

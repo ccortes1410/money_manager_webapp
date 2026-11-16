@@ -4,6 +4,7 @@ const db = require('../models');
 
 const router = express.Router();
 
+router.use('/users', buildCrudRouter(db.User));
 router.use('/transactions', buildCrudRouter(db.Transaction));
 router.use('/budgets', buildCrudRouter(db.Budget));
 router.use('/subscriptions', buildCrudRouter(db.Subscription, {

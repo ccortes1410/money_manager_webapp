@@ -211,22 +211,33 @@ const Budgets = () => {
         get_budget(selectedBudgetId);
     }, [selectedBudgetId, get_budget]);
 
+    const activeBudgets = useMemo(
+        () => budgets.filter((b) => b.is_active !== false),
+        [budgets]
+    );
+    const inactiveBudgets = useMemo(
+        () => budgets.filter((b) => b.is_active === false),
+        [budgets]
+    );
+
     // Filter budgets
-    const filteredBudgets = filter === "all"
-        ? budgets
-        : filter === "over"
-            ? budgets.filter((b) => b.isOver)
-            : filter === "on-track"
-                ? budgets.filter((b) => !b.isOver && b.percentUsed >= 50)
-                : budgets.filter((b) => b.percentUsed < 50);
+    const filteredBudgets = filter === "history"
+        ? inactiveBudgets
+        : filter === "all"
+            ? activeBudgets
+            : filter === "over"
+                ? activeBudgets.filter((b) => b.isOver)
+                : filter === "on-track"
+                    ? activeBudgets.filter((b) => !b.isOver && b.percentUsed >= 50)
+                    : activeBudgets.filter((b) => b.percentUsed < 50);
     
-    // Calculate totals
+    // Calculate totals (deactivated budgets do not count toward totals)
     const totals = useMemo(() => ({
-        totalBudgeted: budgets.reduce((sum, b) => sum + Number(b.amount || 0), 0),
-        totalSpent: budgets.reduce((sum, b) => sum + Number(b.spent || 0), 0),
-        overBudget: budgets.filter((b) => b.isOver).length,
-        onTrack: budgets.filter((b) => !b.isOver).length,
-    }), [budgets]);
+        totalBudgeted: activeBudgets.reduce((sum, b) => sum + Number(b.amount || 0), 0),
+        totalSpent: activeBudgets.reduce((sum, b) => sum + Number(b.spent || 0), 0),
+        overBudget: activeBudgets.filter((b) => b.isOver).length,
+        onTrack: activeBudgets.filter((b) => !b.isOver).length,
+    }), [activeBudgets]);
 
     return (
             <div className="budgets-page">
@@ -304,7 +315,8 @@ const Budgets = () => {
                         { key: "all", label: "All" },
                         { key: "on-track", label: "On Track" },
                         { key: "under", label: "Under 50%" },
-                        { key: "over", label: "Over Budget" }
+                        { key: "over", label: "Over Budget" },
+                        { key: "history", label: "History" }
                     ].map(({ key, label }) => (
                         <button
                             key={key}
@@ -313,13 +325,15 @@ const Budgets = () => {
                         >
                             {label}
                             <span className="count">
-                                {key === "all"
-                                    ? budgets.length
-                                    : key === "over"
-                                        ? budgets.filter((b) => b.isOver).length
-                                        :key === "on-track"
-                                            ? budgets.filter((b) => !b.isOver && b.percentUsed >= 50).length
-                                            : budgets.filter((b) => b.percentUsed < 50).length}
+                                {key === "history"
+                                    ? inactiveBudgets.length
+                                    : key === "all"
+                                        ? activeBudgets.length
+                                        : key === "over"
+                                            ? activeBudgets.filter((b) => b.isOver).length
+                                            : key === "on-track"
+                                                ? activeBudgets.filter((b) => !b.isOver && b.percentUsed >= 50).length
+                                                : activeBudgets.filter((b) => b.percentUsed < 50).length}
                             </span>
                         </button>
                     ))}

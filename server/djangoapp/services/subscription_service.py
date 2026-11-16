@@ -1,8 +1,38 @@
+import os
+import tempfile
 from datetime import date, datetime, timedelta
 from calendar import monthrange
 from decimal import Decimal
-from ..restapi import get_request, post_request
+from ..restapi import get_request, post_request, patch_request, delete_request
 from .date_filter import get_date_bounds
+
+
+def _backfill_legacy_unpaid_payments_once(user_id, up_to_date):
+    """
+    One-time migration helper: payments generated before auto-pay was enabled
+    were created with is_paid=False and paid_date=None. Mark those due payments
+    as paid once per user so existing records count toward totals without
+    overwriting future manual 'Mark Unpaid' toggles.
+    """
+    local_marker = os.path.join(os.path.dirname(__file__), f".backfilled_paid_subs_{user_id}")
+    tmp_marker = os.path.join(tempfile.gettempdir(), f".backfilled_paid_subs_{user_id}")
+    if os.path.exists(local_marker) or os.path.exists(tmp_marker):
+        return
+    try:
+        payments = get_request("subscription-payments/", user_id=user_id)
+        if payments is None:
+            return
+        for p in payments:
+            due = _parse_api_date(p.get("due_date"))
+            if not p.get("is_paid") and p.get("paid_date") is None and due and due <= up_to_date:
+                patch_request(
+                    f"subscription-payments/{p['id']}",
+                    {"is_paid": True, "paid_date": due.isoformat()},
+                )
+        with open(tmp_marker, "w") as f:
+            f.write(datetime.now().isoformat())
+    except Exception:
+        pass
 
 
 def generate_subscription_payments(user_id, up_to_date=None):
@@ -15,6 +45,7 @@ def generate_subscription_payments(user_id, up_to_date=None):
     if up_to_date is None:
         up_to_date = date.today()
 
+    _backfill_legacy_unpaid_payments_once(user_id, up_to_date)
     return _generate_subscription_payments_via_api(user_id, up_to_date)
 
 
@@ -64,52 +95,80 @@ def _generate_payments_for_subscription_via_api(user_id, subscription_id, start_
                                                amount, billing_cycle, billing_day, up_to_date):
     """
     Generate all missing SubscriptionPayment records for a subscription
-    from start_date to up_to_date.
+    from start_date to up_to_date, and remove off-schedule or duplicate rows.
     """
     created_count = 0
 
-    # Get all billing dates from start to up_to_date
-    billing_dates = get_billing_dates(
-        start_date=start_date,
-        end_date=up_to_date,
-        billing_cycle=billing_cycle,
-        billing_day=billing_day
-    )
+    # Get all valid billing dates from start to up_to_date
+    billing_dates = [
+        d for d in get_billing_dates(
+            start_date=start_date,
+            end_date=up_to_date,
+            billing_cycle=billing_cycle,
+            billing_day=billing_day
+        )
+        if not (end_date and d > end_date)
+    ]
+    valid_due_dates = {d.isoformat() for d in billing_dates}
+
+    # Reconcile existing payments for this subscription
+    all_existing = get_request("subscription-payments/", subscription_id=subscription_id) or []
+    existing_by_date = set()
+    for p in all_existing:
+        due = _parse_api_date(p.get("due_date"))
+        due_iso = due.isoformat() if due else None
+        if not due_iso or due_iso not in valid_due_dates or due_iso in existing_by_date:
+            if p.get("id") is not None:
+                delete_request(f"subscription-payments/{p['id']}")
+        else:
+            existing_by_date.add(due_iso)
 
     for billing_date in billing_dates:
-        # Skip if subscription was ended before this date
-        if end_date and billing_date > end_date:
-            continue
+        due_iso = billing_date.isoformat()
 
-        # Check if payment already exists for this date
-        existing_payments = get_request("subscription-payments/",
-                                       subscription_id=subscription_id,
-                                       due_date=billing_date.isoformat()) or []
-
-        # If no payment exists for this date, create one
-        if not existing_payments:
+        # If no payment exists for this date, create one (auto-marked as paid when due)
+        if due_iso not in existing_by_date:
+            is_due = billing_date <= date.today()
             payment_data = {
                 "user_id": user_id,
                 "subscription_id": subscription_id,
-                "due_date": billing_date.isoformat(),
+                "due_date": due_iso,
                 "amount": str(amount),
-                "is_paid": False
+                "is_paid": is_due,
+                "paid_date": due_iso if is_due else None,
+                "created_at": datetime.now().isoformat(),
             }
 
             response = post_request("subscription-payments/", payment_data)
             if response and "error" not in response:
                 created_count += 1
+                existing_by_date.add(due_iso)
 
     return created_count
+
+
+def get_first_billing_date(start_date, billing_cycle, billing_day=1):
+    """
+    Determine the first billing date on or after start_date.
+    For monthly subscriptions, aligns to billing_day in start_date's month
+    (or the next month if billing_day has already passed in start_date's month).
+    """
+    if billing_cycle == "monthly":
+        max_day = monthrange(start_date.year, start_date.month)[1]
+        day = min(max(1, int(billing_day)), max_day)
+        candidate = start_date.replace(day=day)
+        if candidate >= start_date:
+            return candidate
+        return get_next_billing_date(start_date, "monthly", billing_day)
+    return start_date
 
 
 def get_billing_dates(start_date, end_date, billing_cycle, billing_day=1):
     """
     Calculate all billing dates between start_date and end_date.
-    (Unchanged - pure function)
     """
     dates = []
-    current = start_date
+    current = get_first_billing_date(start_date, billing_cycle, billing_day)
 
     while current <= end_date:
         dates.append(current)
@@ -162,7 +221,10 @@ def get_subscriptions_for_period(user_id, period: str):
         payments_params["due_date__gte"] = start.isoformat() if hasattr(start, 'isoformat') else str(start)
         payments_params["due_date__lte"] = end.isoformat() if hasattr(end, 'isoformat') else str(end)
 
-    payments_data = get_request("subscription-payments/", **payments_params) or []
+    payments_data = [
+        p for p in (get_request("subscription-payments/", **payments_params) or [])
+        if p.get("is_paid", True)
+    ]
 
     # Get subscriptions to determine which are active/inactive
     subscriptions_data = get_request("subscriptions/", user_id=user_id) or []
@@ -177,7 +239,7 @@ def get_subscriptions_for_period(user_id, period: str):
     inactive_payments = []
 
     for payment in payments_data:
-        sub_id = payment.get("subscription")
+        sub_id = payment.get("subscription_id") or payment.get("subscription")
         status = subscription_status.get(sub_id, "unknown")
         if status == "active":
             active_payments.append(payment)
@@ -298,5 +360,8 @@ def _get_subscriptions_spent_for_period(user_id, start_date, end_date):
         payments_params["due_date__gte"] = start_date.isoformat() if hasattr(start_date, 'isoformat') else str(start_date)
         payments_params["due_date__lte"] = end_date.isoformat() if hasattr(end_date, 'isoformat') else str(end_date)
 
-    payments_data = get_request("subscription-payments/", **payments_params) or []
+    payments_data = [
+        p for p in (get_request("subscription-payments/", **payments_params) or [])
+        if p.get("is_paid", True)
+    ]
     return sum(Decimal(str(p.get("amount", 0))) for p in payments_data)

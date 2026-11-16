@@ -30,18 +30,45 @@ def get_budgets_data(user, period):
 
     budget_params = {"user_id": user.id}
     transaction_params = {"user_id": user.id}
+    payment_params = {"user_id": user.id}
 
     if start and end:
         budget_params["period_start__lte"] = _iso_date(end)
         budget_params["period_end__gte"] = _iso_date(start)
         transaction_params["date__gte"] = _iso_date(start)
         transaction_params["date__lte"] = _iso_date(end)
-    # Get budgets for the period
+        payment_params["due_date__gte"] = _iso_date(start)
+        payment_params["due_date__lte"] = _iso_date(end)
+    # Get budgets for the period (only active budgets count toward total_budgeted)
     budgets = get_request("budgets/", **budget_params) or []
-    transactions = get_request("transactions/", **transaction_params) or []
+    active_budgets = [b for b in budgets if b.get("is_active", True)]
+    active_categories = {
+        (b.get("category") or "").strip().lower()
+        for b in active_budgets
+        if (b.get("category") or "").strip()
+    }
 
-    total_budgeted = sum((Decimal(str(b["amount"])) for b in budgets), Decimal("0"))
-    total_spent = sum((Decimal(str(t["amount"])) for t in transactions), Decimal("0"))
+    transactions = [
+        t for t in (get_request("transactions/", **transaction_params) or [])
+        if (t.get("category") or "").strip().lower() in active_categories
+    ]
+
+    active_subs = get_request("subscriptions/", user_id=user.id, status="active") or []
+    matching_sub_ids = {
+        s["id"]
+        for s in active_subs
+        if (s.get("category") or "").strip().lower() in active_categories
+    }
+    subscription_payments = [
+        p for p in (get_request("subscription-payments/", **payment_params) or [])
+        if p.get("is_paid", True)
+        and (p.get("subscription_id") or p.get("subscription")) in matching_sub_ids
+    ]
+
+    total_budgeted = sum((Decimal(str(b["amount"])) for b in active_budgets), Decimal("0"))
+    transaction_spent = sum((Decimal(str(t["amount"])) for t in transactions), Decimal("0"))
+    subscription_spent = sum((Decimal(str(p["amount"])) for p in subscription_payments), Decimal("0"))
+    total_spent = transaction_spent + subscription_spent
     remaining = total_budgeted - total_spent
     percent_used = round(float(total_spent / total_budgeted) * 100, 1) if total_budgeted > 0 else 0
 
@@ -65,32 +92,43 @@ def get_budgets(request):
             {"error": "Method Not Allowed"}, status=405
         )
     
+    try:
+        from ..services.subscription_service import generate_subscription_payments
+        generate_subscription_payments(request.user.id)
+    except Exception:
+        pass
+
     reset_expired_budgets(request.user)
 
     try:
         rows = get_request("budgets/", user_id=request.user.id) or []
-        budgets = [budget_from_row(r) for r in rows if r["is_active"]]
-        budgets.sort(key=lambda b: b.period_start, reverse=True)
+        budgets = [budget_from_row(r) for r in rows]
+        budgets.sort(key=lambda b: (b.is_active, b.period_start), reverse=True)
 
         budgets_data = []
         for budget in budgets:
             spent_breakdown = compute_budget_spent(budget)
-            spent = spent_breakdown["total"]
+            spent = float(spent_breakdown["total"])
+            amount = float(budget.amount)
+            remaining = amount - spent
+            percent_used = round((spent / amount) * 100, 1) if amount > 0 else 0
 
             budgets_data.append({
                 "id": budget.id,
                 "category": budget.category,
-                "amount": float(budget.amount),
+                "amount": amount,
                 "period_start": budget.period_start.isoformat(),
                 "period_end": budget.period_end.isoformat(),
                 "recurrence": budget.recurrence,
                 "is_recurring": budget.is_recurring,
                 "is_active": budget.is_active,
                 "is_shared": budget.is_shared,
-                "spent": float(spent),
+                "spent": spent,
                 "transaction_spent": spent_breakdown["transactions"],
                 "subscription_spent": spent_breakdown["subscriptions"],
-                "remaining": float(budget.amount) - float(spent),
+                "remaining": remaining,
+                "percentUsed": percent_used,
+                "isOver": remaining < 0,
             })
 
         return JsonResponse({
@@ -198,17 +236,32 @@ def budget_create(request):
     for field in required_fields:
         if field not in data:
             return JsonResponse({"error":f"Missing field: {field}"}, status=400)
-        
+
+    # Ensure no active budget already exists for this user and category
+    existing_rows = get_request("budgets/", user_id=request.user.id) or []
+    if any(
+        r.get("is_active") and str(r.get("category", "")).lower() == str(data["category"]).lower()
+        for r in existing_rows
+    ):
+        return JsonResponse(
+            {"error": f"An active budget for category '{data['category']}' already exists"},
+            status=400,
+        )
+
+    from datetime import date
+    recurrence = data.get("recurrence") or None
+    is_recurring = data.get("is_recurring", bool(recurrence))
     row = post_request("budgets/", {
         "user_id": request.user.id,
         "category": data["category"],
         "amount": data["amount"],
         "period_start": data["period_start"],
         "period_end": data["period_end"],
-        "recurrence": data.get("recurrence", "monthly"),
-        "is_recurring": data.get("is_recurring", False),
+        "recurrence": recurrence,
+        "is_recurring": is_recurring,
         "is_active": True,
         "is_shared": data.get("is_shared", False),
+        "created_at": date.today().isoformat(),
     })
 
     if not row:

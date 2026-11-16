@@ -11,34 +11,56 @@ def reset_expired_budgets(user):
     """Check and reset expired budgets, creating new ones if recurring."""
     today = date.today()
 
-    rows = get_request(
-        "budget/",
+    all_rows = get_request(
+        "budgets/",
         user_id=user.id,
-        period_end__lte=today.isoformat(),
     ) or []
-    # NOTE: filtering booleans (is_active) through the generic API's query
-    # params is unreliable (MySQL boolean coercion of the string "true"
-    # isn't guaranteed), so we filter it here in Python instead.
+    all_budgets = [budget_from_row(r) for r in all_rows]
 
-    expired = [budget_from_row(r) for r in rows if r["is_active"]]
+    # Categories that already have an active non-expired budget
+    active_categories = {
+        b.category.lower()
+        for b in all_budgets
+        if b.is_active and b.period_end > today
+    }
+
+    # Include active expired budgets, plus any recurring expired budgets that
+    # were deactivated before their successor could be created.
+    expired = [
+        b for b in all_budgets
+        if b.period_end <= today and (
+            b.is_active or (b.is_recurring and b.category.lower() not in active_categories)
+        )
+    ]
 
     created_budgets = []
 
     for budget in expired:
-        # Deactivate the expired budget
-        patch_request(f"budget/{budget.id}", {"is_active": False})
-
-        # Skip if not recurring
         if not budget.is_recurring:
+            if budget.is_active:
+                patch_request(f"budgets/{budget.id}", {"is_active": False})
             continue
-        
-        # Calculate next period based on recurrence type
+
+        if budget.category.lower() in active_categories:
+            patch_request(f"budgets/{budget.id}", {"is_active": False, "is_recurring": False})
+            continue
+
+        # Calculate next period based on recurrence type, advancing until it covers today
         next_start, next_end = calculate_next_period(
             budget.period_end,
             budget.recurrence
         )
+        while next_end <= today:
+            next_start, next_end = calculate_next_period(
+                next_end,
+                budget.recurrence
+            )
 
-        # Create new budget
+        # Deactivate the expired budget
+        if budget.is_active:
+            patch_request(f"budgets/{budget.id}", {"is_active": False})
+
+        # Create new budget for the current period
         new_row = post_request("budgets/", {
             "user_id": budget.user_id,
             "category": budget.category,
@@ -49,16 +71,12 @@ def reset_expired_budgets(user):
             "is_active": True,
             "is_recurring": True,
             "is_shared": budget.is_shared,
+            "created_at": today.isoformat(),
         })
-        # NOTE: the (category, user) unique_together constraint still
-        # exists on this table (enforced by Sequelize now instead of
-        # Django). A colliding create returns None here rather than
-        # raising IntegrityError -- restapi.post_request swallows HTTP
-        # error responses and logs them instead of propagating an
-        # exception. Any test asserting IntegrityError against this path
-        # will need to change to asserting `created_budgets == []` instead.
         if new_row:
+            patch_request(f"budgets/{budget.id}", {"is_active": False, "is_recurring": False})
             created_budgets.append(budget_from_row(new_row))
+            active_categories.add(budget.category.lower())
 
     return created_budgets
 
@@ -87,11 +105,13 @@ def get_transactions_for_budget(budget):
     rows = get_request(
         "transactions/",
         user_id=budget.user_id,
-        category=budget.category,
         date__gte=budget.period_start.isoformat(),
         date__lte=budget.period_end.isoformat(),
     ) or []
-    return [transaction_from_row(r) for r in rows]
+    return [
+        transaction_from_row(r) for r in rows
+        if (r.get("category") or "").lower() == budget.category.lower()
+    ]
 
 
 def get_subscriptions_for_budget(budget):
@@ -109,17 +129,30 @@ def get_subscriptions_for_budget(budget):
 
 
 def compute_budget_spent(budget):
-    """Caclulate total spent for a budget."""
+    """Calculate total spent for a budget."""
     transactions = get_transactions_for_budget(budget)
     transaction_total = sum((t.amount for t in transactions), Decimal("0"))
 
-    # Subscription total for the budget period
+    # Subscription total for the budget period from paid subscription payments
+    matching_subs = get_subscriptions_for_budget(budget)
+    matching_sub_ids = {s.id for s in matching_subs}
+
     subscription_total = Decimal("0")
-    for subscription in get_subscriptions_for_budget(budget):
-        subscription_total += get_subscription_amount_for_period(
-            subscription,
-            budget.period_start,
-            budget.period_end
+    if matching_sub_ids:
+        payment_rows = get_request(
+            "subscription-payments/",
+            user_id=budget.user_id,
+            due_date__gte=budget.period_start.isoformat(),
+            due_date__lte=budget.period_end.isoformat(),
+        ) or []
+        paid_matching_payments = [
+            p for p in payment_rows
+            if (p.get("subscription_id") or p.get("subscription")) in matching_sub_ids
+            and p.get("is_paid", True)
+        ]
+        subscription_total = sum(
+            (Decimal(str(p.get("amount", 0))) for p in paid_matching_payments),
+            Decimal("0"),
         )
 
     total = transaction_total + subscription_total

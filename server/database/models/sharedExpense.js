@@ -9,7 +9,7 @@ const SharedExpense = sequelize.define('SharedExpense', {
     paid_by_id: { type: DataTypes.INTEGER, allowNull: false },
     date: { type: DataTypes.DATEONLY, allowNull: false },
     category: { type: DataTypes.STRING(50), allowNull: true },
-    created_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     created_by_id: { type: DataTypes.INTEGER, allowNull: false },
     receipt_image: { type: DataTypes.STRING(255), allowNull: true },
     notes: { type: DataTypes.TEXT, allowNull: true },

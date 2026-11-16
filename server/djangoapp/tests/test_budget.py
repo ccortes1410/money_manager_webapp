@@ -135,7 +135,14 @@ class BudgetAPITests(BaseTestCase):
         )
         self.test_api.seed("transactions", {
             "user_id": self.user1.id,
+            "category": "Entertainment",
             "amount": "200.00",
+            "date": self.today.isoformat(),
+        })
+        self.test_api.seed("transactions", {
+            "user_id": self.user1.id,
+            "category": "UnbudgetedCategory",
+            "amount": "999.00",
             "date": self.today.isoformat(),
         })
 

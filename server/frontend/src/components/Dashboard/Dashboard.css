@@ -407,6 +407,38 @@
     justify-content: center;
 }
 
+.dashboard-income-bar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    cursor: pointer;
+}
+
+.dashboard-income-tooltip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    background: rgba(0, 0, 0, 0.88);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dashboard-income-bar-wrapper:hover .dashboard-income-tooltip {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
 /* The actual bar */
 .dashboard-income-bar {
     width: 48px;

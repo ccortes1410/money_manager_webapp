@@ -95,12 +95,15 @@ def initiate():
         Transaction.objects.get_or_create(
             user=alice, description=t["description"], date=t["date"], defaults=t
         )
-    # ---- Subscription + a couple of payments each (Alex) ----
+    # ---- Subscription + scheduled payments (Alex) ----
+    from djangoapp.services.subscription_service import get_billing_dates, get_first_billing_date
+
     subscriptions_data = [
         {"name": "Netflix", "amount": Decimal("10900"), "category": "Entertainment", "billing_day": 15},
         {"name": "Gym", "amount": Decimal("29900"), "category": "Health", "billing_day": 1},
     ]
     for s in subscriptions_data:
+        aligned_start = get_first_billing_date(today - timedelta(days=90), "monthly", s["billing_day"])
         sub, _ = Subscription.objects.update_or_create(
             user=alex,
             name=s["name"],
@@ -109,23 +112,19 @@ def initiate():
                 "category": s["category"],
                 "billing_cycle": "monthly",
                 "billing_day": s["billing_day"],
-                "start_date": today - timedelta(days=90),
+                "start_date": aligned_start,
                 "status": "active",
             },
         )
-        # One already-paid payment, one upcoming/unpaid.
-        SubscriptionPayment.objects.get_or_create(
-            user=alex,
-            subscription=sub,
-            due_date=month_start,
-            defaults={"amount": sub.amount, "is_paid": True, "paid_date": month_start},
-        )
-        SubscriptionPayment.objects.get_or_create(
-            user=alex,
-            subscription=sub,
-            due_date=month_end,
-            defaults={"amount": sub.amount, "is_paid": False},
-        )
+        billing_dates = get_billing_dates(sub.start_date, today, sub.billing_cycle, sub.billing_day)
+        SubscriptionPayment.objects.filter(subscription=sub).exclude(due_date__in=billing_dates).delete()
+        for due in billing_dates:
+            SubscriptionPayment.objects.get_or_create(
+                user=alex,
+                subscription=sub,
+                due_date=due,
+                defaults={"amount": sub.amount, "is_paid": True, "paid_date": due},
+            )
 
     # ---- Income (Alex) ----
     Income.objects.get_or_create(

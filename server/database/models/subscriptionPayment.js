@@ -9,7 +9,7 @@ const SubscriptionPayment = sequelize.define('SubscriptionPayment', {
     due_date: { type: DataTypes.DATEONLY, allowNull: false },
     is_paid: { type: DataTypes.BOOLEAN, defaultValue: false },
     paid_date: { type: DataTypes.DATEONLY, allowNull: true },
-    created_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_subscriptionpayment',
     timestamps: false,

@@ -7,7 +7,7 @@ const SharedBudgetMember = sequelize.define('SharedBudgetMember', {
     user_id: { type: DataTypes.INTEGER, allowNull: false },
     role: { type: DataTypes.STRING(20), defaultValue: 'editor' },
     contribution_percentage: { type: DataTypes.DECIMAL(5, 2), defaultValue: 0 },
-    joined_at: { type: DataTypes.DATE },
+    joined_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_sharedbudgetmember',
     timestamps: false,

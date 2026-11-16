@@ -136,14 +136,21 @@ const Subscriptions = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                // Update local state
+                const newIsPaid = data.payment.is_paid;
+                // Update local state and adjust total_paid
                 setSubscriptions((prev) =>
                     prev.map((sub) => {
                         if (sub.id === subscriptionId) {
+                            const targetPayment = (sub.payments || []).find((p) => p.id === paymentId);
+                            const paymentAmount = parseFloat(targetPayment?.amount ?? sub.amount ?? 0);
+                            const delta = newIsPaid ? paymentAmount : -paymentAmount;
                             return {
                                 ...sub,
+                                total_paid: Math.max(0, parseFloat(sub.total_paid || 0) + delta),
                                 payments: sub.payments.map((p) =>
-                                    p.id === paymentId ? { ...p, is_paid: data.payment.is_paid } : p
+                                    p.id === paymentId
+                                        ? { ...p, is_paid: newIsPaid, paid_date: data.payment.paid_date }
+                                        : p
                                 ),
                             };
                         }

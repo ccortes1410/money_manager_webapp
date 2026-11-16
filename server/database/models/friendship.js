@@ -6,8 +6,8 @@ const Friendship = sequelize.define('Friendship', {
     sender_id: { type: DataTypes.INTEGER, allowNull: false },
     receiver_id: { type: DataTypes.INTEGER, allowNull: false },
     status: { type: DataTypes.STRING(20), defaultValue: 'pending' },
-    created_at: { type: DataTypes.DATE },
-    updated_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_friendship',
     timestamps: false,

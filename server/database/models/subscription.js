@@ -13,8 +13,8 @@ const Subscription = sequelize.define('Subscription', {
     end_date: { type: DataTypes.DATEONLY, allowNull: true },
     status: { type: DataTypes.STRING(20), defaultValue: 'active' },
     description: { type: DataTypes.STRING(255), allowNull: true, defaultValue: '' },
-    created_at: { type: DataTypes.DATE },
-    updated_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_subscription',
     timestamps: false,

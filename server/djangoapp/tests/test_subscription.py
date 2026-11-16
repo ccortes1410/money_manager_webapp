@@ -131,7 +131,7 @@ class SubscriptionAPITests(BaseTestCase):
             'amount': 899,
             'category': 'Entertainment',
             'billing_cycle': 'monthly',
-            'billing_day': 15,
+            'billing_day': self.today.day,
             'start_date': self.today.isoformat(),
         }
         response = self.client.post(
@@ -149,6 +149,41 @@ class SubscriptionAPITests(BaseTestCase):
         self.assertEqual(payments[0]['user_id'], self.user1.id)
         self.assertEqual(payments[0]['subscription_id'], subscriptions[0]['id'])
         self.assertEqual(payments[0]['due_date'], self.today.isoformat())
+
+    def test_monthly_payments_align_to_billing_day_and_clean_off_schedule(self):
+        from datetime import date
+        sub = self._seed_subscription(
+            name="Netflix",
+            billing_cycle="monthly",
+            billing_day=15,
+            start_date="2026-08-16",
+            end_date=None,
+        )
+        # Seed off-schedule October payments (1st and 30th)
+        self.test_api.seed("subscription-payments", {
+            "user_id": self.user1.id,
+            "subscription_id": sub["id"],
+            "due_date": "2026-10-01",
+            "amount": "9990.00",
+            "is_paid": True,
+            "paid_date": "2026-10-01",
+        })
+        self.test_api.seed("subscription-payments", {
+            "user_id": self.user1.id,
+            "subscription_id": sub["id"],
+            "due_date": "2026-10-30",
+            "amount": "9990.00",
+            "is_paid": False,
+            "paid_date": None,
+        })
+
+        generate_subscription_payments(self.user1.id, date(2026, 11, 14))
+        payments = [
+            p for p in self.test_api.resources["subscription-payments"]
+            if p["subscription_id"] == sub["id"]
+        ]
+        due_dates = sorted(p["due_date"] for p in payments)
+        self.assertEqual(due_dates, ["2026-09-15", "2026-10-15"])
 
     def test_api_payment_generation_catches_up_and_is_idempotent(self):
         start_date = self.today - timedelta(days=40)

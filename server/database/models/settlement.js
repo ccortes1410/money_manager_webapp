@@ -9,7 +9,7 @@ const Settlement = sequelize.define('Settlement', {
     amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
     date: { type: DataTypes.DATEONLY, allowNull: false },
     notes: { type: DataTypes.TEXT, allowNull: true },
-    created_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_settlement',
     timestamps: false,

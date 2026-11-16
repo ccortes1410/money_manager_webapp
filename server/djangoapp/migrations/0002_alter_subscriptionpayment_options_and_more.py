@@ -4,6 +4,46 @@ import django.utils.timezone
 from django.db import migrations, models
 
 
+def apply_0002_schema_safely(apps, schema_editor):
+    table = "djangoapp_subscriptionpayment"
+    with schema_editor.connection.cursor() as cursor:
+        # 1. Check existing columns on djangoapp_subscriptionpayment
+        cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+        existing_cols = {row[0] for row in cursor.fetchall()}
+
+        if "due_date" not in existing_cols:
+            cursor.execute(
+                f"ALTER TABLE `{table}` ADD COLUMN `due_date` date DEFAULT '2026-01-01' NOT NULL"
+            )
+            cursor.execute(
+                f"ALTER TABLE `{table}` ALTER COLUMN `due_date` DROP DEFAULT"
+            )
+
+        # 2. Check existing indexes on djangoapp_subscriptionpayment
+        cursor.execute(f"SHOW INDEX FROM `{table}`")
+        index_rows = cursor.fetchall()
+        indexes_by_name = {}
+        for row in index_rows:
+            key_name = row[2]
+            col_name = row[4]
+            indexes_by_name.setdefault(key_name, []).append(col_name)
+
+        # 3. Ensure unique index on (subscription_id, due_date) exists BEFORE dropping old index
+        has_due_date_uniq = any(
+            set(cols) == {"subscription_id", "due_date"}
+            for cols in indexes_by_name.values()
+        )
+        if not has_due_date_uniq:
+            cursor.execute(
+                f"ALTER TABLE `{table}` ADD UNIQUE INDEX `djangoapp_subpayment_sub_due_uniq` (`subscription_id`, `due_date`)"
+            )
+
+        # 4. Drop unique index on (subscription_id, paid_date) if present
+        for key_name, cols in indexes_by_name.items():
+            if key_name != "PRIMARY" and set(cols) == {"subscription_id", "paid_date"}:
+                cursor.execute(f"ALTER TABLE `{table}` DROP INDEX `{key_name}`")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,32 +51,39 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='subscriptionpayment',
-            options={'ordering': ['-due_date']},
-        ),
-        migrations.AlterUniqueTogether(
-            name='subscriptionpayment',
-            unique_together=set(),
-        ),
-        migrations.AddField(
-            model_name='subscriptionpayment',
-            name='due_date',
-            field=models.DateField(default=django.utils.timezone.now, help_text='The billing-cycle date this payment covers.'),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name='subscriptionpayment',
-            name='is_paid',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AlterField(
-            model_name='subscriptionpayment',
-            name='paid_date',
-            field=models.DateField(blank=True, help_text='Date the user marked this as paid.', null=True),
-        ),
-        migrations.AlterUniqueTogether(
-            name='subscriptionpayment',
-            unique_together={('subscription', 'due_date')},
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(apply_0002_schema_safely, migrations.RunPython.noop),
+            ],
+            state_operations=[
+                migrations.AlterModelOptions(
+                    name='subscriptionpayment',
+                    options={'ordering': ['-due_date']},
+                ),
+                migrations.AlterUniqueTogether(
+                    name='subscriptionpayment',
+                    unique_together=set(),
+                ),
+                migrations.AddField(
+                    model_name='subscriptionpayment',
+                    name='due_date',
+                    field=models.DateField(default=django.utils.timezone.now, help_text='The billing-cycle date this payment covers.'),
+                    preserve_default=False,
+                ),
+                migrations.AlterField(
+                    model_name='subscriptionpayment',
+                    name='is_paid',
+                    field=models.BooleanField(default=False),
+                ),
+                migrations.AlterField(
+                    model_name='subscriptionpayment',
+                    name='paid_date',
+                    field=models.DateField(blank=True, help_text='Date the user marked this as paid.', null=True),
+                ),
+                migrations.AlterUniqueTogether(
+                    name='subscriptionpayment',
+                    unique_together={('subscription', 'due_date')},
+                ),
+            ],
         ),
     ]

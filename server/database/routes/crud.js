@@ -21,6 +21,42 @@ const { Sequelize } = require('sequelize');
 function buildCrudRouter(model, { include } = {}) {
     const router = express.Router();
     const Op = Sequelize.Op;
+    const attrs = model.rawAttributes || {};
+
+    function resolveField(field) {
+        if (attrs[field]) return field;
+        if (attrs[`${field}_id`]) return `${field}_id`;
+        return field;
+    }
+
+    function coerceQueryValue(val) {
+        if (val === 'true' || val === 'True') return true;
+        if (val === 'false' || val === 'False') return false;
+        return val;
+    }
+
+    function normalizeBody(body) {
+        if (!body || typeof body !== 'object') return body;
+        const normalized = {};
+        for (const [key, value] of Object.entries(body)) {
+            normalized[resolveField(key)] = value;
+        }
+        return normalized;
+    }
+
+    function serializeRow(row) {
+        if (!row) return row;
+        const data = typeof row.toJSON === 'function' ? row.toJSON() : { ...row };
+        for (const [key, value] of Object.entries(data)) {
+            if (key.endsWith('_id')) {
+                const baseKey = key.slice(0, -3);
+                if (!(baseKey in data)) {
+                    data[baseKey] = value;
+                }
+            }
+        }
+        return data;
+    }
 
     router.get('/', async (req, res) => {
         try {
@@ -29,7 +65,8 @@ function buildCrudRouter(model, { include } = {}) {
             for (const [key, value] of Object.entries(req.query)) {
                 if (key.includes('__')) {
                     // Handle Django-style lookups like date__gte, date__lte
-                    const [field, operator] = key.split('__');
+                    const [rawField, operator] = key.split('__');
+                    const field = resolveField(rawField);
                     if (!where[field]) {
                         where[field] = {};
                     }
@@ -51,13 +88,13 @@ function buildCrudRouter(model, { include } = {}) {
                             where[field][Op.eq] = value;
                             break;
                         case 'iexact':
-                            where[field][Op.iLike] = value;
+                            where[field][Op.like] = value;
                             break;
                         case 'contains':
-                            where[field][Op.contains] = value;
+                            where[field][Op.substring] = value;
                             break;
                         case 'icontains':
-                            where[field][Op.iContains] = value;
+                            where[field][Op.substring] = value;
                             break;
                         case 'in':
                             where[field][Op.in] = value.split(',');
@@ -73,15 +110,15 @@ function buildCrudRouter(model, { include } = {}) {
                             break;
                         default:
                             // Default to exact match if operator not recognized
-                            where[field] = value;
+                            where[field] = coerceQueryValue(value);
                     }
                 } else {
                     // Direct field match
-                    where[key] = value;
+                    where[resolveField(key)] = coerceQueryValue(value);
                 }
             }
             const rows = await model.findAll({ where, include });
-            res.json(rows);
+            res.json(rows.map(serializeRow));
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -91,7 +128,7 @@ function buildCrudRouter(model, { include } = {}) {
         try {
             const row = await model.findByPk(req.params.id, { include });
             if (!row) return res.status(404).json({ error: `${model.name} not found` });
-            res.json(row);
+            res.json(serializeRow(row));
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
@@ -99,8 +136,8 @@ function buildCrudRouter(model, { include } = {}) {
 
     router.post('/', async (req, res) => {
         try {
-            const row = await model.create(req.body);
-            res.status(201).json(row);
+            const row = await model.create(normalizeBody(req.body));
+            res.status(201).json(serializeRow(row));
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
@@ -110,8 +147,8 @@ function buildCrudRouter(model, { include } = {}) {
         try {
             const row = await model.findByPk(req.params.id);
             if (!row) return res.status(404).json({ error: `${model.name} not found` });
-            await row.update(req.body);
-            res.json(row);
+            await row.update(normalizeBody(req.body));
+            res.json(serializeRow(row));
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
@@ -121,6 +158,7 @@ function buildCrudRouter(model, { include } = {}) {
         try {
             const deleted = await model.destroy({ where: { id: req.params.id } });
             if (!deleted) return res.status(404).json({ error: `${model.name} not found` });
+            res.json({ message: `${model.name} deleted`, deleted });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

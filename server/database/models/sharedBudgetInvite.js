@@ -9,7 +9,7 @@ const SharedBudgetInvite = sequelize.define('SharedBudgetInvite', {
     role: { type: DataTypes.STRING(20), defaultValue: 'editor' },
     status: { type: DataTypes.STRING(20), defaultValue: 'pending' },
     message: { type: DataTypes.TEXT, allowNull: true },
-    created_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     responded_at: { type: DataTypes.DATE, allowNull: true },
 }, {
     tableName: 'djangoapp_sharedbudgetinvite',

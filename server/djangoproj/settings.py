@@ -9,9 +9,14 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-# import pymysql
-
-# pymysql.install_as_MySQLdb()
+_USING_PYMYSQL = False
+try:
+    import pymysql
+    pymysql.version_info = (2, 2, 7, "final", 0)
+    pymysql.install_as_MySQLdb()
+    _USING_PYMYSQL = True
+except ImportError:
+    pass
 
 import os
 from pathlib import Path
@@ -24,12 +29,13 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 ENV = os.environ.get('DJANGO_ENV', 'local')
+_OVERRIDE_ENV = not bool(os.environ.get('VERCEL'))
 
-if ENV == 'tidb':
-    load_dotenv(BASE_DIR / '.env.tidb', override=True)
+if ENV == 'tidb' and (BASE_DIR / '.env.tidb').exists():
+    load_dotenv(BASE_DIR / '.env.tidb', override=_OVERRIDE_ENV)
     print("Loaded TiDB environment variables")
-elif ENV == 'local':
-    load_dotenv(BASE_DIR / '.env.local', override=True)
+elif ENV == 'local' and (BASE_DIR / '.env.local').exists():
+    load_dotenv(BASE_DIR / '.env.local', override=_OVERRIDE_ENV)
     print("Loaded local environment variables")
 
 # Quick-start development settings - unsuitable for production
@@ -70,10 +76,15 @@ CORS_TRUSTED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',    
     'http://127.0.0.1:8000',
+    'https://*.vercel.app',
 ]
 
 if RENDER_EXTERNAL_URL:
     CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_URL)
+
+VERCEL_URL = os.environ.get('VERCEL_URL')
+if VERCEL_URL:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{VERCEL_URL}")
 
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
@@ -81,7 +92,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HHTP_X_FORWARDED_PROTO', 'https')
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
     if RENDER_EXTERNAL_URL:
         SECURE_SSL_REDIRECT = True
@@ -196,19 +207,22 @@ if ENV == 'local':
     }
 
 elif ENV == 'tidb':
+    _tidb_options = {
+        "ssl": {"ca": certifi.where()},
+        "charset": "utf8mb4",
+    }
+    if not _USING_PYMYSQL:
+        _tidb_options["ssl_mode"] = "VERIFY_IDENTITY"
+
     DATABASES = {
         "default": {
-            "ENGINE": os.environ.get('DB_ENGINE'),
+            "ENGINE": os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
             "NAME": os.environ.get('DB_NAME'),
             "USER": os.environ.get('DB_USER'),
             "PASSWORD": os.environ.get('DB_PASSWORD'),
             "HOST": os.environ.get('DB_HOST'),
             "PORT": os.environ.get('DB_PORT'),
-            "OPTIONS": {
-                "ssl_mode": "VERIFY_IDENTITY",
-                "ssl": { 'ca': certifi.where() },
-                "charset": "utf8mb4",
-            },
+            "OPTIONS": _tidb_options,
         }
     }
 
@@ -252,15 +266,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = "/media/"
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
 
 STATICFILES_DIRS = [
-    # os.path.join(BASE_DIR, 'frontend/static/'),
-    # os.path.join(BASE_DIR, 'frontend/public/'),
-    os.path.join(BASE_DIR, 'frontend/build/static'),
+    d for d in [os.path.join(BASE_DIR, 'frontend/build/static')]
+    if os.path.exists(d)
 ]
 
 LOGIN_URL = '/djangoapp/login'

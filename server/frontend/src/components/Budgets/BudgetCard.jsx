@@ -17,6 +17,7 @@ const BudgetCard = ({ budget, isSelected, onSelect, onEdit, onDelete, onToggleRe
     const period_end = budget?.period_end || 'N/A';
     const recurrence = budget?.recurrence || 'monthly';
     const is_recurring = budget?.is_recurring || false;
+    const is_active = budget?.is_active !== false;
 
     return (
         <div
@@ -96,6 +97,11 @@ const BudgetCard = ({ budget, isSelected, onSelect, onEdit, onDelete, onToggleRe
                         {period_start} - {period_end}
                     </span>
                     <div className="budget-badges">
+                        {!is_active && (
+                            <span className="recurrence-badge inactive-badge">
+                                Inactive
+                            </span>
+                        )}
                         {is_recurring && (
                             <span className="recurring-badge active">
                                 🔄 {recurrence}

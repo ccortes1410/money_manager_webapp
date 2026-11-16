@@ -47,12 +47,20 @@ def get_member_data(member_row, budget_row=None):
     budget = budget_row or get_budget_by_id(member_row["shared_budget"])
 
     # Get total paid by calculating expenses where this member paid
-    total_paid = get_total_paid_by_member(member_row["user_id"], member_row["shared_budget"])
+    budget_id = member_row.get("shared_budget_id", member_row.get("shared_budget"))
+    user_id = member_row["user_id"]
+    total_paid = get_total_paid_by_member(user_id, budget_id)
 
     # Get total owed by calculating splits for this member
-    total_owed = get_total_owed_by_member(member_row["user_id"], member_row["shared_budget"])
+    total_owed = get_total_owed_by_member(user_id, budget_id)
 
-    balance = total_paid - total_owed
+    settlements_paid_rows = get_request("settlements/", shared_budget=budget_id, payer=user_id) or []
+    settlements_paid = sum(float(s["amount"]) for s in settlements_paid_rows)
+
+    settlements_received_rows = get_request("settlements/", shared_budget=budget_id, receiver=user_id) or []
+    settlements_received = sum(float(s["amount"]) for s in settlements_received_rows)
+
+    balance = total_paid - total_owed - settlements_received + settlements_paid
 
     return {
         'id': member_row["id"],
@@ -90,7 +98,7 @@ def get_budget_data(budget_row, user_id=None):
         member = next((m for m in members_data if m['user']['id'] == user_id), None)
         if member:
             user_role = member["role"]
-            user_balanace = float(member["balance"])
+            user_balance = float(member["balance"])
 
     return {
         'id': budget_row["id"],
@@ -107,6 +115,8 @@ def get_budget_data(budget_row, user_id=None):
         },
         'period_start': budget_row["period_start"],
         'period_end': budget_row["period_end"],
+        'start_date': budget_row["period_start"],
+        'end_date': budget_row["period_end"],
         'is_active': budget_row["is_active"],
         'default_split_type': budget_row["default_split_type"],
         'member_count': len(members_data),
@@ -142,9 +152,16 @@ def get_total_paid_by_member(user_id, budget_id):
 
 def get_total_owed_by_member(user_id, budget_id):
     """Get total amount owed by a member in a budget."""
-    # Get splits for this member in this budget that are not settled
-    split_rows = get_request("expense-splits/", shared_budget=budget_id, user_id=user_id, is_settled=False) or []
-    total = sum(float(split_row["amount_owed"]) for split_row in split_rows)
+    expense_rows = get_request("shared-expenses/", shared_budget=budget_id) or []
+    expense_ids = {e["id"] for e in expense_rows if "id" in e}
+    if not expense_ids:
+        return 0.0
+    split_rows = get_request("expense-splits/", user_id=user_id, is_settled=False) or []
+    total = sum(
+        float(split_row["amount_owed"])
+        for split_row in split_rows
+        if split_row.get("shared_expense", split_row.get("shared_expense_id")) in expense_ids
+    )
     return total
 
 
@@ -157,7 +174,7 @@ def get_total_spent_for_budget(budget_id):
 
 def get_settlements_for_budget(budget_id, limit=10):
     """Get settlements for a budget."""
-    settlement_rows = get_request("shared-expenses/", shared_budget=budget_id) or []
+    settlement_rows = get_request("settlements/", shared_budget=budget_id) or []
     # Sort by date descending and limit
     settlement_rows.sort(key=lambda x: x.get("date") or "", reverse=True)
     settlement_rows = settlement_rows[:limit]
@@ -306,6 +323,12 @@ def create_shared_budget(request):
     
     user = request.user
 
+    # Support both start_date/end_date (frontend modal) and period_start/period_end
+    if not data.get('period_start') and data.get('start_date'):
+        data['period_start'] = data['start_date']
+    if not data.get('period_end') and data.get('end_date'):
+        data['period_end'] = data['end_date']
+
     # Validate required fields
     required_fields = ['name', 'total_amount', 'period_start', 'period_end']
     for field in required_fields:
@@ -448,10 +471,10 @@ def update_shared_budget(request, budget_id):
                 return JsonResponse({'error': 'Invalid total amount'}, status=400)
         if 'category' in data:
             payload['category'] = data['category']
-        if 'period_start' in data:
-            payload['period_start'] = data['period_start']
-        if 'period_end' in data:
-            payload['period_end'] = data['period_end']
+        if 'period_start' in data or 'start_date' in data:
+            payload['period_start'] = data.get('period_start') or data.get('start_date')
+        if 'period_end' in data or 'end_date' in data:
+            payload['period_end'] = data.get('period_end') or data.get('end_date')
         if 'is_active' in data:
             payload['is_active'] = data['is_active']
         if 'default_split_type' in data:
@@ -466,13 +489,15 @@ def update_shared_budget(request, budget_id):
             return JsonResponse({'error': 'Failed to updated budget'}, status=500)
 
         # Notify members
-        post_request("shared-budget-notifications/", {
-            'user_id': [m["user_id"] for m in get_budget_members(budget_id) if m["user"]["id"] != user.id],
-            'fromn_user_id': user.id,
-            'notification_type': 'budget_updated',
-            'shared_budget_id': budget_id,
-            'message': f'{user.username} updated budget "{updated_budget_row["name"]}"'
-        })
+        for m in get_budget_members(budget_id):
+            if m["user"]["id"] != user.id:
+                post_request("shared-budget-notifications/", {
+                    'user_id': m["user"]["id"],
+                    'from_user_id': user.id,
+                    'notification_type': 'budget_updated',
+                    'shared_budget_id': budget_id,
+                    'message': f'{user.username} updated budget "{updated_budget_row["name"]}"'
+                })
 
         budget_data = get_budget_data(updated_budget_row, user.id)
 
@@ -1001,15 +1026,36 @@ def add_expense(request, budget_id):
         if split_type == 'custom' and splits_data:
             # Custom splits provided via API
             for split_data in splits_data:
+                split_amt = float(split_data.get("amount", split_data.get("amount_owed", 0)))
                 post_request("expense-splits/", {
                     'shared_expense': expense_row["id"],
-                    'user_id':split_data["user_id"],
-                    'amount_owed': str(split_data["amount"]),
-                    'is_settled':split_data.get("is_settled", False)
+                    'user_id': split_data["user_id"],
+                    'amount_owed': f"{split_amt:.2f}",
+                    'is_settled': split_data.get("is_settled", False)
+                })
+        elif split_type == 'percentage':
+            member_rows_for_split = get_request("shared-budget-members/", shared_budget=budget_id) or []
+            for m in member_rows_for_split:
+                pct = float(m.get("contribution_percentage", 0))
+                owed = round(amount * (pct / 100.0), 2)
+                post_request("expense-splits/", {
+                    'shared_expense': expense_row["id"],
+                    'user_id': m["user_id"],
+                    'amount_owed': f"{owed:.2f}",
+                    'is_settled': False
                 })
         else:
-            # Default: equal split via API endpoint
-            post_request(f"shared-expenses/{expense_row['id']}/create-equal-splits", {})
+            # Default: equal split among budget members
+            member_rows_for_split = get_request("shared-budget-members/", shared_budget=budget_id) or []
+            if member_rows_for_split:
+                owed = round(amount / len(member_rows_for_split), 2)
+                for m in member_rows_for_split:
+                    post_request("expense-splits/", {
+                        'shared_expense': expense_row["id"],
+                        'user_id': m["user_id"],
+                        'amount_owed': f"{owed:.2f}",
+                        'is_settled': False
+                    })
 
         # Notify members
         expense_description = data['description']
@@ -1020,7 +1066,8 @@ def add_expense(request, budget_id):
             post_request("shared-budget-notifications/", {
                 'user_id': member_user_id,
                 'from_user_id': user.id,
-                'notification_type': budget_id,
+                'notification_type': 'expense_added',
+                'shared_budget_id': budget_id,
                 'message': f'{user.username} added "{expense_description}" (${amount}) to "{budget_row["name"]}"'
             })
 
@@ -1091,8 +1138,9 @@ def update_expense(request, budget_id, expense_id):
 
         # Recalculate splits if amount changed
         if 'amount' in data:
+            new_amount = float(data['amount'])
             # Delete existing splits via API
-            split_rows = get_request("expense=splits/", shared_expense=expense_id) or []
+            split_rows = get_request("expense-splits/", shared_expense=expense_id) or []
             for split_row in split_rows:
                 delete_request(f"expense-splits/{split_row['id']}")
 
@@ -1102,18 +1150,35 @@ def update_expense(request, budget_id, expense_id):
             if split_type == 'custom' and data.get('splits'):
                 # Custom splits provided
                 for split_data in data['splits']:
+                    split_amt = float(split_data.get("amount_owed", split_data.get("amount", 0)))
                     post_request("expense-splits/", {
                         'shared_expense': expense_id,
                         'user_id': split_data["user_id"],
-                        'amount_owed': str(split_data["amount_owed"]),
+                        'amount_owed': f"{split_amt:.2f}",
                         'is_settled': split_data.get("is_settled", False),
                     })
             elif split_type == 'percentage':
-                # Percentage splits
-                post_request(f"shared-expenses/{expense_id}/create-percentage-splits", {})
+                member_rows_for_split = get_request("shared-budget-members/", shared_budget=budget_id) or []
+                for m in member_rows_for_split:
+                    pct = float(m.get("contribution_percentage", 0))
+                    owed = round(new_amount * (pct / 100.0), 2)
+                    post_request("expense-splits/", {
+                        'shared_expense': expense_id,
+                        'user_id': m["user_id"],
+                        'amount_owed': f"{owed:.2f}",
+                        'is_settled': False,
+                    })
             else:
-                # Equal splits
-                post_request(f"shared-expenses/{expense_id}/create-equal-splits", {})
+                member_rows_for_split = get_request("shared-budget-members/", shared_budget=budget_id) or []
+                if member_rows_for_split:
+                    owed = round(new_amount / len(member_rows_for_split), 2)
+                    for m in member_rows_for_split:
+                        post_request("expense-splits/", {
+                            'shared_expense': expense_id,
+                            'user_id': m["user_id"],
+                            'amount_owed': f"{owed:.2f}",
+                            'is_settled': False,
+                        })
 
         # Notify members
         member_rows = get_request("shared-budget-members/", shared_budget=budget_id) or []
@@ -1453,7 +1518,7 @@ def get_expense_data(expense_row):
         splits_data.append({
             'id': split_row["id"],
             'user': {
-                'id': split_row["id"],
+                'id': split_row["user_id"],
                 'username': user_row["username"] if user_row else f"user_{split_row['user_id']}",
             },
             'amount_owed': float(split_row["amount_owed"]),
@@ -1491,28 +1556,7 @@ def get_expense_data(expense_row):
 
 def get_budget_debts_data(budget_id):
     """Get all debts/balances for a shared budget from API."""
-    try:
-        # Try to get debts from API endpoint first
-        debts_rows = get_request(f"shared-budgets/{budget_id}/debts") or []
-        if debts_rows:
-            debts_data = []
-            for debt_row in debts_rows:
-                debts_data.append({
-                    'from_user': {
-                        'id': debt_row["from_user_id"],
-                        'username': get_username(debt_row["from_user_id"]),
-                    },
-                    'to_user': {
-                        'id': debt_row["to_user_id"],
-                        'username': get_username(debt_row["to_user_id"]),
-                    },
-                    'amount': float(debt_row["amount"]),
-                })
-            return debts_data
-    except Exception:
-        pass # Fall back to calculation if API ednpoint doesn't exist
-
-    # Calculate debts manually (similar to original calulate_debts function)
+    # Calculate debts manually (similar to original calculate_debts function)
     members = get_request("shared-budget-members/", shared_budget=budget_id) or []
     balances = {}
 
@@ -1523,9 +1567,8 @@ def get_budget_debts_data(budget_id):
         expense_rows = get_request("shared-expenses/", shared_budget=budget_id, paid_by=user_id) or []
         total_paid = sum(float(expense_row["amount"]) for expense_row in expense_rows)
 
-        # Total owed by this member (from splits)
-        split_rows = get_request("expense-splits/", shared_budget=budget_id, user_id=user_id, is_settled=False) or []
-        total_owed = sum(float(split_row["amount_owed"]) for split_row in split_rows)
+        # Total owed by this member (from splits in this budget's expenses)
+        total_owed = get_total_owed_by_member(user_id, budget_id)
 
         # Total settlements made by this member
         settlement_rows = get_request("settlements/", shared_budget=budget_id, payer=user_id) or []
@@ -1559,8 +1602,8 @@ def get_budget_debts_data(budget_id):
             })
 
     # Sort for optimal settlement
-    debtors.sort(key=lambda x: x.get['amount'], reverse=True)
-    creditors.sort(key=lambda x: x.get['amout'], reverse=True)
+    debtors.sort(key=lambda x: x.get('amount', 0), reverse=True)
+    creditors.sort(key=lambda x: x.get('amount', 0), reverse=True)
 
     debts = []
     i, j = 0, 0

@@ -3,6 +3,7 @@
     border-radius: 12px;
     padding: 20px;
     border-left: 4px solid #888;
+    flex-shrink: 0;
 }
 
 .subscription-card.active {

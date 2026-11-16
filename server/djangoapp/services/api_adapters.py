@@ -102,21 +102,21 @@ def shared_budget_from_row(row):
     return SimpleNamespace(
         id=row["id"],
         name=row["name"],
-        description=row["description"],
+        description=row.get("description", ""),
         total_amount=_parse_decimal(row["total_amount"]),
-        category=row["category"],
+        category=row.get("category", ""),
         period_start=_parse_date(row["period_start"]),
         period_end=_parse_date(row["period_end"]),
         is_active=bool(row["is_active"]),
         default_split_type=row["default_split_type"],
-        created_by=row["created_by"],
+        created_by=row.get("created_by_id", row.get("created_by")),
     )
 
 
 def shared_budget_member_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        shared_budget_id=row["shared_budget"],
+        shared_budget_id=row.get("shared_budget_id", row.get("shared_budget")),
         user_id=row["user_id"],
         role=row["role"],
         contriution_percentage=_parse_decimal(row["contribution_percentage"]),
@@ -127,11 +127,11 @@ def shared_budget_member_from_row(row):
 def shared_budget_invite_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        shared_budget_id=row["shared_budget"],
-        invited_by_id=row["invited_by"],
-        invited_user_id=row["invited_user"],
+        shared_budget_id=row.get("shared_budget_id", row.get("shared_budget")),
+        invited_by_id=row.get("invited_by_id", row.get("invited_by")),
+        invited_user_id=row.get("invited_user_id", row.get("invited_user")),
         role=row["role"],
-        message=row["message"],
+        message=row.get("message", ""),
         status=row["status"],
         created_at=_parse_date(row.get("created_at")),
     )
@@ -140,21 +140,21 @@ def shared_budget_invite_from_row(row):
 def shared_expense_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        shared_budget_id=row["shared_budget"],
+        shared_budget_id=row.get("shared_budget_id", row.get("shared_budget")),
         description=row["description"],
         amount=_parse_decimal(row["amount"]),
-        paid_by_id=row["paid_by"],
+        paid_by_id=row.get("paid_by_id", row.get("paid_by")),
         date=_parse_date(row["date"]),
-        category=row["category"],
-        created_by_id=row["created_by"],
-        notes=row["notes"],
+        category=row.get("category", ""),
+        created_by_id=row.get("created_by_id", row.get("created_by")),
+        notes=row.get("notes", ""),
     )
 
 
 def expense_split_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        shared_expense_id=row["shared_expense"],
+        shared_expense_id=row.get("shared_expense_id", row.get("shared_expense")),
         user_id=row["user_id"],
         amount_owed=_parse_decimal(row["amount_owed"]),
         is_settled=bool(row["is_settled"]),
@@ -165,12 +165,12 @@ def expense_split_from_row(row):
 def settlement_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        shared_budget_id=row["shared_budget"],
-        payer_id=row["payer"],
-        receiver_id=row["receiver"],
+        shared_budget_id=row.get("shared_budget_id", row.get("shared_budget")),
+        payer_id=row.get("payer_id", row.get("payer")),
+        receiver_id=row.get("receiver_id", row.get("receiver")),
         amount=_parse_decimal(row["amount"]),
         date=_parse_date(row["date"]),
-        notes=row["notes"],
+        notes=row.get("notes", ""),
         created_at=_parse_date(row.get("created_at")),
     )
 
@@ -179,9 +179,9 @@ def shared_budget_notification_from_row(row):
     return SimpleNamespace(
         id=row["id"],
         user_id=row["user_id"],
-        from_user_id=row["from_user"],
+        from_user_id=row.get("from_user_id", row.get("from_user")),
         notification_type=row["notification_type"],
-        shared_budget_id=row["shared_budget"],
+        shared_budget_id=row.get("shared_budget_id", row.get("shared_budget")),
         message=row["message"],
         is_read=bool(row["is_read"]),
         created_at=_parse_date(row.get("created_at")),
@@ -191,8 +191,8 @@ def shared_budget_notification_from_row(row):
 def friendship_from_row(row):
     return SimpleNamespace(
         id=row["id"],
-        sender_id=row["sender"],
-        receiver_id=row["receiver"],
+        sender_id=row.get("sender_id", row.get("sender")),
+        receiver_id=row.get("receiver_id", row.get("receiver")),
         status=row["status"],
         created_at=_parse_date(row.get("created_at")),
         updated_at=_parse_date(row.get("updated_at")),
@@ -203,7 +203,7 @@ def friendship_notification_from_row(row):
     return SimpleNamespace(
         id=row["id"],
         user_id=row["user_id"],
-        from_user_id=row["from_user"],
+        from_user_id=row.get("from_user_id", row.get("from_user")),
         notification_type=row["notification_type"],
         friendship_id=row.get("friendship_id"),
         message=row["message"],

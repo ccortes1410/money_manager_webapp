@@ -110,6 +110,7 @@ def transaction_create(request):
         "user_id": request.user.id,
         "amount": str(data["amount"]), # Convert to string for API
         "description": data["description"],
+        "category": data["category"],
         "date": data["date"],
     })
 

@@ -12,11 +12,10 @@ const Budget = sequelize.define('Budget', {
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     is_recurring: { type: DataTypes.BOOLEAN, defaultValue: true },
     is_shared: { type: DataTypes.BOOLEAN, defaultValue: false },
-    created_at: { type: DataTypes.DATEONLY },
+    created_at: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_budget',
     timestamps: false,
-    indexes: [{ unique: true, fields: ['category', 'user_id'] }],
 });
 
 module.exports = Budget;

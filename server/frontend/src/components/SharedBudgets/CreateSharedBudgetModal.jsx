@@ -79,6 +79,8 @@ const CreateSharedBudgetModal = ({ onClose, onSave }) => {
 
         onSave({
             ...formData,
+            period_start: formData.start_date,
+            period_end: formData.end_date,
             total_amount: parseFloat(formData.total_amount),
             invite_friends: selectedFriends.map((id) => ({
                 user_id: id,

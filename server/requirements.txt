@@ -4,7 +4,8 @@ Pillow
 gunicorn
 python-dotenv
 django-cors-headers
-mysqlclient>=2.2.7
+PyMySQL>=1.1.0
+certifi
 whitenoise
 dj-database-url
 python-dateutil

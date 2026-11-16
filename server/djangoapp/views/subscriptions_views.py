@@ -32,8 +32,11 @@ def get_subscriptions_data(user, period):
 
     # Get active subscriptions for the period
     subscriptions = get_request("subscriptions/", **subscription_params) or []
-    # Get payments for the period
-    payments = get_request("subscription-payments/", **payment_params) or []
+    # Get paid payments for the period
+    payments = [
+        p for p in (get_request("subscription-payments/", **payment_params) or [])
+        if p.get("is_paid", True)
+    ]
 
     # Calculate totals
     subscription_total = sum((Decimal(str(s["amount"])) for s in subscriptions), Decimal('0'))
@@ -60,6 +63,11 @@ def get_subscriptions(request):
         )
 
     try:
+        try:
+            generate_subscription_payments_service(request.user.id)
+        except Exception:
+            pass
+
         params = {'user_id': request.user.id}
         rows = get_request("subscriptions/", **params) or []
         subscriptions = [subscription_from_row(r) for r in rows]
@@ -94,6 +102,8 @@ def get_subscriptions(request):
                     {
                         "id": p.id,
                         "amount": float(p.amount),
+                        "date": (p.due_date or p.paid_date).isoformat() if (p.due_date or p.paid_date) else None,
+                        "due_date": p.due_date.isoformat() if p.due_date else None,
                         "paid_date": p.paid_date.isoformat() if p.paid_date else None,
                         "is_paid": p.is_paid,
                     }
@@ -495,6 +505,11 @@ def subscription_update(request, subscription_id):
 
         subscription = subscription_from_row(updated)
 
+        try:
+            generate_subscription_payments_service(request.user.id)
+        except Exception as e:
+            logger.warning(f"Payment reconciliation after update failed (non-critical): {e}")
+
         return JsonResponse({
             "message": "Subscription updated",
             "subscription": {
@@ -596,6 +611,11 @@ def subscription_update_status(request, subscription_id):
             )
 
         subscription = subscription_from_row(updated)
+
+        try:
+            generate_subscription_payments_service(request.user.id)
+        except Exception as e:
+            logger.warning(f"Payment reconciliation after update failed (non-critical): {e}")
 
         return JsonResponse({
             "message": f"Subscription {new_status}",
@@ -699,12 +719,14 @@ def subscription_payment_create(request):
             )
 
     # Prepare payment data
+    from datetime import datetime
     payment_data = {
         "user_id": request.user.id,
         "subscription_id": data["subscription_id"],
         "due_date": data["due_date"],
         "amount": str(data["amount"]),  # Convert to string for API compatibility
         "is_paid": data.get("is_paid", False),
+        "created_at": datetime.now().isoformat(),
     }
 
     # If marking as paid, set paid_date to today
@@ -717,7 +739,7 @@ def subscription_payment_create(request):
     # Create via API
     row = post_request("subscription-payments/", payment_data)
 
-    if not row:
+    if not row or "error" in row:
         return JsonResponse(
             {"error": "Failed to create subscription payment"}, status=500
         )

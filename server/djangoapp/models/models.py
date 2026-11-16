@@ -45,10 +45,7 @@ class Budget(models.Model):
     is_shared = models.BooleanField(default=False)
 
     created_at = models.DateField(auto_now_add=True)
-   
-    class Meta:
-        unique_together = ('category', 'user')
-    
+
     def __str__(self):
         return f"Category: {self.category} by {self.user.username}"
 

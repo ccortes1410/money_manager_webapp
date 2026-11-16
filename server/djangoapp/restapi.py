@@ -2,17 +2,25 @@ import os
 import requests
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path='.env.local')
+load_dotenv(dotenv_path='.env.local', override=False)
 
 # In docker-compose, "api" is the service name for the Node container, so
 # it's resolvable by name on the shared Docker network -- no localhost/port
 # juggling needed between containers.
-BACKEND_URL = os.getenv('BACKEND_URL', default='http://api:3030/api/')
+_raw_backend_url = os.getenv('BACKEND_URL', default='http://api:3030/api/')
+BACKEND_URL = _raw_backend_url if _raw_backend_url.endswith('/') else f"{_raw_backend_url}/"
 INTERNAL_API_KEY = os.getenv('INTERNAL_API_KEY', default="")
 
 
 def _headers():
     return {"x-internal-api-key": INTERNAL_API_KEY}
+
+
+def _log_request_error(method, url, e):
+    detail = ""
+    if hasattr(e, "response") and e.response is not None and e.response.text:
+        detail = f" - {e.response.text}"
+    print(f"Error calling {method} {url}: {e}{detail}")
 
 
 def get_request(endpoint, **params):
@@ -23,7 +31,7 @@ def get_request(endpoint, **params):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Error calling GET {url}: {e}")
+        _log_request_error("GET", url, e)
         return None
 
 
@@ -35,13 +43,7 @@ def post_request(endpoint, data=None, **params):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Error calling POST {url}: {e}")
-        # Try to get error response details if available
-        if hasattr(e, 'response') and e.response is not None:
-            try:
-                return e.response.json()  # Return the error details from backend
-            except:
-                pass  # If we can't parse JSON, fall through to return None
+        _log_request_error("POST", url, e)
         return None
 
 
@@ -53,7 +55,7 @@ def patch_request(endpoint, data=None, **params):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Error calling PATCH {url}: {e}")
+        _log_request_error("PATCH", url, e)
         return None
 
 
@@ -65,5 +67,5 @@ def delete_request(endpoint, **params):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        print(f"Error calling DELETE {url}: {e}")
+        _log_request_error("DELETE", url, e)
         return None

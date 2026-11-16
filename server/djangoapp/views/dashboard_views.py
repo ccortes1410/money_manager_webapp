@@ -134,15 +134,23 @@ def _group_by_year(transactions):
 
 def get_transactions_chart_data(user, period: str):
     """
-    Returns transactions grouped by appropriate time granularity (chart data).
+    Returns transactions and paid subscription payments grouped by appropriate time granularity (chart data).
     Mirrors the logic from the original service but uses API calls.
     """
     # Get raw transactions data from API
     transaction_params = {"user_id": user.id}
 
-    # We'll get all transactions and filter by period in Python for simplicity
-    # In a production app, you might want to add date filtering to the API call
-    transactions = get_request("transactions/", **transaction_params) or []
+    transactions = list(get_request("transactions/", **transaction_params) or [])
+    subscription_payments = get_request("subscription-payments/", **transaction_params) or []
+    for p in subscription_payments:
+        if not p.get("is_paid", True):
+            continue
+        pay_date = p.get("due_date") or p.get("paid_date")
+        if pay_date:
+            transactions.append({
+                "date": str(pay_date).split("T")[0],
+                "amount": p.get("amount", 0),
+            })
 
     if period == "daily":
         return _group_daily(transactions)
@@ -196,6 +204,8 @@ def compute_spending_by_category(user, period: str):
 
     # Process subscription payments by category (need to get subscription details)
     for p in subscription_payments:
+        if not p.get("is_paid", True):
+            continue
         subscription_id = p.get("subscription_id") or p.get("subscription")
         if not subscription_id:
             continue
@@ -244,12 +254,6 @@ def dashboard(request):
 
     if request.method == "GET":
         try:
-            # Get transactions chart data via API
-            transactions = get_transactions_chart_data(request.user, period)
-
-            # Get spending by category via API
-            categories = compute_spending_by_category(request.user, period)
-
             # Generate subscription payments (side effect to keep data current)
             # Use internal service directly to avoid circular API call
             try:
@@ -259,6 +263,12 @@ def dashboard(request):
                 # If internal service fails, continue without generating payments
                 # This maintains backward compatibility
                 pass
+
+            # Get transactions chart data via API
+            transactions = get_transactions_chart_data(request.user, period)
+
+            # Get spending by category via API
+            categories = compute_spending_by_category(request.user, period)
 
             # Get subscriptions data via API
             subscription_params = {"user_id": request.user.id, "status": "active"}
@@ -291,6 +301,11 @@ def dashboard(request):
                 subscriptions = filtered_subscriptions
 
             # Get budgets data (already API-based via local view)
+            try:
+                from ..services.budgets_service import reset_expired_budgets
+                reset_expired_budgets(request.user)
+            except Exception:
+                pass
             budgets = get_budgets_data(request.user, period)
 
             # Get income data (already API-based via local view)

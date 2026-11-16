@@ -9,7 +9,7 @@ const FriendshipNotification = sequelize.define('FriendshipNotification', {
     friendship_id: { type: DataTypes.BIGINT, allowNull: true },
     message: { type: DataTypes.STRING(255), allowNull: false },
     is_read: { type: DataTypes.BOOLEAN, defaultValue: false },
-    created_at: { type: DataTypes.DATE },
+    created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
 }, {
     tableName: 'djangoapp_friendshipnotification',
     timestamps: false,

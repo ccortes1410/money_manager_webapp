@@ -123,13 +123,16 @@ const SubscriptionCard = ({
                                     key={payment.id}
                                     className={`payment-item ${payment.is_paid ? "paid" : "unpaid"}`}
                                 >
-                                    <span className="payment-date">{payment.date}</span>
+                                    <span className="payment-date">
+                                        {payment.due_date || payment.paid_date || payment.date}
+                                    </span>
                                     <span className="payment-amount">
                                         ${parseFloat(payment.amount || 0).toFixed(2)}
                                     </span>
                                     <button
                                         className={`payment-status ${payment.is_paid ? "paid" : "unpaid"}`}
                                         onClick={() => onTogglePayment(payment.id)}
+                                        title={payment.is_paid ? "Click to mark as unpaid" : "Click to mark as paid"}
                                     >
                                         {payment.is_paid ? "✓ Paid" : "Mark Paid"}
                                     </button>

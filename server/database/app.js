@@ -16,11 +16,11 @@ app.get('/', (req, res) => {
     res.send('Money Manager database API is running');
 });
 
-app.get('/health', async(req, res) => {
+app.get('/health', async (req, res) => {
     try {
-        awaitdb.sequelize.authenticate();
-        res.json({ status: 'ok', database: 'connected'});
-    } catch(err) {
+        await db.sequelize.authenticate();
+        res.json({ status: 'ok', database: 'connected' });
+    } catch (err) {
         res.status(503).json({ status: 'error', database: 'unreachable', detail: err.message });
     }
 });
@@ -28,8 +28,8 @@ app.get('/health', async(req, res) => {
 // Everything under /api/* requires the shared secret header.
 app.use('/api', requireInternalApiKey, apiRoutes);
 
-// NOTE: we deliberately never all db.sequelize.sync() here. Django's
-// migrations are the single source of truth for the scema -- this
+// NOTE: we deliberately never call db.sequelize.sync() here. Django's
+// migrations are the single source of truth for the schema -- this
 // service only reads/writes rows, it never creates or alters tables.
 async function start() {
     const maxRetries = 10;
@@ -56,4 +56,8 @@ async function start() {
     });
 }
 
-start();
+if (require.main === module) {
+    start();
+}
+
+module.exports = app;

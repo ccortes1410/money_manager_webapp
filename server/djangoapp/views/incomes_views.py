@@ -39,7 +39,10 @@ def get_income_data(user, period):
     if start and end:
         subscription_payment_params["due_date__gte"] = _iso_date(start)
         subscription_payment_params["due_date__lte"] = _iso_date(end)
-    subscription_payments = get_request("subscription-payments/", **subscription_payment_params) or []
+    subscription_payments = [
+        p for p in (get_request("subscription-payments/", **subscription_payment_params) or [])
+        if p.get("is_paid", True)
+    ]
 
     # Calculate totals
     total_income = sum((Decimal(str(i.get("amount", 0))) for i in incomes), Decimal('0'))
@@ -70,13 +73,22 @@ def get_incomes(request):
         )
 
     try:
+        try:
+            from ..services.subscription_service import generate_subscription_payments
+            generate_subscription_payments(request.user.id)
+        except Exception:
+            pass
+
         rows = get_request("incomes/", user_id=request.user.id) or []
         incomes = [income_from_row(r) for r in rows]
         incomes.sort(key=lambda i: i.date_received, reverse=True)
 
-        # Get all transactions and subscription payments for the user (for summary calculation)
+        # Get all transactions and paid subscription payments for the user (for summary calculation)
         transactions_rows = get_request("transactions/", user_id=request.user.id) or []
-        subscription_payment_rows = get_request("subscription-payments/", user_id=request.user.id) or []
+        subscription_payment_rows = [
+            p for p in (get_request("subscription-payments/", user_id=request.user.id) or [])
+            if p.get("is_paid", True)
+        ]
 
         # Calculate summary (all time)
         total_income = sum((Decimal(str(i.amount)) for i in incomes), Decimal('0'))
@@ -180,7 +192,7 @@ def get_income(request, income_id):
         # We'll get all active subscriptions and filter in Python for simplicity
         # Alternatively, we could do two calls: one with end_date__isnull=true and one with end_date_gte=period_start
         # But let's get all and filter
-        subscription_rows = get_request("subscriptions/", user_id=request.user.id, is_active=True) or []
+        subscription_rows = get_request("subscriptions/", user_id=request.user.id, status="active") or []
         filtered_subscriptions = []
         for sub in subscription_rows:
             start_date = sub["start_date"]
@@ -201,29 +213,35 @@ def get_income(request, income_id):
             for sub in filtered_subscriptions
         ]
 
-        # Get income details via API (or compute)
-        income_details = get_request(f"incomes/{income_id}/details/") or {}
-        # If details endpoint doesn't exist, we compute from the income row and spending data
-        if not income_details:
-            # Calculate spent in period from transactions and subscription payments
-            spent_breakdown = get_request("spending/breakdown/",
-                                        user_id=request.user.id,
-                                        period_start=row["period_start"],
-                                        period_end=row["period_end"]) or {}
-            income_details = {
-                "id": row["id"],
-                "amount": float(row["amount"] or 0),
-                "source": row["source"],
-                "date_received": row["date_received"],
-                "period_start": row["period_start"],
-                "period_end": row["period_end"],
-                "period_days": (row["period_end"] - row["period_start"]).days + 1 if row["period_end"] and row["period_start"] else 0,
-                "daily_rate": float(row["amount"]) / max(1, row["period_end"] - row["period_start"].days + 1) if row["period_end"] and row["period_start"] else 0,
-                "spent_in_period": spent_breakdown.get("total", 0),
-                "transaction_spent": spent_breakdown.get("transactions", 0),
-                "subscription_spent": spent_breakdown.get("subscriptions", 0),
-                "remaining_in_period": float(row["amount"]) - spent_breakdown.get("total", 0)
-            }
+        # Compute income period details from the income row and spending data
+        payment_rows = [
+            p for p in (get_request(
+                "subscription-payments/",
+                user_id=request.user.id,
+                due_date__gte=_iso_date(income.period_start),
+                due_date__lte=_iso_date(income.period_end),
+            ) or [])
+            if p.get("is_paid", True)
+        ]
+        transaction_spent = float(sum((t.amount or Decimal('0')) for t in transactions))
+        subscription_spent = float(sum(Decimal(str(p.get("amount", 0))) for p in payment_rows))
+        total_spent_in_period = transaction_spent + subscription_spent
+        period_days = (income.period_end - income.period_start).days + 1 if income.period_end and income.period_start else 0
+
+        income_details = {
+            "id": income.id,
+            "amount": float(income.amount or 0),
+            "source": income.source,
+            "date_received": income.date_received.isoformat() if income.date_received else None,
+            "period_start": income.period_start.isoformat() if income.period_start else None,
+            "period_end": income.period_end.isoformat() if income.period_end else None,
+            "period_days": period_days,
+            "daily_rate": float(income.amount or 0) / max(1, period_days) if period_days else 0,
+            "spent_in_period": total_spent_in_period,
+            "transaction_spent": transaction_spent,
+            "subscription_spent": subscription_spent,
+            "remaining_in_period": float(income.amount or 0) - total_spent_in_period,
+        }
 
         income_details["transactions"] = transactions_data
         income_details["subscriptions"] = subscriptions_data
