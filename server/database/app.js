@@ -28,6 +28,11 @@ app.get('/health', async (req, res) => {
 // Everything under /api/* requires the shared secret header.
 app.use('/api', requireInternalApiKey, apiRoutes);
 
+app.use((err, req, res, next) => {
+    console.error('Unhandled API error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
 // NOTE: we deliberately never call db.sequelize.sync() here. Django's
 // migrations are the single source of truth for the schema -- this
 // service only reads/writes rows, it never creates or alters tables.
