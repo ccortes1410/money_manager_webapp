@@ -11,13 +11,10 @@ def _resolve_backend_url():
     raw = (os.getenv('BACKEND_URL') or '').strip()
     local_defaults = ('http://api:3030/api/', 'http://localhost:3030/api/', 'http://127.0.0.1:3030/api/')
 
+    # On Vercel, if no external BACKEND_URL is configured, return empty string so
+    # restapi.py uses the direct TiDB ORM connection immediately with zero HTTP latency.
     if os.getenv('VERCEL') and (not raw or raw in local_defaults):
-        host = (
-            os.getenv('VERCEL_PROJECT_PRODUCTION_URL')
-            or os.getenv('VERCEL_URL')
-            or 'money-manager-webapp-3nfi.vercel.app'
-        )
-        raw = f"https://{host}/api/"
+        return ''
 
     if not raw:
         raw = 'http://api:3030/api/'
@@ -31,6 +28,7 @@ def _resolve_backend_url():
 
 BACKEND_URL = _resolve_backend_url()
 INTERNAL_API_KEY = os.getenv('INTERNAL_API_KEY') or os.getenv('DJANGO_SECRET_KEY', default="")
+_BACKEND_UNREACHABLE = False
 
 
 def _headers():
@@ -230,55 +228,71 @@ def _should_use_orm_fallback(e):
 
 def get_request(endpoint, **params):
     """GET <BACKEND_URL><endpoint>?<params>. Returns None on failure."""
+    global _BACKEND_UNREACHABLE
+    if not BACKEND_URL or _BACKEND_UNREACHABLE:
+        return _orm_fallback("GET", endpoint, params=params)
     url = BACKEND_URL + endpoint
     try:
-        response = requests.get(url, params=params, headers=_headers(), timeout=10)
+        response = requests.get(url, params=params, headers=_headers(), timeout=3)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         _log_request_error("GET", url, e)
         if _should_use_orm_fallback(e):
+            _BACKEND_UNREACHABLE = True
             return _orm_fallback("GET", endpoint, params=params)
         return None
 
 
 def post_request(endpoint, data=None, **params):
     """POST a JSON body to <BACKEND_URL><endpoint>. Returns None on failure."""
+    global _BACKEND_UNREACHABLE
+    if not BACKEND_URL or _BACKEND_UNREACHABLE:
+        return _orm_fallback("POST", endpoint, data=data, params=params)
     url = BACKEND_URL + endpoint
     try:
-        response = requests.post(url, json=data, params=params, headers=_headers(), timeout=10)
+        response = requests.post(url, json=data, params=params, headers=_headers(), timeout=3)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         _log_request_error("POST", url, e)
         if _should_use_orm_fallback(e):
+            _BACKEND_UNREACHABLE = True
             return _orm_fallback("POST", endpoint, data=data, params=params)
         return None
 
 
 def patch_request(endpoint, data=None, **params):
     """PATCH a JSON body to <BACKEND_URL><endpoint>. Return None on failure."""
+    global _BACKEND_UNREACHABLE
+    if not BACKEND_URL or _BACKEND_UNREACHABLE:
+        return _orm_fallback("PATCH", endpoint, data=data, params=params)
     url = BACKEND_URL + endpoint
     try:
-        response = requests.patch(url, json=data, params=params, headers=_headers(), timeout=10)
+        response = requests.patch(url, json=data, params=params, headers=_headers(), timeout=3)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         _log_request_error("PATCH", url, e)
         if _should_use_orm_fallback(e):
+            _BACKEND_UNREACHABLE = True
             return _orm_fallback("PATCH", endpoint, data=data, params=params)
         return None
 
 
 def delete_request(endpoint, **params):
     """DELETE <BACKEND_URL><endpoint>. Return None on failure."""
+    global _BACKEND_UNREACHABLE
+    if not BACKEND_URL or _BACKEND_UNREACHABLE:
+        return _orm_fallback("DELETE", endpoint, params=params)
     url = BACKEND_URL + endpoint
     try:
-        response = requests.delete(url, params=params, headers=_headers(), timeout=10)
+        response = requests.delete(url, params=params, headers=_headers(), timeout=3)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         _log_request_error("DELETE", url, e)
         if _should_use_orm_fallback(e):
+            _BACKEND_UNREACHABLE = True
             return _orm_fallback("DELETE", endpoint, params=params)
         return None

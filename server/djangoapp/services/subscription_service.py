@@ -70,10 +70,13 @@ def _generate_subscription_payments_via_api(user_id, up_to_date):
         billing_cycle = sub_data["billing_cycle"]
         billing_day = int(sub_data["billing_day"])
 
+        # Handle clock skew if client browser date (start_date) is ahead of server date.today()
+        effective_up_to = max(up_to_date, start_date) if start_date else up_to_date
+
         # Generate payments for this subscription
         created_count += _generate_payments_for_subscription_via_api(
             user_id, subscription_id, start_date, end_date, amount,
-            billing_cycle, billing_day, up_to_date
+            billing_cycle, billing_day, effective_up_to
         )
 
     return created_count
@@ -128,7 +131,7 @@ def _generate_payments_for_subscription_via_api(user_id, subscription_id, start_
 
         # If no payment exists for this date, create one (auto-marked as paid when due)
         if due_iso not in existing_by_date:
-            is_due = billing_date <= date.today()
+            is_due = billing_date <= up_to_date
             payment_data = {
                 "user_id": user_id,
                 "subscription_id": subscription_id,
@@ -147,17 +150,21 @@ def _generate_payments_for_subscription_via_api(user_id, subscription_id, start_
     return created_count
 
 
-def get_first_billing_date(start_date, billing_cycle, billing_day=1):
+def get_first_billing_date(start_date, billing_cycle, billing_day=1, end_date=None):
     """
     Determine the first billing date on or after start_date.
     For monthly subscriptions, aligns to billing_day in start_date's month
-    (or the next month if billing_day has already passed in start_date's month).
+    (or the next month if billing_day has already passed in start_date's month,
+    unless start_date is in the current target month so a newly created
+    subscription gets its current month's payment).
     """
     if billing_cycle == "monthly":
         max_day = monthrange(start_date.year, start_date.month)[1]
         day = min(max(1, int(billing_day)), max_day)
         candidate = start_date.replace(day=day)
         if candidate >= start_date:
+            return candidate
+        if end_date and (start_date.year, start_date.month) == (end_date.year, end_date.month) and candidate <= end_date:
             return candidate
         return get_next_billing_date(start_date, "monthly", billing_day)
     return start_date
@@ -168,7 +175,7 @@ def get_billing_dates(start_date, end_date, billing_cycle, billing_day=1):
     Calculate all billing dates between start_date and end_date.
     """
     dates = []
-    current = get_first_billing_date(start_date, billing_cycle, billing_day)
+    current = get_first_billing_date(start_date, billing_cycle, billing_day, end_date=end_date)
 
     while current <= end_date:
         dates.append(current)
