@@ -12,7 +12,8 @@
       "src": "djangoproj/wsgi.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "50mb"
+        "maxLambdaSize": "50mb",
+        "excludeFiles": "{frontend/**,database/**,djangoenv/**}"
       }
     }
   ],
