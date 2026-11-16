@@ -139,7 +139,7 @@ SESSION_COOKIE_AGE = 3600              # 1 hour (default is 2 weeks)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_HTTPONLY = True          # Prevent JavaScript access
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
 
 ROOT_URLCONF = "djangoproj.urls"
 
@@ -188,25 +188,13 @@ WSGI_APPLICATION = "djangoproj.wsgi.application"
 #         }
 # else:
     # Local development - use local MySQL
-if ENV == 'local':
-    DATABASES = {
-        "default": {
-            "ENGINE": os.environ.get('DB_ENGINE'),
-            "NAME": os.environ.get('DB_NAME'),
-            "USER": os.environ.get('DB_USER'),
-            "PASSWORD": os.environ.get('DB_PASSWORD'),
-            "HOST": os.environ.get('DB_HOST'),
-            "PORT": os.environ.get('DB_PORT'),
-            "OPTIONS": {
-                "charset": "utf8mb4",
-            },
-            "TEST": {
-                "NAME": "test_money_manager_db",
-            }
-        }
-    }
+_USE_TIDB = (
+    ENV == 'tidb'
+    or 'tidbcloud.com' in (os.environ.get('DB_HOST') or '')
+    or bool(os.environ.get('VERCEL'))
+)
 
-elif ENV == 'tidb':
+if _USE_TIDB:
     _tidb_options = {
         "ssl": {"ca": certifi.where()},
         "charset": "utf8mb4",
@@ -216,13 +204,30 @@ elif ENV == 'tidb':
 
     DATABASES = {
         "default": {
-            "ENGINE": os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
+            "ENGINE": os.environ.get('DB_ENGINE') or 'django.db.backends.mysql',
             "NAME": os.environ.get('DB_NAME'),
             "USER": os.environ.get('DB_USER'),
             "PASSWORD": os.environ.get('DB_PASSWORD'),
             "HOST": os.environ.get('DB_HOST'),
-            "PORT": os.environ.get('DB_PORT'),
+            "PORT": os.environ.get('DB_PORT') or '4000',
             "OPTIONS": _tidb_options,
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get('DB_ENGINE') or 'django.db.backends.mysql',
+            "NAME": os.environ.get('DB_NAME'),
+            "USER": os.environ.get('DB_USER'),
+            "PASSWORD": os.environ.get('DB_PASSWORD'),
+            "HOST": os.environ.get('DB_HOST'),
+            "PORT": os.environ.get('DB_PORT') or '3306',
+            "OPTIONS": {
+                "charset": "utf8mb4",
+            },
+            "TEST": {
+                "NAME": "test_money_manager_db",
+            }
         }
     }
 

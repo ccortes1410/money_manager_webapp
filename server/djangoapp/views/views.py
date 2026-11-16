@@ -40,7 +40,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ======================= AUTH VIEWS ======================= #
-@ratelimit(key='ip', rate='3/m', method='POST', block=True)
+@csrf_exempt
+@ratelimit(key='ip', rate='10/m', method='POST', block=True)
 def register_view(request):
     context = {}
     if request.method == "GET":
@@ -76,11 +77,12 @@ def register_view(request):
                 password=password,
             )
             user.save()
+            login(request, user)
             logger.info(f"User registered: {username}")
-            return JsonResponse({"status": True, "userName": username}, status=201)
+            return JsonResponse({"status": True, "id": user.id, "userName": username}, status=201)
         except Exception as e:
             logger.exception(f"Error registering user: {e}")
-            return JsonResponse({"error": "Failed to register user"}, status=500)
+            return JsonResponse({"error": f"Failed to register user: {e}"}, status=500)
 
     return render(request, "register.html")
 
