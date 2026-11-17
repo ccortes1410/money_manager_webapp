@@ -65,8 +65,8 @@ def get_subscriptions(request):
     try:
         try:
             generate_subscription_payments_service(request.user.id)
-        except Exception:
-            pass
+        except Exception as gen_err:
+            logger.exception(f"Payment generation failed in get_subscriptions: {gen_err}")
 
         params = {'user_id': request.user.id}
         rows = get_request("subscriptions/", **params) or []
