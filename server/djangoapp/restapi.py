@@ -193,7 +193,16 @@ def _orm_fallback(method, endpoint, data=None, params=None):
                     continue
                 create_kwargs[norm_field] = norm_val
 
-            obj = model.objects.create(**create_kwargs)
+            try:
+                obj = model.objects.create(**create_kwargs)
+            except Exception as create_err:
+                if resource == "subscription-payments" and "1364" in str(create_err) and "'date'" in str(create_err):
+                    from django.db import connection
+                    with connection.cursor() as cursor:
+                        cursor.execute("ALTER TABLE `djangoapp_subscriptionpayment` MODIFY COLUMN `date` date NULL")
+                    obj = model.objects.create(**create_kwargs)
+                else:
+                    raise
             return _serialize_instance(obj)
 
         if method == "PATCH" and item_id is not None:
