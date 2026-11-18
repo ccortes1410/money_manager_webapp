@@ -343,8 +343,28 @@ urlpatterns = [
         view=shared_budget_views.get_budget_notifications,
         name='get_budget_notifications'
     ),
+    path(
+        route='budget-notifications/<int:notification_id>/read',
+        view=shared_budget_views.mark_budget_notification_read,
+        name='mark_budget_notification_read'
+    ),
+    path(
+        route='budget-notifications/read-all',
+        view=shared_budget_views.mark_all_budget_notifications_read,
+        name='mark_all_budget_notifications_read'
+    ),
     
-    # Friend & Budget Notifications
+    # Friend & Combined Notifications
+    path(
+        route='notifications/all',
+        view=friendship_views.get_all_notifications,
+        name='get_all_notifications'
+    ),
+    path(
+        route='notifications/all/read-all',
+        view=friendship_views.mark_all_combined_notifications_read,
+        name='mark_all_combined_notifications_read'
+    ),
     path(
         route='notifications', 
         view=friendship_views.get_notifications,

@@ -1492,7 +1492,8 @@ def get_budget_notifications(request):
                     'id': notification_row["shared_budget"],
                     'name': budget_row["name"] if budget_row else "Unknown Budget",
                 } if notification_row.get("shared_budget") else None,
-                'is_read': notification_row.get("created_at"),
+                'is_read': bool(notification_row.get("is_read", False)),
+                'created_at': notification_row.get("created_at"),
             })
 
         unread_count = len([n for n in notification_rows if not n.get("is_read", False)])
@@ -1504,6 +1505,52 @@ def get_budget_notifications(request):
     except Exception as e:
         print(f"Error getting budget notifications: {e}")
         return JsonResponse({'error': 'Failed to get budget notifications'}, status=500)
+
+
+@csrf_exempt
+@login_required_json
+def mark_budget_notification_read(request, notification_id):
+    """Mark a single shared budget notification as read."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+    user = request.user
+    try:
+        notification_row = get_request(f"shared-budget-notifications/{notification_id}")
+        if not notification_row or notification_row.get("user_id") != user.id:
+            return JsonResponse({'error': 'Notification not found'}, status=404)
+
+        updated = patch_request(
+            f"shared-budget-notifications/{notification_id}",
+            {'is_read': True},
+        )
+        if not updated:
+            return JsonResponse({'error': 'Failed to mark notification as read'}, status=500)
+
+        return JsonResponse({'message': 'Notification marked as read'})
+    except Exception as e:
+        print(f"Error marking budget notification as read: {e}")
+        return JsonResponse({'error': 'Failed to mark notification as read'}, status=500)
+
+
+@csrf_exempt
+@login_required_json
+def mark_all_budget_notifications_read(request):
+    """Mark all unread shared budget notifications for the logged-in user as read."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+    user = request.user
+    try:
+        unread = get_request("shared-budget-notifications/", user_id=user.id, is_read=False) or []
+        for n in unread:
+            if not n.get("is_read", False):
+                patch_request(f"shared-budget-notifications/{n['id']}", {'is_read': True})
+
+        return JsonResponse({'message': 'All budget notifications marked as read'})
+    except Exception as e:
+        print(f"Error marking all budget notifications as read: {e}")
+        return JsonResponse({'error': 'Failed to mark all budget notifications as read'}, status=500)
 
 
 # ========================= HELPER FUNCTIONS FOR EXPENSES ===================================

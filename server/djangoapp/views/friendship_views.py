@@ -2,10 +2,12 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from functools import wraps
+from datetime import date, timedelta
 import json
 
 from ..restapi import get_request, post_request, patch_request, delete_request
 from ..services.api_adapters import (
+    budget_from_row,
     friendship_from_row,
     friendship_notification_from_row,
     get_username,
@@ -13,6 +15,12 @@ from ..services.api_adapters import (
     get_user_last_name,
     get_user_email,
     get_user_data
+)
+from ..services.budgets_service import compute_budget_spent
+from ..services.subscription_service import (
+    _parse_api_date,
+    get_first_billing_date,
+    get_next_billing_date,
 )
 
 
@@ -640,4 +648,234 @@ def mark_all_notifications_read(request):
         return JsonResponse({'message': 'All notifications marked as read'})
     except Exception as e:
         print(f"Error marking all notifications as read: {e}")
+        return JsonResponse({'error': 'Failed to mark all notifications as read'}, status=500)
+
+
+@login_required_json
+def get_all_notifications(request):
+    """
+    Aggregate friend notifications, shared budget notifications, and live
+    financial alerts (budgets >= 80% used, active subscriptions due within 3 days)
+    into a single feed for the global Notification Bell.
+    """
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+    user = request.user
+    today = date.today()
+    today_iso = timezone.now().isoformat()
+
+    try:
+        user_cache = {}
+        budget_cache = {}
+
+        def _get_username_cached(uid):
+            if not uid:
+                return "System"
+            if uid not in user_cache:
+                u_resp = get_request(f"users/{uid}")
+                u_row = u_resp.json() if hasattr(u_resp, 'json') else u_resp
+                user_cache[uid] = u_row.get("username") if isinstance(u_row, dict) else f"user_{uid}"
+            return user_cache[uid]
+
+        def _get_shared_budget_cached(bid):
+            if not bid:
+                return None
+            if bid not in budget_cache:
+                b_resp = get_request(f"shared-budgets/{bid}")
+                b_row = b_resp.json() if hasattr(b_resp, 'json') else b_resp
+                budget_cache[bid] = b_row if isinstance(b_row, dict) else None
+            return budget_cache[bid]
+
+        combined = []
+        unread_count = 0
+
+        # 1. Friend notifications
+        friend_resp = get_request("friendship-notifications/", user_id=user.id)
+        friend_rows = friend_resp.json() if hasattr(friend_resp, 'json') else (friend_resp or [])
+        for row in friend_rows:
+            is_read = bool(row.get("is_read", False))
+            if not is_read:
+                unread_count += 1
+            from_uid = row.get("from_user_id") or row.get("from_user")
+            combined.append({
+                'id': f"friend_{row['id']}",
+                'raw_id': row['id'],
+                'source': 'friend',
+                'type': row.get('notification_type', 'friend'),
+                'message': row.get('message', ''),
+                'from_user': {
+                    'id': from_uid,
+                    'username': _get_username_cached(from_uid),
+                } if from_uid else None,
+                'is_read': is_read,
+                'created_at': row.get('created_at') or today_iso,
+                'link': '/friends',
+            })
+
+        # 2. Shared Budget notifications
+        sb_resp = get_request("shared-budget-notifications/", user_id=user.id)
+        sb_rows = sb_resp.json() if hasattr(sb_resp, 'json') else (sb_resp or [])
+        for row in sb_rows:
+            is_read = bool(row.get("is_read", False))
+            if not is_read:
+                unread_count += 1
+            from_uid = row.get("from_user_id") or row.get("from_user")
+            sb_id = row.get("shared_budget") or row.get("shared_budget_id")
+            sb_row = _get_shared_budget_cached(sb_id)
+            combined.append({
+                'id': f"shared_budget_{row['id']}",
+                'raw_id': row['id'],
+                'source': 'shared_budget',
+                'type': row.get('notification_type', 'shared_budget'),
+                'message': row.get('message', ''),
+                'from_user': {
+                    'id': from_uid,
+                    'username': _get_username_cached(from_uid),
+                } if from_uid else None,
+                'budget': {
+                    'id': sb_id,
+                    'name': sb_row.get('name', 'Shared Budget') if sb_row else 'Shared Budget',
+                } if sb_id else None,
+                'is_read': is_read,
+                'created_at': row.get('created_at') or today_iso,
+                'link': '/shared-budgets',
+            })
+
+        # 3. Live Financial Alerts (budgets >= 80% & subscriptions due within 3 days)
+        alerts_count = 0
+
+        # 3a. Budget threshold alerts
+        budget_rows = get_request("budgets/", user_id=user.id) or []
+        for b_row in budget_rows:
+            if not b_row.get("is_active", True):
+                continue
+            try:
+                b_obj = budget_from_row(b_row)
+                if b_obj.period_end < today:
+                    continue
+                spent_info = compute_budget_spent(b_obj)
+                spent_val = float(spent_info.get("total", 0))
+                budget_amt = float(b_obj.amount)
+                if budget_amt <= 0:
+                    continue
+                pct = round((spent_val / budget_amt) * 100, 1)
+                if pct >= 100:
+                    alerts_count += 1
+                    over_amt = spent_val - budget_amt
+                    combined.append({
+                        'id': f"alert_budget_{b_obj.id}",
+                        'raw_id': b_obj.id,
+                        'source': 'alert',
+                        'type': 'budget_over',
+                        'severity': 'danger',
+                        'title': f"{b_obj.category} Budget Exceeded",
+                        'message': f"You've spent ${spent_val:.2f} of ${budget_amt:.2f} ({pct:.0f}% — ${over_amt:.2f} over).",
+                        'is_read': False,
+                        'created_at': today_iso,
+                        'link': '/budgets',
+                    })
+                elif pct >= 80:
+                    alerts_count += 1
+                    rem_amt = budget_amt - spent_val
+                    combined.append({
+                        'id': f"alert_budget_{b_obj.id}",
+                        'raw_id': b_obj.id,
+                        'source': 'alert',
+                        'type': 'budget_warning',
+                        'severity': 'warning',
+                        'title': f"{b_obj.category} Budget at {pct:.0f}%",
+                        'message': f"${rem_amt:.2f} remaining out of ${budget_amt:.2f} before {b_obj.period_end.isoformat()}.",
+                        'is_read': False,
+                        'created_at': today_iso,
+                        'link': '/budgets',
+                    })
+            except Exception as b_err:
+                print(f"Error computing budget alert for row {b_row.get('id')}: {b_err}")
+
+        # 3b. Upcoming subscription renewals within 3 days
+        sub_rows = get_request("subscriptions/", user_id=user.id, status="active") or []
+        for s_row in sub_rows:
+            try:
+                start_dt = _parse_api_date(s_row.get("start_date"))
+                end_dt = _parse_api_date(s_row.get("end_date"))
+                if not start_dt or (end_dt and end_dt < today):
+                    continue
+                cycle = s_row.get("billing_cycle", "monthly")
+                b_day = int(s_row.get("billing_day") or 1)
+                next_due = get_first_billing_date(start_dt, cycle, b_day)
+                guard = 0
+                while next_due < today and guard < 1000:
+                    next_due = get_next_billing_date(next_due, cycle, b_day)
+                    guard += 1
+                if end_dt and next_due > end_dt:
+                    continue
+                days_until = (next_due - today).days
+                if 0 <= days_until <= 3:
+                    alerts_count += 1
+                    amt = float(s_row.get("amount", 0))
+                    when_str = "today" if days_until == 0 else ("tomorrow" if days_until == 1 else f"in {days_until} days")
+                    combined.append({
+                        'id': f"alert_sub_{s_row['id']}",
+                        'raw_id': s_row['id'],
+                        'source': 'alert',
+                        'type': 'subscription_upcoming',
+                        'severity': 'info',
+                        'title': f"{s_row.get('name', 'Subscription')} Renews {when_str.capitalize()}",
+                        'message': f"${amt:.2f} ({cycle}) due on {next_due.isoformat()}.",
+                        'is_read': False,
+                        'created_at': today_iso,
+                        'link': '/subscriptions',
+                    })
+            except Exception as s_err:
+                print(f"Error computing subscription alert for row {s_row.get('id')}: {s_err}")
+
+        # Sort alerts first by severity, then persistent notifications by created_at desc
+        combined.sort(
+            key=lambda x: (
+                0 if x.get('source') == 'alert' else 1,
+                -(1 if not x.get('is_read') else 0),
+                x.get('created_at') or '',
+            ),
+            reverse=False,
+        )
+        # Better sort: alerts at top, then unread persistent newest-first, then read persistent newest-first
+        alerts_list = [n for n in combined if n.get('source') == 'alert']
+        persistent_list = [n for n in combined if n.get('source') != 'alert']
+        persistent_list.sort(key=lambda x: x.get('created_at') or '', reverse=True)
+        final_list = alerts_list + persistent_list[:50]
+
+        return JsonResponse({
+            'notifications': final_list,
+            'unread_count': unread_count,
+            'alerts_count': alerts_count,
+            'badge_count': unread_count + alerts_count,
+        })
+    except Exception as e:
+        print(f"Error getting combined notifications: {e}")
+        return JsonResponse({'error': 'Failed to get notifications'}, status=500)
+
+
+@csrf_exempt
+@login_required_json
+def mark_all_combined_notifications_read(request):
+    """Mark both friend and shared budget notifications as read for the logged-in user."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+    user = request.user
+    try:
+        unread_friends = get_request("friendship-notifications/", user_id=user.id, is_read=False) or []
+        for n in unread_friends:
+            if not n.get("is_read", False):
+                patch_request(f"friendship-notifications/{n['id']}", {'is_read': True})
+
+        unread_budgets = get_request("shared-budget-notifications/", user_id=user.id, is_read=False) or []
+        for n in unread_budgets:
+            if not n.get("is_read", False):
+                patch_request(f"shared-budget-notifications/{n['id']}", {'is_read': True})
+
+        return JsonResponse({'message': 'All notifications marked as read'})
+    except Exception as e:
+        print(f"Error marking all combined notifications as read: {e}")
         return JsonResponse({'error': 'Failed to mark all notifications as read'}, status=500)

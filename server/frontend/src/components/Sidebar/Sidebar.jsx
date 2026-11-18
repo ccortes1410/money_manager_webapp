@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import { useToast } from '../Toast/ToastContext';
+import NotificationBell from '../Notifications/NotificationBell';
 import "../Sidebar/Sidebar.css";
 
 import budgetIcon from '../assets/budget.png';
@@ -60,6 +61,9 @@ const Sidebar = ({ collapsed, onToggle }) => {
                     ☰
                 </button>
             )}
+            <div className="mobile-notification-anchor">
+                <NotificationBell collapsed={collapsed} onNavigate={handleNavClick} />
+            </div>
             {!collapsed && (
                 <div className="sidebar-backdrop" onClick={onToggle} />
             )}
@@ -76,12 +80,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
                 </button>
                 </div>
                 {/* Logo / Header */}
-                <NavLink to="/" className="sidebar-header" onClick={handleNavClick}>
-                    <div className="sidebar-logo">
-                        <div className="sidebar-logo-icon">💰</div>
-                        <span className="sidebar-logo-text">Money Manager</span>
+                <div className="sidebar-header-row">
+                    <NavLink to="/" className="sidebar-header" onClick={handleNavClick}>
+                        <div className="sidebar-logo">
+                            <div className="sidebar-logo-icon">💰</div>
+                            <span className="sidebar-logo-text">Money Manager</span>
+                        </div>
+                    </NavLink>
+                    <div className="desktop-notification-anchor">
+                        <NotificationBell collapsed={collapsed} onNavigate={handleNavClick} />
                     </div>
-                </NavLink>
+                </div>
 
                 {/* Main Navigation */}
                 
