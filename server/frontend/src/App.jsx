@@ -36,9 +36,12 @@ function AppLayout({ collapsed, toggleSidebar }) {
 }
 
 function App() {
-    const [ collapsed, setCollapsed ] = useState(
-        () => JSON.parse(localStorage.getItem("sidebarCollapsed")) || false
-    );
+    const [ collapsed, setCollapsed ] = useState(() => {
+        if (typeof window !== "undefined" && window.innerWidth <= 768) {
+            return true;
+        }
+        return JSON.parse(localStorage.getItem("sidebarCollapsed")) || false;
+    });
 
     const toggleSidebar = () => {
         setCollapsed((prev) => {

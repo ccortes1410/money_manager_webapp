@@ -118,3 +118,13 @@ form {
 .save-btn:hover {
     background: #1a6fd4;
 }
+
+@media (max-width: 640px) {
+    .subscriptions-modal-content {
+        width: 95%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}

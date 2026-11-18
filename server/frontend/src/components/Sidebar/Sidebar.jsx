@@ -43,77 +43,99 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
     if (!user) return null;
 
+    const handleNavClick = () => {
+        if (typeof window !== "undefined" && window.innerWidth <= 768 && !collapsed) {
+            onToggle();
+        }
+    };
+
     return (
-
-        <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-            {/* Collapse Toggle Button */}
-            <div className="sidebar-top">
+        <>
+            {collapsed && (
                 <button
-                className="collapse-btn"
-                onClick={onToggle}
-            >
-                {collapsed ? '>' : '<'}
-            </button>
-            </div>
-            {/* Logo / Header */}
-            <NavLink to="/" className="sidebar-header">
-                <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">💰</div>
-                    <span className="sidebar-logo-text">Money Manager</span>
-                </div>
-            </NavLink>
-
-            {/* Main Navigation */}
-            
-            <ul className="nav-links">
-                {navItems.map((item) => (
-                    <li
-                        key={item.path}
-                        className="nav-item"
-                        data-tooltip={item.label}
-                    >
-                        <NavLink
-                            to={item.path}
-                            className={`nav-link ${isActive(item.path) ? "active" : ""}`}
-                        >
-                            <span className="nav-icon">
-                                <img src={item.icon} alt={item.label} className="img_icon" />
-                            </span>
-                            <span className="nav-text">{item.label}</span>
-                        </NavLink>
-                    </li>
-                ))}
-            </ul>
-            
-            {/* User Section */}
-            {user && (
-                <div className="sidebar-user">
-                    <div className="user-avatar">
-                        {user.username?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                    <div className="user-info">
-                        <span className="user-name">{user.username}</span>
-                        <span className="user-email">{user.email || "User"}</span>
-                    </div>
-                </div>
+                    className="mobile-menu-btn"
+                    onClick={onToggle}
+                    aria-label="Open navigation menu"
+                >
+                    ☰
+                </button>
+            )}
+            {!collapsed && (
+                <div className="sidebar-backdrop" onClick={onToggle} />
             )}
 
-            {/* Logout */}
-            <ul className="nav-links logout">
-                <li className="nav-item" data-tooltip="Logout">
-                    <NavLink
-                        to="/"
-                        className="nav-link"
-                        onClick={handleLogout}
-                    >
-                        <span className="nav-icon">
-                            <img src={logoutIcon} alt="Logout" className="img_icon" />
-                        </span>
-                        <span className="nav-text">Logout</span>
-                    </NavLink>
-                </li>
-            </ul>
-        </aside>
+            <aside className={`sidebar ${collapsed ? "collapsed" : "open"}`}>
+                {/* Collapse Toggle Button */}
+                <div className="sidebar-top">
+                    <button
+                    className="collapse-btn"
+                    onClick={onToggle}
+                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {collapsed ? '>' : '<'}
+                </button>
+                </div>
+                {/* Logo / Header */}
+                <NavLink to="/" className="sidebar-header" onClick={handleNavClick}>
+                    <div className="sidebar-logo">
+                        <div className="sidebar-logo-icon">💰</div>
+                        <span className="sidebar-logo-text">Money Manager</span>
+                    </div>
+                </NavLink>
+
+                {/* Main Navigation */}
+                
+                <ul className="nav-links">
+                    {navItems.map((item) => (
+                        <li
+                            key={item.path}
+                            className="nav-item"
+                            data-tooltip={item.label}
+                        >
+                            <NavLink
+                                to={item.path}
+                                className={`nav-link ${isActive(item.path) ? "active" : ""}`}
+                                onClick={handleNavClick}
+                            >
+                                <span className="nav-icon">
+                                    <img src={item.icon} alt={item.label} className="img_icon" />
+                                </span>
+                                <span className="nav-text">{item.label}</span>
+                            </NavLink>
+                        </li>
+                    ))}
+                </ul>
+                
+                {/* User Section */}
+                {user && (
+                    <div className="sidebar-user">
+                        <div className="user-avatar">
+                            {user.username?.charAt(0).toUpperCase() || "U"}
+                        </div>
+                        <div className="user-info">
+                            <span className="user-name">{user.username}</span>
+                            <span className="user-email">{user.email || "User"}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Logout */}
+                <ul className="nav-links logout">
+                    <li className="nav-item" data-tooltip="Logout">
+                        <NavLink
+                            to="/"
+                            className="nav-link"
+                            onClick={handleLogout}
+                        >
+                            <span className="nav-icon">
+                                <img src={logoutIcon} alt="Logout" className="img_icon" />
+                            </span>
+                            <span className="nav-text">Logout</span>
+                        </NavLink>
+                    </li>
+                </ul>
+            </aside>
+        </>
     );
 };
 

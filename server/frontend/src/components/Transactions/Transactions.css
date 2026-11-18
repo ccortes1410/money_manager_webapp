@@ -505,6 +505,15 @@
 
 /* Responsive Table */
 @media (max-width: 768px) {
+    .transactions-page {
+        padding: 1rem;
+    }
+
+    .transactions-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .transactions-controls {
         flex-direction: column;
         align-items: stretch;
@@ -516,6 +525,7 @@
 
     .filter-controls {
         justify-content: space-between;
+        flex-wrap: wrap;
     }
 
     .transactions-table {
@@ -525,17 +535,30 @@
     .transactions-table th,
     .transactions-table td {
         padding: 0.75rem 0.5rem;
+        white-space: nowrap;
     }
 
     .description-col {
         max-width: 150px;
     }
+
+    .tx-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
 }
 
 @media (max-width: 640px) {
-    .transactions-header-actions {
+    .transactions-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+
+    .transactions-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.75rem;
     }
 }

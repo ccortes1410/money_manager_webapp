@@ -1671,6 +1671,10 @@
    RESPONSIVE
    ============================================ */
 @media (max-width: 768px) {
+    .shared-budgets-page {
+        padding: 1rem;
+    }
+
     .sb-header {
         flex-direction: column;
         align-items: flex-start;
@@ -1688,10 +1692,19 @@
 
     .sbd-header-actions {
         width: 100%;
+        flex-wrap: wrap;
     }
 
     .sbd-header-actions .sbd-action-btn {
-        flex: 1;
+        flex: 1 1 auto;
+    }
+
+    .sbd-section-tabs {
+        overflow-x: auto;
+    }
+
+    .sbd-section-tab {
+        white-space: nowrap;
     }
 
     .sb-budget-grid {
@@ -1704,5 +1717,15 @@
 
     .sb-invites-grid {
         grid-template-columns: 1fr;
+    }
+
+    .sb-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .sb-modal {
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 }
