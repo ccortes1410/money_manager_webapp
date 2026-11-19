@@ -200,6 +200,39 @@ class SubscriptionAPITests(BaseTestCase):
         self.assertEqual(repeated_count, 0)
         self.assertEqual(len(payments), created_count)
 
+    def test_manual_unpaid_payment_is_preserved_across_reloads(self):
+        sub = self._seed_subscription(
+            start_date=self.today.isoformat(),
+            end_date=None,
+            billing_day=self.today.day,
+        )
+        generate_subscription_payments(self.user1.id, self.today)
+        payments = [
+            p for p in self.test_api.resources["subscription-payments"]
+            if p["subscription_id"] == sub["id"]
+        ]
+        self.assertEqual(len(payments), 1)
+        self.assertTrue(payments[0]["is_paid"])
+
+        # Mark payment as unpaid via the toggle endpoint
+        toggle_resp = self.client.patch(
+            reverse('djangoapp:payment_toggle', kwargs={'payment_id': payments[0]["id"]})
+        )
+        self.assertEqual(toggle_resp.status_code, 200)
+        self.assertFalse(toggle_resp.json()["payment"]["is_paid"])
+
+        # Reload subscriptions (which triggers generate_subscription_payments again)
+        list_resp = self.client.get(reverse('djangoapp:subscriptions'))
+        self.assertEqual(list_resp.status_code, 200)
+
+        reloaded_payments = [
+            p for p in self.test_api.resources["subscription-payments"]
+            if p["subscription_id"] == sub["id"]
+        ]
+        self.assertEqual(len(reloaded_payments), 1)
+        self.assertFalse(reloaded_payments[0]["is_paid"])
+        self.assertIsNone(reloaded_payments[0]["paid_date"])
+
     def test_detail_endpoint_success_with_end_date_set(self):
         sub = self._seed_subscription()
         response = self.client.get(

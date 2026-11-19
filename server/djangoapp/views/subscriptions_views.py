@@ -656,7 +656,7 @@ def payment_toggle_paid(request, payment_id):
             )
 
         # Toggle the payment status
-        current_status = payment_row.get("is_paid", False)
+        current_status = bool(payment_row.get("is_paid", False))
         payload = {"is_paid": not current_status}
 
         # Set paid_date when marking as paid, clear when marking as unpaid

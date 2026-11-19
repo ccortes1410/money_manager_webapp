@@ -1,38 +1,8 @@
-import os
-import tempfile
 from datetime import date, datetime, timedelta
 from calendar import monthrange
 from decimal import Decimal
 from ..restapi import get_request, post_request, patch_request, delete_request
 from .date_filter import get_date_bounds
-
-
-def _backfill_legacy_unpaid_payments_once(user_id, up_to_date):
-    """
-    One-time migration helper: payments generated before auto-pay was enabled
-    were created with is_paid=False and paid_date=None. Mark those due payments
-    as paid once per user so existing records count toward totals without
-    overwriting future manual 'Mark Unpaid' toggles.
-    """
-    local_marker = os.path.join(os.path.dirname(__file__), f".backfilled_paid_subs_{user_id}")
-    tmp_marker = os.path.join(tempfile.gettempdir(), f".backfilled_paid_subs_{user_id}")
-    if os.path.exists(local_marker) or os.path.exists(tmp_marker):
-        return
-    try:
-        payments = get_request("subscription-payments/", user_id=user_id)
-        if payments is None:
-            return
-        for p in payments:
-            due = _parse_api_date(p.get("due_date"))
-            if not p.get("is_paid") and p.get("paid_date") is None and due and due <= up_to_date:
-                patch_request(
-                    f"subscription-payments/{p['id']}",
-                    {"is_paid": True, "paid_date": due.isoformat()},
-                )
-        with open(tmp_marker, "w") as f:
-            f.write(datetime.now().isoformat())
-    except Exception:
-        pass
 
 
 def generate_subscription_payments(user_id, up_to_date=None):
@@ -41,11 +11,11 @@ def generate_subscription_payments(user_id, up_to_date=None):
     up to the specified date (default: today).
 
     This function calls the Node.js backend API to generate payments.
+    Existing payments (including ones manually marked as unpaid) are preserved.
     """
     if up_to_date is None:
         up_to_date = date.today()
 
-    _backfill_legacy_unpaid_payments_once(user_id, up_to_date)
     return _generate_subscription_payments_via_api(user_id, up_to_date)
 
 
