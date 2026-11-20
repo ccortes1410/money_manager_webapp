@@ -115,17 +115,23 @@ const Sidebar = ({ collapsed, onToggle }) => {
                     ))}
                 </ul>
                 
-                {/* User Section */}
+                {/* User Section -> Settings Link */}
                 {user && (
-                    <div className="sidebar-user">
+                    <NavLink
+                        to="/settings"
+                        className={`sidebar-user ${isActive("/settings") ? "active" : ""}`}
+                        onClick={handleNavClick}
+                        title="Account Settings"
+                    >
                         <div className="user-avatar">
                             {user.username?.charAt(0).toUpperCase() || "U"}
                         </div>
                         <div className="user-info">
                             <span className="user-name">{user.username}</span>
-                            <span className="user-email">{user.email || "User"}</span>
+                            <span className="user-email">{user.email || "Settings"}</span>
                         </div>
-                    </div>
+                        <span className="user-settings-gear" aria-hidden="true">⚙️</span>
+                    </NavLink>
                 )}
 
                 {/* Logout */}

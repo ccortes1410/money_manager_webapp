@@ -103,7 +103,12 @@ const Login = () => {
                         </div>
 
                         <div className="auth-form-group">
-                            <label htmlFor="password">Password</label>
+                            <div className="auth-label-row">
+                                <label htmlFor="password">Password</label>
+                                <Link to="/forgot-password" className="auth-forgot-link">
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <div className="auth-input-wrapper">
                                 <span className="auth-input-icon">🔒</span>
                                 <input

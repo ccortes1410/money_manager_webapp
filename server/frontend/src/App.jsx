@@ -12,6 +12,8 @@ import "./App.css";
 const LandingPage = lazy(() => import("./components/LandingPage/LandingPage"));
 const Login = lazy(() => import("./components/Auth/Login"));
 const Register = lazy(() => import("./components/Auth/Register"));
+const ForgotPassword = lazy(() => import("./components/Auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./components/Auth/ResetPassword"));
 const Dashboard = lazy(() => import("./components/Dashboard/Dashboard"));
 const Transactions = lazy(() => import("./components/Transactions/Transactions"));
 const Budgets = lazy(() => import("./components/Budgets/Budgets"));
@@ -20,6 +22,7 @@ const Income = lazy(() => import("./components/Income/Income"));
 const Friends = lazy(() => import("./components/Friends/Friends"));
 const SharedBudgets = lazy(() => import("./components/SharedBudgets/SharedBudgets"));
 const SharedBudgetDetail = lazy(() => import("./components/SharedBudgets/SharedBudgetDetail"));
+const Settings = lazy(() => import("./components/Settings/Settings"));
 const NotFound = lazy(() => import("./components/NotFound/NotFound"));
 
 
@@ -62,6 +65,8 @@ function App() {
                                     <Route path="/" element={<LandingPage />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
+                                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                                    <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
 
                                     {/* Protected Routes */}
                                     <Route element={<AppLayout collapsed={collapsed} toggleSidebar={toggleSidebar} />}>
@@ -119,6 +124,13 @@ function App() {
                                         <ProtectedRoute>
                                             <div className="app-container">
                                                 <SharedBudgetDetail />
+                                            </div>
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/settings" element={
+                                        <ProtectedRoute>
+                                            <div className="app-container">
+                                                <Settings />
                                             </div>
                                         </ProtectedRoute>
                                     } />

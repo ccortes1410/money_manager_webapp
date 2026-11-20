@@ -47,6 +47,33 @@ urlpatterns = [
         view=views.logout_request,
         name='logout'
     ),
+    path(
+        route='password-reset/request',
+        view=views.password_reset_request,
+        name='password_reset_request'
+    ),
+    path(
+        route='password-reset/confirm',
+        view=views.password_reset_confirm,
+        name='password_reset_confirm'
+    ),
+
+    # User Profile & Settings
+    path(
+        route='profile',
+        view=views.user_profile,
+        name='user_profile'
+    ),
+    path(
+        route='profile/change-password',
+        view=views.change_password,
+        name='change_password'
+    ),
+    path(
+        route='profile/delete',
+        view=views.delete_account,
+        name='delete_account'
+    ),
 
     # Dashboard
     path(
